@@ -10,7 +10,7 @@ import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 import "dotenv/config"
 
-const port = process.env.PORT || 4000
+const port = process.env.PORT || 2000
 const app = express()
 const httpServer = http.createServer(app)
 
