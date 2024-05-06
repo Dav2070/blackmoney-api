@@ -1,6 +1,6 @@
 export const typeDefs = `#graphql
 	type Query {
-		hello: String
+		listRooms: RoomList!
 	}
 
 	type Mutation {
@@ -12,5 +12,14 @@ export const typeDefs = `#graphql
 
 	type Session {
 		token: String
+	}
+
+	type Room {
+		name: String!
+	}
+
+	type RoomList {
+		total: Int!
+		items: [Room!]!
 	}
 `

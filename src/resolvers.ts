@@ -1,10 +1,9 @@
+import * as roomResolvers from "./resolvers/room.js"
 import * as sessionResolvers from "./resolvers/session.js"
 
 export const resolvers = {
 	Query: {
-		hello: () => {
-			return "Hello World"
-		}
+		listRooms: roomResolvers.listRooms
 	},
 	Mutation: {
 		createSession: sessionResolvers.createSession
