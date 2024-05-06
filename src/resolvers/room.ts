@@ -1,5 +1,5 @@
 import { apiErrors } from "../errors.js"
-import { ResolverContext, List, Room } from "../types.js"
+import { ResolverContext, List, Room, Table } from "../types.js"
 import { throwApiError } from "../utils.js"
 
 export async function listRooms(
@@ -21,7 +21,28 @@ export async function listRooms(
 		context.prisma.room.count({ where }),
 		context.prisma.room.findMany({
 			where,
-			orderBy: { name: "desc" }
+			orderBy: { name: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
+export async function tables(
+	room: Room,
+	args: {},
+	context: ResolverContext
+): Promise<List<Table>> {
+	let where = { roomId: room.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.table.count({ where }),
+		context.prisma.table.findMany({
+			where,
+			orderBy: { name: "asc" }
 		})
 	])
 

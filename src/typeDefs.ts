@@ -16,10 +16,20 @@ export const typeDefs = `#graphql
 
 	type Room {
 		name: String!
+		tables: TableList!
 	}
 
 	type RoomList {
 		total: Int!
 		items: [Room!]!
+	}
+
+	type Table {
+		name: String!
+	}
+
+	type TableList {
+		total: Int!
+		items: [Table!]!
 	}
 `

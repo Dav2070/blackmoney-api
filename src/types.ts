@@ -28,5 +28,11 @@ export interface Session {
 }
 
 export interface Room {
+	id: bigint
+	name: String
+}
+
+export interface Table {
+	id: bigint
 	name: String
 }
