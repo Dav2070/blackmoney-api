@@ -8,6 +8,7 @@ import cors from "cors"
 import { PrismaClient } from "@prisma/client"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
+import { User } from "./src/types.js"
 import "dotenv/config"
 
 const port = process.env.PORT || 2000
@@ -34,8 +35,21 @@ app.use(
 	express.json({ type: "application/json", limit: "50mb" }),
 	expressMiddleware(server, {
 		context: async ({ req }) => {
+			const accessToken = req.headers.authorization
+			let user: User = null
+
+			if (accessToken != null) {
+				let session = await prisma.session.findFirst({
+					where: { token: accessToken },
+					include: { user: true }
+				})
+
+				user = session.user
+			}
+
 			return {
-				prisma
+				prisma,
+				user
 			}
 		}
 	})
