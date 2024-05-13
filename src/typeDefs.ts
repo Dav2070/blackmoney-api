@@ -16,6 +16,7 @@ export const typeDefs = `#graphql
 	}
 
 	type Room {
+		uuid: String!
 		name: String!
 		tables: TableList!
 	}
@@ -26,6 +27,7 @@ export const typeDefs = `#graphql
 	}
 
 	type Table {
+		uuid: String!
 		name: String!
 	}
 
