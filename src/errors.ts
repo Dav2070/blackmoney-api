@@ -8,10 +8,20 @@ export const apiErrors = {
 		message: "You are not authenticated",
 		status: 401
 	},
+	actionNotAllowed: {
+		code: "ACTION_NOT_ALLOWED",
+		message: "Action not allowed",
+		status: 403
+	},
 	validationFailed: {
 		code: "VALIDATION_FAILED",
 		message: "Validation failed",
 		status: 400
+	},
+	roomDoesNotExist: {
+		code: "ROOM_DOES_NOT_EXIST",
+		message: "Room does not exist",
+		status: 404
 	}
 }
 

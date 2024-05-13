@@ -9,6 +9,10 @@ export const typeDefs = `#graphql
 			password: String!
 		): Session!
 		createRoom(name: String!): Room!
+		createTable(
+			roomUuid: String!
+			name: String!
+		): Table!
 	}
 
 	type Session {
