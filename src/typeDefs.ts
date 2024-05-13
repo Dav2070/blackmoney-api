@@ -7,7 +7,8 @@ export const typeDefs = `#graphql
 		createSession(
 			username: String!
 			password: String!
-		): Session
+		): Session!
+		createRoom(name: String!): Room!
 	}
 
 	type Session {

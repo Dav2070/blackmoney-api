@@ -6,7 +6,8 @@ export const resolvers = {
 		listRooms: roomResolvers.listRooms
 	},
 	Mutation: {
-		createSession: sessionResolvers.createSession
+		createSession: sessionResolvers.createSession,
+		createRoom: roomResolvers.createRoom
 	},
 	Room: {
 		tables: roomResolvers.tables

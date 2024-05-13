@@ -1,6 +1,31 @@
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Room, Table } from "../types.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { validateNameLength } from "../services/validationService.js"
+
+export async function createRoom(
+	parent: any,
+	args: {
+		name: string
+	},
+	context: ResolverContext
+): Promise<Room> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Validate the name
+	throwValidationError(validateNameLength(args.name))
+
+	// Create the room
+	return await context.prisma.room.create({
+		data: {
+			name: args.name,
+			userId: context.user.id
+		}
+	})
+}
 
 export async function listRooms(
 	parent: any,
