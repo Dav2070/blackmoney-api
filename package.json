@@ -17,6 +17,7 @@
     "@graphql-tools/schema": "^10.0.2",
     "@graphql-tools/utils": "^10.0.13",
     "@prisma/client": "^5.12.1",
+    "dav-js": "git+https://github.com/dav-apps/dav-js.git#v2.7.2",
     "express": "^4.19.2"
   },
   "devDependencies": {
