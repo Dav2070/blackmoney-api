@@ -6,9 +6,16 @@ import express from "express"
 import http from "http"
 import cors from "cors"
 import { PrismaClient } from "@prisma/client"
+import {
+	Dav,
+	Environment,
+	ApiResponse,
+	isSuccessStatusCode,
+	User,
+	UsersController
+} from "dav-js"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
-import { User } from "./src/types.js"
 import "dotenv/config"
 
 const port = process.env.PORT || 2000
@@ -29,6 +36,18 @@ const server = new ApolloServer({
 
 await server.start()
 
+// Init dav
+let environment = Environment.Staging
+
+if (process.env.ENVIRONMENT == "production") {
+	environment = Environment.Production
+}
+
+new Dav({
+	environment,
+	server: true
+})
+
 app.use(
 	"/",
 	cors<cors.CorsRequest>(),
@@ -39,12 +58,11 @@ app.use(
 			let user: User = null
 
 			if (accessToken != null) {
-				let session = await prisma.session.findFirst({
-					where: { token: accessToken },
-					include: { user: true }
-				})
+				let userResponse = await UsersController.GetUser({ accessToken })
 
-				user = session.user
+				if (isSuccessStatusCode(userResponse.status)) {
+					user = (userResponse as ApiResponse<User>).data
+				}
 			}
 
 			return {

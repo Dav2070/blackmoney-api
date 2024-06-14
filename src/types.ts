@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client"
+import { User } from "dav-js"
 
 export interface ResolverContext {
 	prisma: PrismaClient
@@ -14,12 +15,6 @@ export interface ApiError {
 	code: string
 	message: string
 	status?: number
-}
-
-export interface User {
-	id: bigint
-	name: string
-	password: string
 }
 
 export interface Session {
