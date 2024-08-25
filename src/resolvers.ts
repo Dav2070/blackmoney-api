@@ -13,5 +13,8 @@ export const resolvers = {
 	},
 	Room: {
 		tables: roomResolvers.tables
+	},
+	Category: {
+		products: categoryResolvers.products
 	}
 }
