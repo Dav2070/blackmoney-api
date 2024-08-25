@@ -4,19 +4,11 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
-		createSession(
-			username: String!
-			password: String!
-		): Session!
 		createRoom(name: String!): Room!
 		createTable(
 			roomUuid: String!
 			name: String!
 		): Table!
-	}
-
-	type Session {
-		token: String
 	}
 
 	type Room {

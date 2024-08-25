@@ -17,11 +17,6 @@ export interface ApiError {
 	status?: number
 }
 
-export interface Session {
-	user: User
-	token: string
-}
-
 export interface Room {
 	id: bigint
 	name: String
