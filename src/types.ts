@@ -26,3 +26,13 @@ export interface Table {
 	id: bigint
 	name: String
 }
+
+export interface Product {
+	id: bigint
+	name: String
+}
+
+export interface Category {
+	id: bigint
+	name: String
+}

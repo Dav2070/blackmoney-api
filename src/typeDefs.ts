@@ -1,6 +1,7 @@
 export const typeDefs = `#graphql
 	type Query {
 		listRooms: RoomList!
+		listCategories: CategoryList!
 	}
 
 	type Mutation {
@@ -30,5 +31,27 @@ export const typeDefs = `#graphql
 	type TableList {
 		total: Int!
 		items: [Table!]!
+	}
+
+	type Product {
+		uuid: String!
+		name: String!
+		price: Int!
+	}
+
+	type ProductList {
+		total: Int!
+		items: [Product!]!
+	}
+	
+	type Category {
+		uuid: String!
+		name: String!
+		products: [ProductList!]!
+	}
+
+	type CategoryList {
+		total: Int!
+		items: [Category!]!
 	}
 `
