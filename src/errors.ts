@@ -18,6 +18,16 @@ export const apiErrors = {
 		message: "Validation failed",
 		status: 400
 	},
+	loginFailed: {
+		code: "LOGIN_FAILED",
+		message: "Login failed",
+		status: 400
+	},
+	companyDoesNotExist: {
+		code: "COMPANY_DOES_NOT_EXIST",
+		message: "Company does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",

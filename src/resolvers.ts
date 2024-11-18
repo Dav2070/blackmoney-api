@@ -1,3 +1,4 @@
+import * as sessionResolvers from "./resolvers/session.js"
 import * as companyResolvers from "./resolvers/company.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
@@ -10,6 +11,7 @@ export const resolvers = {
 		listCategories: categoryResolvers.listCategories
 	},
 	Mutation: {
+		login: sessionResolvers.login,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable
 	},

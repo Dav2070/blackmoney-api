@@ -6,6 +6,10 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
+		login(
+			userName: String!
+			password: String!
+		): Session!
 		createRoom(name: String!): Room!
 		createTable(
 			roomUuid: String!
@@ -22,6 +26,10 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		role: UserRole!
+	}
+
+	type Session {
+		uuid: String!
 	}
 
 	type Room {

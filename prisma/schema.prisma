@@ -16,13 +16,21 @@ model Company {
 }
 
 model User {
-  id        BigInt   @id @default(autoincrement())
-  uuid      String   @unique @default(uuid())
-  name      String   @db.VarChar
-  password  String   @db.VarChar
-  role      UserRole @default(USER)
-  company   Company  @relation(fields: [companyId], references: [id])
+  id        BigInt    @id @default(autoincrement())
+  uuid      String    @unique @default(uuid())
+  name      String    @db.VarChar
+  password  String    @db.VarChar
+  role      UserRole  @default(USER)
   companyId BigInt
+  company   Company   @relation(fields: [companyId], references: [id])
+  sessions  Session[]
+}
+
+model Session {
+  id     BigInt @id @default(autoincrement())
+  uuid   String @unique @default(uuid())
+  userId BigInt
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Room {
