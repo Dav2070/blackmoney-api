@@ -9,11 +9,11 @@ export async function retrieveCompany(
 	context: ResolverContext
 ): Promise<Company> {
 	// Check if the user is logged in
-	if (context.user == null) {
+	if (context.davUser == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
 	return await context.prisma.company.findFirst({
-		where: { userId: context.user.Id }
+		where: { userId: context.davUser.Id }
 	})
 }

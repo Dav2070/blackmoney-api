@@ -9,13 +9,13 @@ export async function login(
 	context: ResolverContext
 ): Promise<Session> {
 	// Check if the user is logged in
-	if (context.user == null) {
+	if (context.davUser == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
 	// Get the company
 	let company = await context.prisma.company.findFirst({
-		where: { userId: context.user.Id }
+		where: { userId: context.davUser.Id }
 	})
 
 	if (company == null) {

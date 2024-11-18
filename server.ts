@@ -5,13 +5,13 @@ import { makeExecutableSchema } from "@graphql-tools/schema"
 import express from "express"
 import http from "http"
 import cors from "cors"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, User } from "@prisma/client"
 import {
 	Dav,
 	Environment,
 	ApiResponse,
 	isSuccessStatusCode,
-	User,
+	User as DavUser,
 	UsersController
 } from "dav-js"
 import { typeDefs } from "./src/typeDefs.js"
@@ -55,18 +55,31 @@ app.use(
 	expressMiddleware(server, {
 		context: async ({ req }) => {
 			const accessToken = req.headers.authorization
+			let davUser: DavUser = null
 			let user: User = null
 
 			if (accessToken != null) {
-				let userResponse = await UsersController.GetUser({ accessToken })
+				let session = await prisma.session.findFirst({
+					where: {
+						uuid: accessToken
+					},
+					include: { user: true }
+				})
 
-				if (isSuccessStatusCode(userResponse.status)) {
-					user = (userResponse as ApiResponse<User>).data
+				user = session?.user
+
+				if (user == null) {
+					let userResponse = await UsersController.GetUser({ accessToken })
+
+					if (isSuccessStatusCode(userResponse.status)) {
+						davUser = (userResponse as ApiResponse<DavUser>).data
+					}
 				}
 			}
 
 			return {
 				prisma,
+				davUser,
 				user
 			}
 		}

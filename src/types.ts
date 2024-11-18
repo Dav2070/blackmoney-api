@@ -1,8 +1,9 @@
-import { PrismaClient } from "@prisma/client"
-import { User } from "dav-js"
+import { PrismaClient, User } from "@prisma/client"
+import { User as DavUser } from "dav-js"
 
 export interface ResolverContext {
 	prisma: PrismaClient
+	davUser?: DavUser
 	user?: User
 }
 

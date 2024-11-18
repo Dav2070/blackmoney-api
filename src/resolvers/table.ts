@@ -26,7 +26,7 @@ export async function createTable(
 	}
 
 	// Check if the room belongs to the user
-	if (room.userId != BigInt(context.user.Id)) {
+	if (room.userId != BigInt(context.davUser.Id)) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
