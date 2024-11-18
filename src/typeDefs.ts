@@ -1,5 +1,6 @@
 export const typeDefs = `#graphql
 	type Query {
+		retrieveCompany: Company
 		listRooms: RoomList!
 		listCategories: CategoryList!
 	}
@@ -10,6 +11,17 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
+	}
+
+	type Company {
+		uuid: String!
+		name: String!
+	}
+
+	type User {
+		uuid: String!
+		name: String!
+		role: UserRole!
 	}
 
 	type Room {
@@ -53,5 +65,10 @@ export const typeDefs = `#graphql
 	type CategoryList {
 		total: Int!
 		items: [Category!]!
+	}
+
+	enum UserRole {
+		ADMIN
+		USER
 	}
 `
