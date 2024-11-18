@@ -7,10 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id     BigInt @id @default(autoincrement())
+  uuid   String @unique @default(uuid())
+  userId BigInt
+  name   String @db.VarChar
+  users  User[]
+}
+
+model User {
+  id        BigInt   @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  name      String   @db.VarChar
+  password  String   @db.VarChar
+  role      UserRole @default(USER)
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId BigInt
+}
+
 model Room {
   id     BigInt  @id @default(autoincrement())
   uuid   String  @unique @default(uuid())
-  name   String
+  name   String  @db.VarChar
   userId BigInt
   tables Table[]
 }
@@ -58,4 +76,9 @@ model Category {
 model TaxRate {
   id   BigInt @id @default(autoincrement())
   rate Int    @unique
+}
+
+enum UserRole {
+  ADMIN
+  USER
 }
