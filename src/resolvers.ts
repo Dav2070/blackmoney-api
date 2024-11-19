@@ -15,6 +15,9 @@ export const resolvers = {
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable
 	},
+	Company: {
+		users: companyResolvers.users
+	},
 	Room: {
 		tables: roomResolvers.tables
 	},

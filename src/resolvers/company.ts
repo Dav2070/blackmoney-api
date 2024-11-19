@@ -1,6 +1,6 @@
-import { Company } from "@prisma/client"
+import { Company, User } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext } from "../types.js"
+import { ResolverContext, List } from "../types.js"
 import { throwApiError } from "../utils.js"
 
 export async function retrieveCompany(
@@ -16,4 +16,25 @@ export async function retrieveCompany(
 	return await context.prisma.company.findFirst({
 		where: { userId: context.davUser.Id }
 	})
+}
+
+export async function users(
+	company: Company,
+	args: any,
+	context: ResolverContext
+): Promise<List<User>> {
+	let where = { companyId: company.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.user.count({ where }),
+		context.prisma.user.findMany({
+			where,
+			orderBy: { name: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }

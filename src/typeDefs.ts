@@ -20,12 +20,18 @@ export const typeDefs = `#graphql
 	type Company {
 		uuid: String!
 		name: String!
+		users: UserList!
 	}
 
 	type User {
 		uuid: String!
 		name: String!
 		role: UserRole!
+	}
+
+	type UserList {
+		total: Int!
+		items: [User!]!
 	}
 
 	type Session {
