@@ -13,6 +13,7 @@ model Company {
   userId BigInt
   name   String @db.VarChar
   users  User[]
+  rooms  Room[]
 }
 
 model User {
@@ -34,11 +35,13 @@ model Session {
 }
 
 model Room {
-  id     BigInt  @id @default(autoincrement())
-  uuid   String  @unique @default(uuid())
-  name   String  @db.VarChar
-  userId BigInt
-  tables Table[]
+  id        BigInt   @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  name      String   @db.VarChar
+  userId    BigInt?
+  companyId BigInt?
+  company   Company? @relation(fields: [companyId], references: [id])
+  tables    Table[]
 }
 
 model Table {
