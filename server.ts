@@ -29,13 +29,6 @@ let schema = makeExecutableSchema({
 
 export const prisma = new PrismaClient()
 
-const server = new ApolloServer({
-	schema,
-	plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
-})
-
-await server.start()
-
 // Init dav
 let environment = Environment.Staging
 
@@ -47,6 +40,14 @@ new Dav({
 	environment,
 	server: true
 })
+
+const server = new ApolloServer({
+	schema,
+	plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+	introspection: environment != Environment.Production
+})
+
+await server.start()
 
 app.use(
 	"/",
