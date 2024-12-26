@@ -30,10 +30,15 @@ let schema = makeExecutableSchema({
 export const prisma = new PrismaClient()
 
 // Init dav
-let environment = Environment.Staging
+let environment = Environment.Development
 
-if (process.env.ENVIRONMENT == "production") {
-	environment = Environment.Production
+switch (process.env.ENVIRONMENT) {
+	case "production":
+		environment = Environment.Production
+		break
+	case "staging":
+		environment = Environment.Staging
+		break
 }
 
 new Dav({
