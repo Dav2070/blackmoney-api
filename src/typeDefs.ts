@@ -15,6 +15,10 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
+		addProducts(
+			uuid: String!
+			products: [AddProductsInput!]!
+		):Order!
 	}
 
 	type Company {
@@ -81,8 +85,17 @@ export const typeDefs = `#graphql
 		items: [Category!]!
 	}
 
+	type Order {
+	uuid:String!
+	}
+
 	enum UserRole {
 		ADMIN
 		USER
+	}
+
+	input AddProductsInput{
+		uuid: String!
+		count: Int!
 	}
 `

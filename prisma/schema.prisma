@@ -61,7 +61,7 @@ model Order {
   paidAt     DateTime?
   tableId    BigInt
   table      Table     @relation(fields: [tableId], references: [id])
-  products   Product[]
+  products   Product[] 
 }
 
 model Product {
