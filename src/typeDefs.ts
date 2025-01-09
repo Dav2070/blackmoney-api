@@ -78,6 +78,7 @@ export const typeDefs = `#graphql
 	type Category {
 		uuid: String!
 		name: String!
+		type: CategoryType!
 		products: ProductList!
 	}
 
@@ -95,6 +96,11 @@ export const typeDefs = `#graphql
 	enum UserRole {
 		ADMIN
 		USER
+	}
+
+	enum CategoryType {
+		FOOD
+		DRINK
 	}
 
 	input AddProductsInput{
