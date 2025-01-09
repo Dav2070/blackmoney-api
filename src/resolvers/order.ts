@@ -1,11 +1,89 @@
 import { Order } from "@prisma/client"
+import { apiErrors } from "../errors.js"
 import { ResolverContext } from "../types.js"
+import { throwApiError } from "../utils.js"
 
-export async function addProducts(
+export async function addProductsToOrder(
 	parent: any,
 	args: { uuid: string; products: { uuid: string; count: number }[] },
 	context: ResolverContext
 ): Promise<Order> {
-	console.log(args)
-	return null
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the order
+	let order = await context.prisma.order.findFirst({
+		where: {
+			uuid: args.uuid
+		}
+	})
+
+	// Check if the order exists
+	if (order == null) {
+		throwApiError(apiErrors.orderDoesNotExist)
+	}
+
+	// Get the products from the database
+	let products: { id: bigint; count: number }[] = []
+
+	for (let item of args.products) {
+		const product = await context.prisma.product.findFirst({
+			where: {
+				uuid: item.uuid
+			}
+		})
+
+		if (product == null) {
+			throwApiError(apiErrors.productDoesNotExist)
+		}
+
+		products.push({
+			id: product.id,
+			count: item.count
+		})
+	}
+
+	// Add the products to the order
+	for (let product of products) {
+		// Check if there is already a OrderToProduct item
+		let orderToProduct = await context.prisma.orderToProduct.findFirst({
+			where: {
+				orderId: order.id,
+				productId: product.id
+			}
+		})
+
+		if (orderToProduct == null) {
+			// Create a new OrderToProduct item
+			orderToProduct = await context.prisma.orderToProduct.create({
+				data: {
+					order: {
+						connect: {
+							id: order.id
+						}
+					},
+					product: {
+						connect: {
+							id: product.id
+						}
+					},
+					count: product.count
+				}
+			})
+		} else {
+			// Update the OrderToProduct item
+			orderToProduct = await context.prisma.orderToProduct.update({
+				where: {
+					id: orderToProduct.id
+				},
+				data: {
+					count: orderToProduct.count + product.count
+				}
+			})
+		}
+	}
+
+	return order
 }

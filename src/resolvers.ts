@@ -9,13 +9,13 @@ export const resolvers = {
 	Query: {
 		retrieveCompany: companyResolvers.retrieveCompany,
 		listRooms: roomResolvers.listRooms,
-		listCategories: categoryResolvers.listCategories,
+		listCategories: categoryResolvers.listCategories
 	},
 	Mutation: {
 		login: sessionResolvers.login,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
-		addProducts: orderResolvers.addProducts
+		addProductsToOrder: orderResolvers.addProductsToOrder
 	},
 	Company: {
 		users: companyResolvers.users

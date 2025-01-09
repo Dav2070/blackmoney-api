@@ -15,10 +15,10 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
-		addProducts(
+		addProductsToOrder(
 			uuid: String!
 			products: [AddProductsInput!]!
-		):Order!
+		): Order!
 	}
 
 	type Company {
