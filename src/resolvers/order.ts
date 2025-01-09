@@ -1,6 +1,6 @@
 import { Order } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext } from "../types.js"
+import { ResolverContext, List, Product } from "../types.js"
 import { throwApiError } from "../utils.js"
 
 export async function addProductsToOrder(
@@ -111,4 +111,36 @@ export async function totalPrice(
 	}
 
 	return totalPrice
+}
+
+export async function products(
+	order: Order,
+	args: {},
+	context: ResolverContext
+): Promise<List<Product>> {
+	const where = {
+		orderId: order.id
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.orderToProduct.count({
+			where
+		}),
+		context.prisma.orderToProduct.findMany({
+			where,
+			include: {
+				product: true
+			}
+		})
+	])
+
+	return {
+		total,
+		items: items.map(item => {
+			return {
+				...item.product,
+				count: item.count
+			}
+		})
+	}
 }

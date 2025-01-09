@@ -27,6 +27,7 @@ export const resolvers = {
 		products: categoryResolvers.products
 	},
 	Order: {
-		totalPrice: orderResolvers.totalPrice
+		totalPrice: orderResolvers.totalPrice,
+		products: orderResolvers.products
 	}
 }

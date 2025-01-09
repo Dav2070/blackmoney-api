@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client"
+import { PrismaClient, User, Product as ProductModel } from "@prisma/client"
 import { User as DavUser } from "dav-js"
 
 export interface ResolverContext {
@@ -20,20 +20,19 @@ export interface ApiError {
 
 export interface Room {
 	id: bigint
-	name: String
+	name: string
 }
 
 export interface Table {
 	id: bigint
-	name: String
+	name: string
 }
 
-export interface Product {
-	id: bigint
-	name: String
+export interface Product extends ProductModel {
+	count?: number
 }
 
 export interface Category {
 	id: bigint
-	name: String
+	name: string
 }

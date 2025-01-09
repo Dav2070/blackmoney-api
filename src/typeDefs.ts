@@ -67,6 +67,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		price: Int!
+		count: Int
 	}
 
 	type ProductList {
@@ -88,6 +89,7 @@ export const typeDefs = `#graphql
 	type Order {
 		uuid: String!
 		totalPrice: Int!
+		products: ProductList!
 	}
 
 	enum UserRole {
