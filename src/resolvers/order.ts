@@ -87,3 +87,28 @@ export async function addProductsToOrder(
 
 	return order
 }
+
+export async function totalPrice(
+	order: Order,
+	args: {},
+	context: ResolverContext
+): Promise<number> {
+	// Get the products from the database
+	let products = await context.prisma.orderToProduct.findMany({
+		where: {
+			orderId: order.id
+		},
+		include: {
+			product: true
+		}
+	})
+
+	// Calculate the total price
+	let totalPrice = 0
+
+	for (let product of products) {
+		totalPrice += product.product.price * product.count
+	}
+
+	return totalPrice
+}

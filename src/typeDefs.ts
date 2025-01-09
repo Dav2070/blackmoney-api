@@ -86,7 +86,8 @@ export const typeDefs = `#graphql
 	}
 
 	type Order {
-	uuid:String!
+		uuid: String!
+		totalPrice: Int!
 	}
 
 	enum UserRole {

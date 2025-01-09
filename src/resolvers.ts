@@ -25,5 +25,8 @@ export const resolvers = {
 	},
 	Category: {
 		products: categoryResolvers.products
+	},
+	Order: {
+		totalPrice: orderResolvers.totalPrice
 	}
 }

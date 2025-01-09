@@ -56,7 +56,6 @@ model Table {
 model Order {
   id         BigInt           @id @default(autoincrement())
   uuid       String           @unique @default(uuid())
-  totalPrice Int
   createdAt  DateTime         @default(now())
   paidAt     DateTime?
   tableId    BigInt
