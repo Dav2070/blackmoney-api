@@ -9,7 +9,8 @@ export const resolvers = {
 	Query: {
 		retrieveCompany: companyResolvers.retrieveCompany,
 		listRooms: roomResolvers.listRooms,
-		listCategories: categoryResolvers.listCategories
+		listCategories: categoryResolvers.listCategories,
+		retrieveTable: tableResolvers.retrieveTable
 	},
 	Mutation: {
 		login: sessionResolvers.login,
@@ -29,5 +30,8 @@ export const resolvers = {
 	Order: {
 		totalPrice: orderResolvers.totalPrice,
 		products: orderResolvers.products
+	},
+	Table: {
+		orders: tableResolvers.orders
 	}
 }
