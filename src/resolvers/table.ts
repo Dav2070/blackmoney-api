@@ -13,6 +13,7 @@ export async function retrieveTable(
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
+
 	// Get the table
 	let table = await context.prisma.table.findFirst({
 		where: { uuid: args.uuid },
@@ -24,7 +25,7 @@ export async function retrieveTable(
 	}
 
 	// Check if the room belongs to the user
-	if (table.room.userId != BigInt(context.davUser.Id)) {
+	if (table.room.companyId != context.user.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
