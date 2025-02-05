@@ -20,6 +20,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			products: [AddProductsInput!]!
 		): Order!
+		removeProductsFromOrder(
+			uuid: String!
+			products: [AddProductsInput!]!
+		): Order!
 	}
 
 	type Company {

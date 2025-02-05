@@ -42,6 +42,11 @@ export const apiErrors = {
 		code: "PRODUCT_DOES_NOT_EXIST",
 		message: "Product does not exist",
 		status: 404
+	},
+	productNotInOrder: {
+		code: "PRODUCT_NOT_IN_ORDER",
+		message: "Product is not in the order",
+		status: 400
 	}
 }
 
