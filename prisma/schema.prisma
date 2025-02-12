@@ -54,22 +54,39 @@ model Table {
 }
 
 model Order {
-  id        BigInt           @id @default(autoincrement())
-  uuid      String           @unique @default(uuid())
-  createdAt DateTime         @default(now())
+  id        BigInt      @id @default(autoincrement())
+  uuid      String      @unique @default(uuid())
+  createdAt DateTime    @default(now())
   paidAt    DateTime?
   tableId   BigInt
-  table     Table            @relation(fields: [tableId], references: [id])
-  products  OrderToProduct[]
+  table     Table       @relation(fields: [tableId], references: [id])
+  products  OrderItem[]
 }
 
-model OrderToProduct {
-  id        BigInt  @id @default(autoincrement())
-  orderId   BigInt
-  productId BigInt
-  count     Int     @default(1)
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+model OrderItem {
+  id         BigInt               @id @default(autoincrement())
+  orderId    BigInt
+  productId  BigInt
+  count      Int                  @default(1)
+  order      Order                @relation(fields: [orderId], references: [id])
+  product    Product              @relation(fields: [productId], references: [id])
+  variations OrderItemVariation[]
+}
+
+model OrderItemVariation {
+  id             BigInt                              @id @default(autoincrement())
+  orderItemId    BigInt
+  count          Int                                 @default(1)
+  orderItem      OrderItem                           @relation(fields: [orderItemId], references: [id])
+  variationItems OrderItemVariationToVariationItem[]
+}
+
+model OrderItemVariationToVariationItem {
+  id                   BigInt             @id @default(autoincrement())
+  orderItemVariationId BigInt
+  variationItemId      BigInt
+  orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id])
+  variationItem        VariationItem      @relation(fields: [variationItemId], references: [id])
 }
 
 model Product {
@@ -80,7 +97,7 @@ model Product {
   categoryId BigInt
   category   Category             @relation(fields: [categoryId], references: [id])
   variations ProductToVariation[]
-  orders     OrderToProduct[]
+  orders     OrderItem[]
 }
 
 model ProductToVariation {
@@ -100,12 +117,13 @@ model Variation {
 }
 
 model VariationItem {
-  id             BigInt    @id @default(autoincrement())
-  uuid           String    @unique @default(uuid())
-  name           String
-  additionalCost Int
-  variationId    BigInt
-  variation      Variation @relation(fields: [variationId], references: [id])
+  id                  BigInt                              @id @default(autoincrement())
+  uuid                String                              @unique @default(uuid())
+  name                String
+  additionalCost      Int
+  variationId         BigInt
+  variation           Variation                           @relation(fields: [variationId], references: [id])
+  orderItemVariations OrderItemVariationToVariationItem[]
 }
 
 model Category {

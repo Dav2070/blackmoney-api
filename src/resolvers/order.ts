@@ -48,7 +48,7 @@ export async function addProductsToOrder(
 	// Add the products to the order
 	for (let product of products) {
 		// Check if there is already a OrderToProduct item
-		let orderToProduct = await context.prisma.orderToProduct.findFirst({
+		let orderToProduct = await context.prisma.orderItem.findFirst({
 			where: {
 				orderId: order.id,
 				productId: product.id
@@ -57,7 +57,7 @@ export async function addProductsToOrder(
 
 		if (orderToProduct == null) {
 			// Create a new OrderToProduct item
-			orderToProduct = await context.prisma.orderToProduct.create({
+			orderToProduct = await context.prisma.orderItem.create({
 				data: {
 					order: {
 						connect: {
@@ -74,7 +74,7 @@ export async function addProductsToOrder(
 			})
 		} else {
 			// Update the OrderToProduct item
-			orderToProduct = await context.prisma.orderToProduct.update({
+			orderToProduct = await context.prisma.orderItem.update({
 				where: {
 					id: orderToProduct.id
 				},
@@ -133,32 +133,32 @@ export async function removeProductsFromOrder(
 	// Remove the products from the order
 	for (let product of products) {
 		// Check if there is already a OrderToProduct item
-		let orderToProduct = await context.prisma.orderToProduct.findFirst({
+		let orderItem = await context.prisma.orderItem.findFirst({
 			where: {
 				orderId: order.id,
 				productId: product.id
 			}
 		})
 
-		if (orderToProduct == null) {
+		if (orderItem == null) {
 			throwApiError(apiErrors.productNotInOrder)
 		}
 
-		if (orderToProduct.count <= product.count) {
+		if (orderItem.count <= product.count) {
 			// Delete the OrderToProduct item
-			await context.prisma.orderToProduct.delete({
+			await context.prisma.orderItem.delete({
 				where: {
-					id: orderToProduct.id
+					id: orderItem.id
 				}
 			})
 		} else {
 			// Update the OrderToProduct item
-			await context.prisma.orderToProduct.update({
+			await context.prisma.orderItem.update({
 				where: {
-					id: orderToProduct.id
+					id: orderItem.id
 				},
 				data: {
-					count: orderToProduct.count - product.count
+					count: orderItem.count - product.count
 				}
 			})
 		}
@@ -173,7 +173,7 @@ export async function totalPrice(
 	context: ResolverContext
 ): Promise<number> {
 	// Get the products from the database
-	let products = await context.prisma.orderToProduct.findMany({
+	let products = await context.prisma.orderItem.findMany({
 		where: {
 			orderId: order.id
 		},
@@ -202,10 +202,10 @@ export async function products(
 	}
 
 	const [total, items] = await context.prisma.$transaction([
-		context.prisma.orderToProduct.count({
+		context.prisma.orderItem.count({
 			where
 		}),
-		context.prisma.orderToProduct.findMany({
+		context.prisma.orderItem.findMany({
 			where,
 			include: {
 				product: true
