@@ -3,6 +3,8 @@ import * as companyResolvers from "./resolvers/company.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as categoryResolvers from "./resolvers/category.js"
+import * as productResolvers from "./resolvers/product.js"
+import * as variationResolvers from "./resolvers/variation.js"
 import * as orderResolvers from "./resolvers/order.js"
 
 export const resolvers = {
@@ -25,14 +27,20 @@ export const resolvers = {
 	Room: {
 		tables: roomResolvers.tables
 	},
+	Table: {
+		orders: tableResolvers.orders
+	},
 	Category: {
 		products: categoryResolvers.products
+	},
+	Product: {
+		variations: productResolvers.variations
+	},
+	Variation: {
+		variationItems: variationResolvers.variationItems
 	},
 	Order: {
 		totalPrice: orderResolvers.totalPrice,
 		products: orderResolvers.products
-	},
-	Table: {
-		orders: tableResolvers.orders
 	}
 }

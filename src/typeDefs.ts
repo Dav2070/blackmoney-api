@@ -69,18 +69,6 @@ export const typeDefs = `#graphql
 		items: [Table!]!
 	}
 
-	type Product {
-		uuid: String!
-		name: String!
-		price: Int!
-		count: Int
-	}
-
-	type ProductList {
-		total: Int!
-		items: [Product!]!
-	}
-	
 	type Category {
 		uuid: String!
 		name: String!
@@ -91,6 +79,40 @@ export const typeDefs = `#graphql
 	type CategoryList {
 		total: Int!
 		items: [Category!]!
+	}
+
+	type Product {
+		uuid: String!
+		name: String!
+		price: Int!
+		variations: VariationList!
+	}
+
+	type ProductList {
+		total: Int!
+		items: [Product!]!
+	}
+
+	type Variation {
+		uuid: String!
+		name: String!
+		variationItems: VariationItemList!
+	}
+
+	type VariationList {
+		total: Int!
+		items: [Variation!]!
+	}
+
+	type VariationItem {
+		uuid: String!
+		name: String!
+		additionalCost: Int!
+	}
+
+	type VariationItemList {
+		total: Int!
+		items: [VariationItem!]!
 	}
 
 	type Order {

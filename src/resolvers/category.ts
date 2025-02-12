@@ -1,5 +1,6 @@
+import { Product } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext, List, Category, Product } from "../types.js"
+import { ResolverContext, List, Category } from "../types.js"
 import { throwApiError } from "../utils.js"
 
 export async function listCategories(

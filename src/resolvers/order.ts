@@ -1,6 +1,6 @@
-import { Order } from "@prisma/client"
+import { Order, Product } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext, List, Product } from "../types.js"
+import { ResolverContext, List } from "../types.js"
 import { throwApiError } from "../utils.js"
 
 export async function addProductsToOrder(
@@ -215,11 +215,6 @@ export async function products(
 
 	return {
 		total,
-		items: items.map(item => {
-			return {
-				...item.product,
-				count: item.count
-			}
-		})
+		items: items.map(item => item.product)
 	}
 }
