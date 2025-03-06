@@ -54,17 +54,18 @@ model Table {
 }
 
 model Order {
-  id        BigInt      @id @default(autoincrement())
-  uuid      String      @unique @default(uuid())
-  createdAt DateTime    @default(now())
-  paidAt    DateTime?
-  tableId   BigInt
-  table     Table       @relation(fields: [tableId], references: [id])
-  products  OrderItem[]
+  id         BigInt      @id @default(autoincrement())
+  uuid       String      @unique @default(uuid())
+  createdAt  DateTime    @default(now())
+  paidAt     DateTime?
+  tableId    BigInt
+  table      Table       @relation(fields: [tableId], references: [id])
+  orderItems OrderItem[]
 }
 
 model OrderItem {
   id         BigInt               @id @default(autoincrement())
+  uuid       String               @unique @default(uuid())
   orderId    BigInt
   productId  BigInt
   count      Int                  @default(1)
