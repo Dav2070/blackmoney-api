@@ -4,6 +4,7 @@ export const typeDefs = `#graphql
 		listRooms: RoomList!
 		listCategories: CategoryList!
 		retrieveTable(uuid: String!): Table
+		retrieveOrder(uuid: String!): Order
 	}
 
 	type Mutation {
@@ -118,12 +119,24 @@ export const typeDefs = `#graphql
 	type Order {
 		uuid: String!
 		totalPrice: Int!
-		products: ProductList!
+		orderItems: OrderItemList!
 	}
 
 	type OrderList {
 		total: Int!
 		items: [Order!]!
+	}
+
+	type OrderItem {
+		uuid: String!
+		order: Order!
+		product: Product!
+		count: Int!
+	}
+
+	type OrderItemList {
+		total: Int!
+		items: [OrderItem!]!
 	}
 
 	enum UserRole {

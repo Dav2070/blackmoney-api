@@ -1,7 +1,27 @@
-import { Order, Product } from "@prisma/client"
+import { Order, OrderItem } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List } from "../types.js"
 import { throwApiError } from "../utils.js"
+
+export async function retrieveOrder(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<Order> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the order
+	return await context.prisma.order.findFirst({
+		where: {
+			uuid: args.uuid
+		}
+	})
+}
 
 export async function addProductsToOrder(
 	parent: any,
@@ -192,11 +212,11 @@ export async function totalPrice(
 	return totalPrice
 }
 
-export async function products(
+export async function orderItems(
 	order: Order,
 	args: {},
 	context: ResolverContext
-): Promise<List<Product>> {
+): Promise<List<OrderItem>> {
 	const where = {
 		orderId: order.id
 	}
@@ -206,15 +226,12 @@ export async function products(
 			where
 		}),
 		context.prisma.orderItem.findMany({
-			where,
-			include: {
-				product: true
-			}
+			where
 		})
 	])
 
 	return {
 		total,
-		items: items.map(item => item.product)
+		items
 	}
 }

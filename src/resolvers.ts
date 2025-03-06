@@ -6,13 +6,15 @@ import * as categoryResolvers from "./resolvers/category.js"
 import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
 import * as orderResolvers from "./resolvers/order.js"
+import * as orderItemResolvers from "./resolvers/orderItem.js"
 
 export const resolvers = {
 	Query: {
 		retrieveCompany: companyResolvers.retrieveCompany,
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,
-		retrieveTable: tableResolvers.retrieveTable
+		retrieveTable: tableResolvers.retrieveTable,
+		retrieveOrder: orderResolvers.retrieveOrder
 	},
 	Mutation: {
 		login: sessionResolvers.login,
@@ -41,6 +43,10 @@ export const resolvers = {
 	},
 	Order: {
 		totalPrice: orderResolvers.totalPrice,
-		products: orderResolvers.products
+		orderItems: orderResolvers.orderItems
+	},
+	OrderItem: {
+		order: orderItemResolvers.order,
+		product: orderItemResolvers.product
 	}
 }
