@@ -1,6 +1,8 @@
 import { GraphQLError } from "graphql"
+import { OrderItem, PrismaClient } from "@prisma/client"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
+import { OrderItemVariation } from "@prisma/client"
 
 export function throwApiError(error: ApiError) {
 	throw new GraphQLError(error.message, {
@@ -23,5 +25,51 @@ export function throwValidationError(...errors: string[]) {
 				errors: filteredErrors
 			}
 		})
+	}
+}
+
+export async function findCorrectVariationForOrderItem(
+	prisma: PrismaClient,
+	orderItem: OrderItem,
+	variationItemIds: bigint[]
+): Promise<OrderItemVariation> {
+	let orderItemVariations = await prisma.orderItemVariation.findMany({
+		where: {
+			orderItemId: orderItem.id
+		}
+	})
+
+	for (let orderItemVariation of orderItemVariations) {
+		let orderItemVariationToVariationItems =
+			await prisma.orderItemVariationToVariationItem.findMany({
+				where: {
+					orderItemVariationId: orderItemVariation.id
+				}
+			})
+
+		if (
+			orderItemVariationToVariationItems.length != variationItemIds.length
+		) {
+			continue
+		}
+
+		let breakOrderItemVariation = false
+
+		for (let orderItemVariationToVariationItem of orderItemVariationToVariationItems) {
+			if (
+				!variationItemIds.includes(
+					orderItemVariationToVariationItem.variationItemId
+				)
+			) {
+				breakOrderItemVariation = true
+				break
+			}
+		}
+
+		if (breakOrderItemVariation) {
+			continue
+		}
+
+		return orderItemVariation
 	}
 }

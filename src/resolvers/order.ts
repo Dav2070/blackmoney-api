@@ -1,7 +1,7 @@
 import { Order, OrderItem } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List } from "../types.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
 
 export async function retrieveOrder(
 	parent: any,
@@ -25,7 +25,17 @@ export async function retrieveOrder(
 
 export async function addProductsToOrder(
 	parent: any,
-	args: { uuid: string; products: { uuid: string; count: number }[] },
+	args: {
+		uuid: string
+		products: {
+			uuid: string
+			count: number
+			variations?: {
+				variationItemUuids: string[]
+				count: number
+			}[]
+		}[]
+	},
 	context: ResolverContext
 ): Promise<Order> {
 	// Check if the user is logged in
@@ -46,7 +56,14 @@ export async function addProductsToOrder(
 	}
 
 	// Get the products from the database
-	let products: { id: bigint; count: number }[] = []
+	let products: {
+		id: bigint
+		count: number
+		variations: {
+			variationItemIds: bigint[]
+			count: number
+		}[]
+	}[] = []
 
 	for (let item of args.products) {
 		const product = await context.prisma.product.findFirst({
@@ -59,25 +76,59 @@ export async function addProductsToOrder(
 			throwApiError(apiErrors.productDoesNotExist)
 		}
 
+		const variations: {
+			variationItemIds: bigint[]
+			count: number
+		}[] = []
+
+		if (item.variations != null) {
+			for (let variationItem of item.variations) {
+				const variationItemIds: bigint[] = []
+
+				for (let variationItemUuid of variationItem.variationItemUuids) {
+					const variationItem =
+						await context.prisma.variationItem.findFirst({
+							where: {
+								uuid: variationItemUuid
+							}
+						})
+
+					if (variationItem == null) {
+						throwApiError(apiErrors.variationItemDoesNotExist)
+					}
+
+					// TODO: Check if the variation item belongs to the product
+
+					variationItemIds.push(variationItem.id)
+				}
+
+				variations.push({
+					variationItemIds,
+					count: variationItem.count
+				})
+			}
+		}
+
 		products.push({
 			id: product.id,
-			count: item.count
+			count: item.count,
+			variations
 		})
 	}
 
 	// Add the products to the order
 	for (let product of products) {
-		// Check if there is already a OrderToProduct item
-		let orderToProduct = await context.prisma.orderItem.findFirst({
+		// Check if there is already a OrderItem
+		let orderItem = await context.prisma.orderItem.findFirst({
 			where: {
 				orderId: order.id,
 				productId: product.id
 			}
 		})
 
-		if (orderToProduct == null) {
-			// Create a new OrderToProduct item
-			orderToProduct = await context.prisma.orderItem.create({
+		if (orderItem == null) {
+			// Create a new OrderItem
+			orderItem = await context.prisma.orderItem.create({
 				data: {
 					order: {
 						connect: {
@@ -92,14 +143,102 @@ export async function addProductsToOrder(
 					count: product.count
 				}
 			})
+
+			// Add the variations to the OrderItem
+			for (let variation of product.variations) {
+				// For each variation in product, create an OrderItemVariation
+				let orderItemVariation =
+					await context.prisma.orderItemVariation.create({
+						data: {
+							orderItem: {
+								connect: {
+									id: orderItem.id
+								}
+							},
+							count: variation.count
+						}
+					})
+
+				for (let variationItemId of variation.variationItemIds) {
+					// For each variationItemId in variation, create an OrderItemVariationToVariationItem
+					await context.prisma.orderItemVariationToVariationItem.create({
+						data: {
+							orderItemVariation: {
+								connect: {
+									id: orderItemVariation.id
+								}
+							},
+							variationItem: {
+								connect: {
+									id: variationItemId
+								}
+							}
+						}
+					})
+				}
+			}
 		} else {
-			// Update the OrderToProduct item
-			orderToProduct = await context.prisma.orderItem.update({
+			for (let variation of product.variations) {
+				// Check if there is already a OrderItemVariation
+				let orderVariationItem = await findCorrectVariationForOrderItem(
+					context.prisma,
+					orderItem,
+					variation.variationItemIds
+				)
+
+				if (orderVariationItem == null) {
+					// Create a new OrderItemVariation
+					orderVariationItem =
+						await context.prisma.orderItemVariation.create({
+							data: {
+								orderItem: {
+									connect: {
+										id: orderItem.id
+									}
+								},
+								count: variation.count
+							}
+						})
+
+					for (let variationItemId of variation.variationItemIds) {
+						// For each variationItemId in variation, create an OrderItemVariationToVariationItem
+						await context.prisma.orderItemVariationToVariationItem.create(
+							{
+								data: {
+									orderItemVariation: {
+										connect: {
+											id: orderVariationItem.id
+										}
+									},
+									variationItem: {
+										connect: {
+											id: variationItemId
+										}
+									}
+								}
+							}
+						)
+					}
+				} else {
+					// Update the OrderItemVariation
+					await context.prisma.orderItemVariation.update({
+						where: {
+							id: orderVariationItem.id
+						},
+						data: {
+							count: orderVariationItem.count + variation.count
+						}
+					})
+				}
+			}
+
+			// Update the OrderItem
+			orderItem = await context.prisma.orderItem.update({
 				where: {
-					id: orderToProduct.id
+					id: orderItem.id
 				},
 				data: {
-					count: orderToProduct.count + product.count
+					count: orderItem.count + product.count
 				}
 			})
 		}

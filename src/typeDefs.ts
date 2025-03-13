@@ -149,8 +149,14 @@ export const typeDefs = `#graphql
 		DRINK
 	}
 
-	input AddProductsInput{
+	input AddProductsInput {
 		uuid: String!
+		count: Int!
+		variations: [AddProductVariationInput!]
+	}
+
+	input AddProductVariationInput {
+		variationItemUuids: [String!]!
 		count: Int!
 	}
 `
