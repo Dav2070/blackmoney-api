@@ -9,10 +9,9 @@ import { PrismaClient, User } from "@prisma/client"
 import {
 	Dav,
 	Environment,
-	ApiResponse,
-	isSuccessStatusCode,
 	User as DavUser,
-	UsersController
+	UsersController,
+	convertUserResourceToUser
 } from "dav-js"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
@@ -75,10 +74,19 @@ app.use(
 				user = session?.user
 
 				if (user == null) {
-					let userResponse = await UsersController.GetUser({ accessToken })
+					let userResponse = await UsersController.retrieveUser(
+						`
+							id
+							email
+							firstName
+						`,
+						{
+							accessToken
+						}
+					)
 
-					if (isSuccessStatusCode(userResponse.status)) {
-						davUser = (userResponse as ApiResponse<DavUser>).data
+					if (!Array.isArray(userResponse)) {
+						davUser = convertUserResourceToUser(userResponse)
 					}
 				}
 			}
