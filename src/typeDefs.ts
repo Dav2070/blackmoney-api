@@ -129,14 +129,25 @@ export const typeDefs = `#graphql
 
 	type OrderItem {
 		uuid: String!
+		count: Int!
 		order: Order!
 		product: Product!
-		count: Int!
+		orderItemVariations: OrderItemVariationList!
 	}
 
 	type OrderItemList {
 		total: Int!
 		items: [OrderItem!]!
+	}
+
+	type OrderItemVariation {
+		count: Int!
+		variationItems: VariationItemList!
+	}
+
+	type OrderItemVariationList {
+		total: Int!
+		items: [OrderItemVariation!]!
 	}
 
 	enum UserRole {

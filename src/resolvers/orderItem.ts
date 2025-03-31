@@ -1,5 +1,5 @@
-import { Product, Order, OrderItem } from "@prisma/client"
-import { ResolverContext } from "../types.js"
+import { Product, Order, OrderItem, OrderItemVariation } from "@prisma/client"
+import { ResolverContext, List } from "../types.js"
 
 export async function order(
 	orderItem: OrderItem,
@@ -23,4 +23,22 @@ export async function product(
 			id: orderItem.productId
 		}
 	})
+}
+
+export async function orderItemVariations(
+	orderItem: OrderItem,
+	args: {},
+	context: ResolverContext
+): Promise<List<OrderItemVariation>> {
+	let where = { orderItemId: orderItem.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.orderItemVariation.count({ where }),
+		context.prisma.orderItemVariation.findMany({ where })
+	])
+
+	return {
+		total,
+		items
+	}
 }

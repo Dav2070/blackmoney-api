@@ -7,6 +7,7 @@ import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as orderItemResolvers from "./resolvers/orderItem.js"
+import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 
 export const resolvers = {
 	Query: {
@@ -47,6 +48,10 @@ export const resolvers = {
 	},
 	OrderItem: {
 		order: orderItemResolvers.order,
-		product: orderItemResolvers.product
+		product: orderItemResolvers.product,
+		orderItemVariations: orderItemResolvers.orderItemVariations
+	},
+	OrderItemVariation: {
+		variationItems: orderItemVariationResolvers.variationItems
 	}
 }
