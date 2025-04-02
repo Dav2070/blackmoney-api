@@ -83,6 +83,7 @@ export const typeDefs = `#graphql
 	}
 
 	type Product {
+		id: Int!
 		uuid: String!
 		name: String!
 		price: Int!

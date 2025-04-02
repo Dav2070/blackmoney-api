@@ -1,6 +1,10 @@
 import { Product, Variation } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 
+export function id(product: Product): number {
+	return Number(product.id)
+}
+
 export async function variations(
 	product: Product,
 	args: {},
