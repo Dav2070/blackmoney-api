@@ -25,7 +25,7 @@ export interface Room {
 
 export interface Table {
 	id: bigint
-	name: string
+	name: number
 }
 
 export interface Category {

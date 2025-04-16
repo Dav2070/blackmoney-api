@@ -61,7 +61,7 @@ export const typeDefs = `#graphql
 
 	type Table {
 		uuid: String!
-		name: String!
+		name: Int!
 		orders(paid: Boolean): OrderList!
 	}
 

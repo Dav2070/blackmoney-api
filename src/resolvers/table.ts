@@ -44,7 +44,6 @@ export async function createTable(
 	parent: any,
 	args: {
 		roomUuid: string
-		name: string
 	},
 	context: ResolverContext
 ): Promise<Table> {
@@ -67,13 +66,21 @@ export async function createTable(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Validate the name
-	throwValidationError(validateNameLength(args.name))
+	// Get the highest table number of the room
+	let highestTableNumber = 0
+
+	const tables = await context.prisma.table.findMany({
+		where: { roomId: room.id }
+	})
+
+	if (tables.length > 0) {
+		highestTableNumber = Math.max(...tables.map(table => table.name))
+	}
 
 	// Create the table
 	return await context.prisma.table.create({
 		data: {
-			name: args.name,
+			name: highestTableNumber + 1,
 			roomId: room.id
 		}
 	})

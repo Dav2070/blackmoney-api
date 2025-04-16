@@ -47,7 +47,7 @@ model Room {
 model Table {
   id     BigInt  @id @default(autoincrement())
   uuid   String  @unique @default(uuid())
-  name   String
+  name   Int     @default(1)
   roomId BigInt
   room   Room    @relation(fields: [roomId], references: [id])
   orders Order[]
