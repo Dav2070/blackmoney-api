@@ -25,7 +25,8 @@ export const resolvers = {
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder
 	},
 	Company: {
-		users: companyResolvers.users
+		users: companyResolvers.users,
+		rooms: companyResolvers.rooms
 	},
 	Room: {
 		tables: roomResolvers.tables

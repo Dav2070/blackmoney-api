@@ -31,6 +31,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		users: UserList!
+		rooms: RoomList!
 	}
 
 	type User {
