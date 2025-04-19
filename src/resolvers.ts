@@ -19,6 +19,7 @@ export const resolvers = {
 	},
 	Mutation: {
 		login: sessionResolvers.login,
+		createCompany: companyResolvers.createCompany,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		addProductsToOrder: orderResolvers.addProductsToOrder,

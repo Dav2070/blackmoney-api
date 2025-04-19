@@ -12,6 +12,7 @@ export const typeDefs = `#graphql
 			userName: String!
 			password: String!
 		): Session!
+		createCompany(name: String!): Company!
 		createRoom(name: String!): Room!
 		createTable(
 			roomUuid: String!

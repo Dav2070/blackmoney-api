@@ -1,7 +1,8 @@
 import { Company, Room, User } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List } from "../types.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { validateNameLength } from "../services/validationService.js"
 
 export async function retrieveCompany(
 	parent: any,
@@ -15,6 +16,27 @@ export async function retrieveCompany(
 
 	return await context.prisma.company.findFirst({
 		where: { userId: context.davUser.Id }
+	})
+}
+
+export async function createCompany(
+	parent: any,
+	args: { name: string },
+	context: ResolverContext
+): Promise<Company> {
+	// Check if the user is logged in
+	if (context.davUser == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// VAlidate the name
+	throwValidationError(validateNameLength(args.name))
+
+	return await context.prisma.company.create({
+		data: {
+			name: args.name,
+			userId: context.davUser.Id
+		}
 	})
 }
 
