@@ -35,7 +35,7 @@ export async function createCompany(
 	return await context.prisma.company.create({
 		data: {
 			name: args.name,
-			userId: context.davUser.Id
+			userId: BigInt(context.davUser.Id)
 		}
 	})
 }
