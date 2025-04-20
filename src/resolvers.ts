@@ -1,4 +1,5 @@
 import * as sessionResolvers from "./resolvers/session.js"
+import * as userResolvers from "./resolvers/user.js"
 import * as companyResolvers from "./resolvers/company.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
@@ -11,6 +12,7 @@ import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 
 export const resolvers = {
 	Query: {
+		retrieveUser: userResolvers.retrieveUser,
 		retrieveCompany: companyResolvers.retrieveCompany,
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,
@@ -24,6 +26,9 @@ export const resolvers = {
 		createTable: tableResolvers.createTable,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder
+	},
+	Session: {
+		user: sessionResolvers.user
 	},
 	Company: {
 		users: companyResolvers.users,

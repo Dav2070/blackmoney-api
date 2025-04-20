@@ -1,4 +1,4 @@
-import { Session } from "@prisma/client"
+import { Session, User } from "@prisma/client"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError } from "../utils.js"
@@ -40,5 +40,15 @@ export async function login(
 		data: {
 			userId: user.id
 		}
+	})
+}
+
+export async function user(
+	session: Session,
+	args: {},
+	context: ResolverContext
+): Promise<User> {
+	return await context.prisma.user.findFirst({
+		where: { id: session.userId }
 	})
 }

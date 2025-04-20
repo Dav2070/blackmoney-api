@@ -1,5 +1,6 @@
 export const typeDefs = `#graphql
 	type Query {
+		retrieveUser: User!
 		retrieveCompany: Company
 		listRooms: RoomList!
 		listCategories: CategoryList!
@@ -48,6 +49,7 @@ export const typeDefs = `#graphql
 
 	type Session {
 		uuid: String!
+		user: User!
 	}
 
 	type Room {
