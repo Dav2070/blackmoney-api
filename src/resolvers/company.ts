@@ -29,7 +29,16 @@ export async function createCompany(
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// VAlidate the name
+	// Check if the user already has a company
+	const existingCompany = await context.prisma.company.findFirst({
+		where: { userId: BigInt(context.davUser.Id) }
+	})
+
+	if (existingCompany != null) {
+		throwApiError(apiErrors.companyAlreadyExists)
+	}
+
+	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
 	return await context.prisma.company.create({

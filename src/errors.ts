@@ -52,6 +52,11 @@ export const apiErrors = {
 		code: "PRODUCT_NOT_IN_ORDER",
 		message: "Product is not in the order",
 		status: 400
+	},
+	companyAlreadyExists: {
+		code: "COMPANY_ALREADY_EXISTS",
+		message: "The user already has a company",
+		status: 400
 	}
 }
 
