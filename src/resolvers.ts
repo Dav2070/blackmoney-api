@@ -26,7 +26,8 @@ export const resolvers = {
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
-		removeProductsFromOrder: orderResolvers.removeProductsFromOrder
+		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
+		updateOrderItem: orderItemResolvers.updateOrderItem
 	},
 	Session: {
 		user: sessionResolvers.user

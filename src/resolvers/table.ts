@@ -1,7 +1,6 @@
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
-import { throwApiError, throwValidationError } from "../utils.js"
-import { validateNameLength } from "../services/validationService.js"
+import { throwApiError } from "../utils.js"
 import { Order, Table } from "@prisma/client"
 
 export async function retrieveTable(

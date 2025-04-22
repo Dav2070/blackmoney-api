@@ -28,6 +28,11 @@ export const typeDefs = `#graphql
 			uuid: String!
 			products: [AddProductsInput!]!
 		): Order!
+		updateOrderItem(
+			uuid: String!
+			count: Int!
+			orderItemVariations: UpdateOrderItemInput!
+		): OrderItem!
 	}
 
 	type Company {
@@ -147,6 +152,7 @@ export const typeDefs = `#graphql
 	}
 
 	type OrderItemVariation {
+		uuid: String!
 		count: Int!
 		variationItems: VariationItemList!
 	}
@@ -174,6 +180,17 @@ export const typeDefs = `#graphql
 
 	input AddProductVariationInput {
 		variationItemUuids: [String!]!
+		count: Int!
+	}
+
+	input UpdateOrderItemInput {
+		uuid: String!
+		count: Int!
+		orderItemVariations: [UpdateOrderItemVariationInput!]!
+	}
+
+	input UpdateOrderItemVariationInput {
+		uuid: String!
 		count: Int!
 	}
 `
