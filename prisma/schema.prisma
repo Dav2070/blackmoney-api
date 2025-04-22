@@ -76,6 +76,7 @@ model OrderItem {
 
 model OrderItemVariation {
   id             BigInt                              @id @default(autoincrement())
+  uuid           String                              @unique @default(uuid())
   orderItemId    BigInt
   count          Int                                 @default(1)
   orderItem      OrderItem                           @relation(fields: [orderItemId], references: [id])
