@@ -79,7 +79,7 @@ model OrderItemVariation {
   uuid           String                              @unique @default(uuid())
   orderItemId    BigInt
   count          Int                                 @default(1)
-  orderItem      OrderItem                           @relation(fields: [orderItemId], references: [id])
+  orderItem      OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   variationItems OrderItemVariationToVariationItem[]
 }
 
@@ -87,8 +87,8 @@ model OrderItemVariationToVariationItem {
   id                   BigInt             @id @default(autoincrement())
   orderItemVariationId BigInt
   variationItemId      BigInt
-  orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id])
-  variationItem        VariationItem      @relation(fields: [variationItemId], references: [id])
+  orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id], onDelete: Cascade)
+  variationItem        VariationItem      @relation(fields: [variationItemId], references: [id], onDelete: Cascade)
 }
 
 model Product {
