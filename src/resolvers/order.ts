@@ -23,6 +23,103 @@ export async function retrieveOrder(
 	})
 }
 
+export async function updateOrder(
+	parent: any,
+	args: {
+		uuid: string
+		orderItems: {
+			count: number
+			productId: number
+			// orderItemVariations?: {
+			// 	uuid: string
+			// 	count: number
+			// }[]
+		}[]
+	},
+	context: ResolverContext
+): Promise<Order> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the order
+	let order = await context.prisma.order.findFirst({
+		where: {
+			uuid: args.uuid
+		}
+	})
+
+	let orderItems = await context.prisma.orderItem.findMany({
+		where: {
+			orderId: order.id
+		}
+	})
+
+	const orderItemsToDelete: OrderItem[] = []
+
+	for (let orderItem of orderItems) {
+		orderItemsToDelete.push(orderItem)
+	}
+
+	for (let item of args.orderItems) {
+		let orderItem = orderItemsToDelete.find(
+			oi => oi.productId == BigInt(item.productId)
+		)
+
+		if (orderItem != null && orderItem.count > 0) {
+			let i = orderItemsToDelete.indexOf(orderItem)
+			orderItemsToDelete.splice(i, 1)
+
+			if (item.count != orderItem.count) {
+				// Update the order item
+				orderItem = await context.prisma.orderItem.update({
+					where: {
+						id: orderItem.id
+					},
+					data: {
+						count: item.count
+					}
+				})
+			}
+		} else if (orderItem == null || orderItem.count > 0) {
+			// Create the order item
+			orderItem = await context.prisma.orderItem.create({
+				data: {
+					order: {
+						connect: {
+							id: order.id
+						}
+					},
+					product: {
+						connect: {
+							id: BigInt(item.productId)
+						}
+					},
+					count: item.count
+				}
+			})
+		}
+	}
+
+	// Delete the order items
+	const deleteCommands = []
+
+	for (let orderItem of orderItemsToDelete) {
+		deleteCommands.push(
+			context.prisma.orderItem.delete({
+				where: {
+					uuid: orderItem.uuid
+				}
+			})
+		)
+	}
+
+	await context.prisma.$transaction(deleteCommands)
+
+	return order
+}
+
 export async function addProductsToOrder(
 	parent: any,
 	args: {

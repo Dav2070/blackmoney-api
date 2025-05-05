@@ -25,6 +25,7 @@ export const resolvers = {
 		createCompany: companyResolvers.createCompany,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
+		updateOrder: orderResolvers.updateOrder,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem

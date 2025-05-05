@@ -20,6 +20,10 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
+		updateOrder(
+			uuid: String!
+			orderItems: [UpdateOrderItemInput!]!
+		): Order!
 		addProductsToOrder(
 			uuid: String!
 			products: [AddProductsInput!]!
@@ -170,6 +174,11 @@ export const typeDefs = `#graphql
 	enum CategoryType {
 		FOOD
 		DRINK
+	}
+
+	input UpdateOrderItemInput {
+		count: Int!
+		productId: Int!
 	}
 
 	input AddProductsInput {
