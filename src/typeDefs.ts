@@ -121,6 +121,7 @@ export const typeDefs = `#graphql
 	}
 
 	type VariationItem {
+		id: Int!
 		uuid: String!
 		name: String!
 		additionalCost: Int!
