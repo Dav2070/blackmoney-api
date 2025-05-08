@@ -22,7 +22,7 @@ export const typeDefs = `#graphql
 		): Table!
 		updateOrder(
 			uuid: String!
-			orderItems: [UpdateOrderItemInput!]!
+			orderItems: [OrderItemInput!]!
 		): Order!
 		addProductsToOrder(
 			uuid: String!
@@ -35,7 +35,7 @@ export const typeDefs = `#graphql
 		updateOrderItem(
 			uuid: String!
 			count: Int
-			orderItemVariations: [UpdateOrderItemVariationInput!]
+			orderItemVariations: [OrderItemVariationInput!]
 		): OrderItem!
 	}
 
@@ -177,9 +177,10 @@ export const typeDefs = `#graphql
 		DRINK
 	}
 
-	input UpdateOrderItemInput {
+	input OrderItemInput {
 		count: Int!
 		productId: Int!
+		orderItemVariations: [OrderItemVariationInput!]
 	}
 
 	input AddProductsInput {
@@ -193,8 +194,13 @@ export const typeDefs = `#graphql
 		count: Int!
 	}
 
-	input UpdateOrderItemVariationInput {
+	input OrderItemVariationInput {
 		uuid: String!
 		count: Int!
+		variationItems: [VariationItemInput!]
+	}
+
+	input VariationItemInput {
+		id: Int!
 	}
 `

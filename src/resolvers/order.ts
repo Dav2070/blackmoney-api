@@ -30,10 +30,13 @@ export async function updateOrder(
 		orderItems: {
 			count: number
 			productId: number
-			// orderItemVariations?: {
-			// 	uuid: string
-			// 	count: number
-			// }[]
+			orderItemVariations?: {
+				uuid: string
+				count: number
+				variationItems: {
+					id: number
+				}[]
+			}[]
 		}[]
 	},
 	context: ResolverContext
@@ -53,17 +56,36 @@ export async function updateOrder(
 	let orderItems = await context.prisma.orderItem.findMany({
 		where: {
 			orderId: order.id
+		},
+		include: {
+			orderItemVariations: {
+				include: {
+					orderItemVariationToVariationItems: true
+				}
+			}
 		}
 	})
 
-	const orderItemsToDelete: OrderItem[] = []
+	const orderItemsToDelete: (OrderItem & {
+		orderItemVariations: ({
+			orderItemVariationToVariationItems: {
+				id: bigint
+				orderItemVariationId: bigint
+				variationItemId: bigint
+			}[]
+		} & {
+			id: bigint
+			uuid: string
+			count: number
+			orderItemId: bigint
+		})[]
+	})[] = []
 
 	//Erstelle Liste mit den OrderItems, die gelöscht werden könnten
 	for (let orderItem of orderItems) {
 		orderItemsToDelete.push(orderItem)
 	}
 
-	
 	for (let item of args.orderItems) {
 		//Finde das OrderItem, das geupdatet werden soll
 		let orderItem = orderItemsToDelete.find(
@@ -83,38 +105,86 @@ export async function updateOrder(
 					},
 					data: {
 						count: item.count
+					},
+					include: {
+						orderItemVariations: {
+							include: {
+								orderItemVariationToVariationItems: true
+							}
+						}
 					}
 				})
-				// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
-			if (item.orderItemVariations) {
-				for (const variation of item.orderItemVariations) {
-					let existingVariation = null
 
-					
-						existingVariation = orderItem.orderItemVariations.find(
-							v =>
-								v.variationItems.length ===
+				// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
+				if (item.orderItemVariations) {
+					const orderItemVariationsToDelete: {
+						id: bigint
+						uuid: string
+						count: number
+						orderItemId: bigint
+					}[] = orderItem.orderItemVariations
+
+					for (const variation of item.orderItemVariations) {
+						// Try to find the existing variation
+						let existingVariation = orderItem.orderItemVariations.find(
+							oiv =>
+								oiv.orderItemVariationToVariationItems.length ===
 									variation.variationItems.length &&
-								v.variationItems.every(
+								oiv.orderItemVariationToVariationItems.every(
 									(item, index) =>
-										item.name === variation.variationItems[index].name
-									//&&
-									//item.uuid === variation.variationItems[index].uuid
+										item.id ===
+										BigInt(variation.variationItems[index].id)
 								)
 						)
-					
 
-					if (existingVariation != null) {
-						// Existierende Variation aktualisieren
-						
-					} else {
-						// Neue Variation hinzufügen
-						
+						if (existingVariation != null) {
+							let i =
+								orderItemVariationsToDelete.indexOf(existingVariation)
+							if (i != -1) orderItemVariationsToDelete.splice(i, 1)
+
+							// Existierende Variation aktualisieren
+							await context.prisma.orderItemVariation.update({
+								where: {
+									id: existingVariation.id
+								},
+								data: {
+									count: variation.count
+								}
+							})
+						} else {
+							// Neue Variation hinzufügen
+							await context.prisma.orderItemVariation.create({
+								data: {
+									orderItem: {
+										connect: {
+											id: orderItem.id
+										}
+									},
+									count: variation.count
+								}
+							})
+						}
+
+						// Delete the order item variations
+						const deleteOrderItemVariationsCommands = []
+
+						for (let orderItemVariation of orderItemVariationsToDelete) {
+							deleteOrderItemVariationsCommands.push(
+								context.prisma.orderItemVariation.delete({
+									where: {
+										id: orderItemVariation.id
+									}
+								})
+							)
+						}
+
+						await context.prisma.$transaction(
+							deleteOrderItemVariationsCommands
+						)
 					}
 				}
 			}
-			}
-		} 
+		}
 		//Füge das OrderItem in der Datenbank hinzu
 		else if (orderItem == null || orderItem.count > 0) {
 			// Create the order item
@@ -131,6 +201,13 @@ export async function updateOrder(
 						}
 					},
 					count: item.count
+				},
+				include: {
+					orderItemVariations: {
+						include: {
+							orderItemVariationToVariationItems: true
+						}
+					}
 				}
 			})
 		}
