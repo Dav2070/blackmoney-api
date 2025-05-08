@@ -64,23 +64,23 @@ model Order {
 }
 
 model OrderItem {
-  id         BigInt               @id @default(autoincrement())
-  uuid       String               @unique @default(uuid())
-  count      Int                  @default(1)
-  orderId    BigInt
-  productId  BigInt
-  order      Order                @relation(fields: [orderId], references: [id])
-  product    Product              @relation(fields: [productId], references: [id])
-  variations OrderItemVariation[]
+  id                  BigInt               @id @default(autoincrement())
+  uuid                String               @unique @default(uuid())
+  count               Int                  @default(1)
+  orderId             BigInt
+  productId           BigInt
+  order               Order                @relation(fields: [orderId], references: [id])
+  product             Product              @relation(fields: [productId], references: [id])
+  orderItemVariations OrderItemVariation[]
 }
 
 model OrderItemVariation {
-  id             BigInt                              @id @default(autoincrement())
-  uuid           String                              @unique @default(uuid())
-  orderItemId    BigInt
-  count          Int                                 @default(1)
-  orderItem      OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  variationItems OrderItemVariationToVariationItem[]
+  id                                 BigInt                              @id @default(autoincrement())
+  uuid                               String                              @unique @default(uuid())
+  orderItemId                        BigInt
+  count                              Int                                 @default(1)
+  orderItem                          OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
 }
 
 model OrderItemVariationToVariationItem {
@@ -92,14 +92,14 @@ model OrderItemVariationToVariationItem {
 }
 
 model Product {
-  id         BigInt               @id @default(autoincrement())
-  uuid       String               @unique @default(uuid())
-  name       String
-  price      Int
-  categoryId BigInt
-  category   Category             @relation(fields: [categoryId], references: [id])
-  variations ProductToVariation[]
-  orders     OrderItem[]
+  id                  BigInt               @id @default(autoincrement())
+  uuid                String               @unique @default(uuid())
+  name                String
+  price               Int
+  categoryId          BigInt
+  category            Category             @relation(fields: [categoryId], references: [id])
+  productToVariations ProductToVariation[]
+  orderItems          OrderItem[]
 }
 
 model ProductToVariation {
@@ -111,21 +111,21 @@ model ProductToVariation {
 }
 
 model Variation {
-  id             BigInt               @id @default(autoincrement())
-  uuid           String               @unique @default(uuid())
-  name           String
-  products       ProductToVariation[]
-  variationItems VariationItem[]
+  id                  BigInt               @id @default(autoincrement())
+  uuid                String               @unique @default(uuid())
+  name                String
+  productToVariations ProductToVariation[]
+  variationItems      VariationItem[]
 }
 
 model VariationItem {
-  id                  BigInt                              @id @default(autoincrement())
-  uuid                String                              @unique @default(uuid())
-  name                String
-  additionalCost      Int
-  variationId         BigInt
-  variation           Variation                           @relation(fields: [variationId], references: [id])
-  orderItemVariations OrderItemVariationToVariationItem[]
+  id                                 BigInt                              @id @default(autoincrement())
+  uuid                               String                              @unique @default(uuid())
+  name                               String
+  additionalCost                     Int
+  variationId                        BigInt
+  variation                          Variation                           @relation(fields: [variationId], references: [id])
+  orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
 }
 
 model Category {

@@ -7,7 +7,7 @@ export async function variationItems(
 	context: ResolverContext
 ): Promise<List<VariationItem>> {
 	const where = {
-		orderItemVariations: {
+		orderItemVariationToVariationItems: {
 			some: {
 				orderItemVariationId: orderItemVariation.id
 			}
