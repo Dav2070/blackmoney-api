@@ -58,15 +58,19 @@ export async function updateOrder(
 
 	const orderItemsToDelete: OrderItem[] = []
 
+	//Erstelle Liste mit den OrderItems, die gelöscht werden könnten
 	for (let orderItem of orderItems) {
 		orderItemsToDelete.push(orderItem)
 	}
 
+	
 	for (let item of args.orderItems) {
+		//Finde das OrderItem, das geupdatet werden soll
 		let orderItem = orderItemsToDelete.find(
 			oi => oi.productId == BigInt(item.productId)
 		)
 
+		// Check ob das OrderItem existiert und entfern es aus der potentiellen Liste der zu löschenden Items
 		if (orderItem != null && orderItem.count > 0) {
 			let i = orderItemsToDelete.indexOf(orderItem)
 			orderItemsToDelete.splice(i, 1)
@@ -81,8 +85,38 @@ export async function updateOrder(
 						count: item.count
 					}
 				})
+				// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
+			if (item.orderItemVariations) {
+				for (const variation of item.orderItemVariations) {
+					let existingVariation = null
+
+					
+						existingVariation = orderItem.orderItemVariations.find(
+							v =>
+								v.variationItems.length ===
+									variation.variationItems.length &&
+								v.variationItems.every(
+									(item, index) =>
+										item.name === variation.variationItems[index].name
+									//&&
+									//item.uuid === variation.variationItems[index].uuid
+								)
+						)
+					
+
+					if (existingVariation != null) {
+						// Existierende Variation aktualisieren
+						
+					} else {
+						// Neue Variation hinzufügen
+						
+					}
+				}
 			}
-		} else if (orderItem == null || orderItem.count > 0) {
+			}
+		} 
+		//Füge das OrderItem in der Datenbank hinzu
+		else if (orderItem == null || orderItem.count > 0) {
 			// Create the order item
 			orderItem = await context.prisma.orderItem.create({
 				data: {
