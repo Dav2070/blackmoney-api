@@ -195,7 +195,7 @@ export const typeDefs = `#graphql
 	}
 
 	input OrderItemVariationInput {
-		uuid: String!
+		uuid: String
 		count: Int!
 		variationItems: [VariationItemInput!]
 	}

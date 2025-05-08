@@ -31,7 +31,6 @@ export async function updateOrder(
 			count: number
 			productId: number
 			orderItemVariations?: {
-				uuid: string
 				count: number
 				variationItems: {
 					id: number
