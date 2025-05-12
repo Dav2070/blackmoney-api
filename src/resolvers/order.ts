@@ -113,75 +113,6 @@ export async function updateOrder(
 						}
 					}
 				})
-
-				// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
-				if (item.orderItemVariations) {
-					const orderItemVariationsToDelete: {
-						id: bigint
-						uuid: string
-						count: number
-						orderItemId: bigint
-					}[] = orderItem.orderItemVariations
-
-					for (const variation of item.orderItemVariations) {
-						// Try to find the existing variation
-						let existingVariation = orderItem.orderItemVariations.find(
-							oiv =>
-								oiv.orderItemVariationToVariationItems.length ===
-									variation.variationItems.length &&
-								oiv.orderItemVariationToVariationItems.every(
-									(item, index) =>
-										item.id ===
-										BigInt(variation.variationItems[index].id)
-								)
-						)
-
-						if (existingVariation != null) {
-							let i =
-								orderItemVariationsToDelete.indexOf(existingVariation)
-							if (i != -1) orderItemVariationsToDelete.splice(i, 1)
-
-							// Existierende Variation aktualisieren
-							await context.prisma.orderItemVariation.update({
-								where: {
-									id: existingVariation.id
-								},
-								data: {
-									count: variation.count
-								}
-							})
-						} else {
-							// Neue Variation hinzufügen
-							await context.prisma.orderItemVariation.create({
-								data: {
-									orderItem: {
-										connect: {
-											id: orderItem.id
-										}
-									},
-									count: variation.count
-								}
-							})
-						}
-
-						// Delete the order item variations
-						const deleteOrderItemVariationsCommands = []
-
-						for (let orderItemVariation of orderItemVariationsToDelete) {
-							deleteOrderItemVariationsCommands.push(
-								context.prisma.orderItemVariation.delete({
-									where: {
-										id: orderItemVariation.id
-									}
-								})
-							)
-						}
-
-						await context.prisma.$transaction(
-							deleteOrderItemVariationsCommands
-						)
-					}
-				}
 			}
 		}
 		//Füge das OrderItem in der Datenbank hinzu
@@ -209,6 +140,93 @@ export async function updateOrder(
 					}
 				}
 			})
+		}
+
+		// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
+		if (item.orderItemVariations) {
+			const orderItemVariationsToDelete: {
+				id: bigint
+				uuid: string
+				count: number
+				orderItemId: bigint
+			}[] = orderItem.orderItemVariations
+
+			for (const variation of item.orderItemVariations) {
+				// Try to find the existing variation
+				let existingVariation = orderItem.orderItemVariations.find(
+					oiv =>
+						oiv.orderItemVariationToVariationItems.length ===
+							variation.variationItems.length &&
+						oiv.orderItemVariationToVariationItems.every(
+							(item, index) =>
+								item.id === BigInt(variation.variationItems[index].id)
+						)
+				)
+
+				if (existingVariation != null) {
+					let i = orderItemVariationsToDelete.indexOf(existingVariation)
+					if (i != -1) orderItemVariationsToDelete.splice(i, 1)
+
+					if (existingVariation.count != variation.count) {
+						// Existierende Variation aktualisieren
+						await context.prisma.orderItemVariation.update({
+							where: {
+								id: existingVariation.id
+							},
+							data: {
+								count: variation.count
+							}
+						})
+					}
+				} else {
+					// Neue Variation hinzufügen
+					const newOrderItemVariation =
+						await context.prisma.orderItemVariation.create({
+							data: {
+								orderItem: {
+									connect: {
+										id: orderItem.id
+									}
+								},
+								count: variation.count
+							}
+						})
+
+					for (const variationItem of variation.variationItems) {
+						await context.prisma.orderItemVariationToVariationItem.create(
+							{
+								data: {
+									orderItemVariation: {
+										connect: {
+											id: newOrderItemVariation.id
+										}
+									},
+									variationItem: {
+										connect: {
+											id: variationItem.id
+										}
+									}
+								}
+							}
+						)
+					}
+				}
+			}
+
+			// Delete the order item variations
+			const deleteOrderItemVariationsCommands = []
+
+			for (let orderItemVariation of orderItemVariationsToDelete) {
+				deleteOrderItemVariationsCommands.push(
+					context.prisma.orderItemVariation.delete({
+						where: {
+							id: orderItemVariation.id
+						}
+					})
+				)
+			}
+
+			await context.prisma.$transaction(deleteOrderItemVariationsCommands)
 		}
 	}
 
