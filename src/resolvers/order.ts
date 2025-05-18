@@ -655,7 +655,7 @@ export async function totalPrice(
 }
 
 export function paidAt(order: Order): string {
-	return order.paidAt.toISOString()
+	return order.paidAt?.toISOString() ?? null
 }
 
 export async function table(
