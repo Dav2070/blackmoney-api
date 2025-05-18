@@ -18,7 +18,8 @@ export const resolvers = {
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,
 		retrieveTable: tableResolvers.retrieveTable,
-		retrieveOrder: orderResolvers.retrieveOrder
+		retrieveOrder: orderResolvers.retrieveOrder,
+		listOrders: orderResolvers.listOrders
 	},
 	Mutation: {
 		login: sessionResolvers.login,

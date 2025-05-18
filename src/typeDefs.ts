@@ -6,6 +6,7 @@ export const typeDefs = `#graphql
 		listCategories: CategoryList!
 		retrieveTable(uuid: String!): Table
 		retrieveOrder(uuid: String!): Order
+		listOrders(completed: Boolean): OrderList!
 	}
 
 	type Mutation {

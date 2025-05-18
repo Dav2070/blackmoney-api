@@ -23,6 +23,37 @@ export async function retrieveOrder(
 	})
 }
 
+export async function listOrders(
+	parent: any,
+	args: {
+		completed?: boolean
+	},
+	context: ResolverContext
+): Promise<List<Order>> {
+	const completed = args.completed ?? false
+
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the orders
+	const where = {
+		// TODO: Get only the orders of the company of the user
+		paidAt: completed ? { not: null } : null
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.order.count({ where }),
+		context.prisma.order.findMany({ where })
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
 export async function updateOrder(
 	parent: any,
 	args: {
