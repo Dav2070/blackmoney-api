@@ -1,4 +1,4 @@
-import { Order, OrderItem } from "@prisma/client"
+import { Order, OrderItem, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
@@ -652,6 +652,22 @@ export async function totalPrice(
 	}
 
 	return totalPrice
+}
+
+export function paidAt(order: Order): string {
+	return order.paidAt.toISOString()
+}
+
+export async function table(
+	order: Order,
+	args: {},
+	context: ResolverContext
+): Promise<Table> {
+	return context.prisma.table.findFirst({
+		where: {
+			id: order.tableId
+		}
+	})
 }
 
 export async function orderItems(
