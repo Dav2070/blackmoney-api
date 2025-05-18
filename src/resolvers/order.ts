@@ -1,6 +1,6 @@
 import { Order, OrderItem } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext, List } from "../types.js"
+import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
 
 export async function retrieveOrder(
@@ -549,6 +549,53 @@ export async function removeProductsFromOrder(
 	}
 
 	return order
+}
+
+export async function completeOrder(
+	parent: any,
+	args: {
+		uuid: string
+		paymentMethod: PaymentMethod
+	},
+	context: ResolverContext
+): Promise<Order> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the order
+	let order = await context.prisma.order.findFirst({
+		where: {
+			uuid: args.uuid
+		}
+	})
+
+	// Check if the order exists
+	if (order == null) {
+		throwApiError(apiErrors.orderDoesNotExist)
+	}
+
+	// Check if the order is already completed
+	if (order.paidAt != null) {
+		throwApiError(apiErrors.orderAlreadyCompleted)
+	}
+
+	// Update the order
+	return await context.prisma.order.update({
+		where: {
+			id: order.id
+		},
+		data: {
+			paidAt: new Date(),
+			paymentMethod: args.paymentMethod,
+			user: {
+				connect: {
+					id: context.user.id
+				}
+			}
+		}
+	})
 }
 
 export async function totalPrice(

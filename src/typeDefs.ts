@@ -32,6 +32,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			products: [AddProductsInput!]!
 		): Order!
+		completeOrder(
+			uuid: String!
+			paymentMethod: PaymentMethod!
+		): Order!
 		updateOrderItem(
 			uuid: String!
 			count: Int
@@ -175,6 +179,11 @@ export const typeDefs = `#graphql
 	enum CategoryType {
 		FOOD
 		DRINK
+	}
+
+	enum PaymentMethod {
+		CASH
+		CARD
 	}
 
 	input OrderItemInput {

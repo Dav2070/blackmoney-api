@@ -29,6 +29,7 @@ export const resolvers = {
 		updateOrder: orderResolvers.updateOrder,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
+		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem
 	},
 	Session: {

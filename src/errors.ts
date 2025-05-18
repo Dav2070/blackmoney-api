@@ -62,6 +62,11 @@ export const apiErrors = {
 		code: "COMPANY_ALREADY_EXISTS",
 		message: "The user already has a company",
 		status: 400
+	},
+	orderAlreadyCompleted: {
+		code: "ORDER_ALREADY_COMPLETED",
+		message: "Order already completed",
+		status: 400
 	}
 }
 
