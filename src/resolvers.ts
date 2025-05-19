@@ -10,6 +10,7 @@ import * as orderResolvers from "./resolvers/order.js"
 import * as orderItemResolvers from "./resolvers/orderItem.js"
 import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 import * as variationItemResolvers from "./resolvers/variationItem.js"
+import { PaymentMethod } from "@prisma/client"
 
 export const resolvers = {
 	Query: {
@@ -60,7 +61,8 @@ export const resolvers = {
 		totalPrice: orderResolvers.totalPrice,
 		paidAt: orderResolvers.paidAt,
 		table: orderResolvers.table,
-		orderItems: orderResolvers.orderItems
+		orderItems: orderResolvers.orderItems,
+		paymentMethod: orderResolvers.paymentMethod
 	},
 	OrderItem: {
 		order: orderItemResolvers.order,

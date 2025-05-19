@@ -141,6 +141,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		totalPrice: Int!
 		paidAt: String
+		paymentMethod: PaymentMethod
 		table: Table!
 		orderItems: OrderItemList!
 	}
