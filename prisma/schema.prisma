@@ -64,6 +64,25 @@ model Table {
   orders    Order[]
 }
 
+model Bill {
+  id           BigInt        @id @default(autoincrement())
+  uuid         String        @unique @default(uuid())
+  orderId      BigInt
+  billToOrders BillToOrder[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+}
+
+model BillToOrder {
+  id        BigInt   @id @default(autoincrement())
+  billId    BigInt
+  orderId   BigInt
+  bill      Bill     @relation(fields: [billId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 model Order {
   id            BigInt         @id @default(autoincrement())
   uuid          String         @unique @default(uuid())
@@ -76,6 +95,7 @@ model Order {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
   orderItems    OrderItem[]
+  billToOrders  BillToOrder[]
 }
 
 model OrderItem {
