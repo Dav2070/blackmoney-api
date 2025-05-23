@@ -8,12 +8,14 @@ datasource db {
 }
 
 model Company {
-  id     BigInt @id @default(autoincrement())
-  uuid   String @unique @default(uuid())
-  userId BigInt
-  name   String @db.VarChar
-  users  User[]
-  rooms  Room[]
+  id        BigInt   @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  userId    BigInt
+  name      String   @db.VarChar
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  users     User[]
+  rooms     Room[]
 }
 
 model User {
@@ -24,15 +26,19 @@ model User {
   role      UserRole  @default(USER)
   companyId BigInt
   company   Company   @relation(fields: [companyId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
   sessions  Session[]
   orders    Order[]
 }
 
 model Session {
-  id     BigInt @id @default(autoincrement())
-  uuid   String @unique @default(uuid())
-  userId BigInt
-  user   User   @relation(fields: [userId], references: [id])
+  id        BigInt   @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  userId    BigInt
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Room {
@@ -42,28 +48,33 @@ model Room {
   userId    BigInt?
   companyId BigInt?
   company   Company? @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   tables    Table[]
 }
 
 model Table {
-  id     BigInt  @id @default(autoincrement())
-  uuid   String  @unique @default(uuid())
-  name   Int     @default(1)
-  roomId BigInt
-  room   Room    @relation(fields: [roomId], references: [id])
-  orders Order[]
+  id        BigInt   @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  name      Int      @default(1)
+  roomId    BigInt
+  room      Room     @relation(fields: [roomId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  orders    Order[]
 }
 
 model Order {
   id            BigInt         @id @default(autoincrement())
   uuid          String         @unique @default(uuid())
-  createdAt     DateTime       @default(now())
   paidAt        DateTime?
   paymentMethod PaymentMethod?
   tableId       BigInt
   table         Table          @relation(fields: [tableId], references: [id])
   userId        BigInt?
   user          User?          @relation(fields: [userId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
   orderItems    OrderItem[]
 }
 
@@ -75,15 +86,19 @@ model OrderItem {
   productId           BigInt
   order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
   orderItemVariations OrderItemVariation[]
 }
 
 model OrderItemVariation {
   id                                 BigInt                              @id @default(autoincrement())
   uuid                               String                              @unique @default(uuid())
-  orderItemId                        BigInt
   count                              Int                                 @default(1)
+  orderItemId                        BigInt
   orderItem                          OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  createdAt                          DateTime                            @default(now())
+  updatedAt                          DateTime                            @default(now()) @updatedAt
   orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
 }
 
@@ -93,6 +108,8 @@ model OrderItemVariationToVariationItem {
   variationItemId      BigInt
   orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id], onDelete: Cascade)
   variationItem        VariationItem      @relation(fields: [variationItemId], references: [id], onDelete: Cascade)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @default(now()) @updatedAt
 }
 
 model Product {
@@ -102,6 +119,8 @@ model Product {
   price               Int
   categoryId          BigInt
   category            Category             @relation(fields: [categoryId], references: [id])
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
   orderItems          OrderItem[]
 }
@@ -112,12 +131,16 @@ model ProductToVariation {
   variationId BigInt
   product     Product   @relation(fields: [productId], references: [id])
   variation   Variation @relation(fields: [variationId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 }
 
 model Variation {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
   name                String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
   variationItems      VariationItem[]
 }
@@ -129,20 +152,19 @@ model VariationItem {
   additionalCost                     Int
   variationId                        BigInt
   variation                          Variation                           @relation(fields: [variationId], references: [id])
+  createdAt                          DateTime                            @default(now())
+  updatedAt                          DateTime                            @default(now()) @updatedAt
   orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
 }
 
 model Category {
-  id       BigInt       @id @default(autoincrement())
-  uuid     String       @unique @default(uuid())
-  name     String
-  type     CategoryType @default(FOOD)
-  products Product[]
-}
-
-model TaxRate {
-  id   BigInt @id @default(autoincrement())
-  rate Int    @unique
+  id        BigInt       @id @default(autoincrement())
+  uuid      String       @unique @default(uuid())
+  name      String
+  type      CategoryType @default(FOOD)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  products  Product[]
 }
 
 enum UserRole {
