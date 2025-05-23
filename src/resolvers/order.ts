@@ -658,6 +658,7 @@ export function paidAt(order: Order): string {
 	return order.paidAt?.toISOString() ?? null
 }
 
+
 export async function table(
 	order: Order,
 	args: {},

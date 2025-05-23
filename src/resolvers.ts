@@ -60,7 +60,7 @@ export const resolvers = {
 		totalPrice: orderResolvers.totalPrice,
 		paidAt: orderResolvers.paidAt,
 		table: orderResolvers.table,
-		orderItems: orderResolvers.orderItems
+		orderItems: orderResolvers.orderItems,
 	},
 	OrderItem: {
 		order: orderItemResolvers.order,
