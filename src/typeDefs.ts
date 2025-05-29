@@ -36,6 +36,7 @@ export const typeDefs = `#graphql
 		): Order!
 		completeOrder(
 			uuid: String!
+			billUuid: String!
 			paymentMethod: PaymentMethod!
 		): Order!
 		updateOrderItem(

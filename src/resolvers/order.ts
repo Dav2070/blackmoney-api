@@ -586,6 +586,7 @@ export async function completeOrder(
 	parent: any,
 	args: {
 		uuid: string
+		billUuid: string
 		paymentMethod: PaymentMethod
 	},
 	context: ResolverContext
@@ -612,6 +613,18 @@ export async function completeOrder(
 		throwApiError(apiErrors.orderAlreadyCompleted)
 	}
 
+	// Get the bill
+	let bill = await context.prisma.bill.findFirst({
+		where: {
+			uuid: args.billUuid
+		}
+	})
+
+	// Check if the bill exists
+	if (bill == null) {
+		throwApiError(apiErrors.billDoesNotExist)
+	}
+
 	// Update the order
 	return await context.prisma.order.update({
 		where: {
@@ -623,6 +636,11 @@ export async function completeOrder(
 			user: {
 				connect: {
 					id: context.user.id
+				}
+			},
+			billToOrders: {
+				create: {
+					billId: bill.id
 				}
 			}
 		}

@@ -33,6 +33,11 @@ export const apiErrors = {
 		message: "Room does not exist",
 		status: 404
 	},
+	billDoesNotExist: {
+		code: "BILL_DOES_NOT_EXIST",
+		message: "Bill does not exist",
+		status: 404
+	},
 	orderDoesNotExist: {
 		code: "ORDER_DOES_NOT_EXIST",
 		message: "Order does not exist",
