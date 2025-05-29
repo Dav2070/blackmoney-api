@@ -21,6 +21,7 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
+		createBill: Bill!
 		updateOrder(
 			uuid: String!
 			orderItems: [OrderItemInput!]!
@@ -135,6 +136,10 @@ export const typeDefs = `#graphql
 	type VariationItemList {
 		total: Int!
 		items: [VariationItem!]!
+	}
+
+	type Bill {
+		uuid: String!
 	}
 
 	type Order {

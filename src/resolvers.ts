@@ -6,6 +6,7 @@ import * as tableResolvers from "./resolvers/table.js"
 import * as categoryResolvers from "./resolvers/category.js"
 import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
+import * as billResolvers from "./resolvers/bill.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as orderItemResolvers from "./resolvers/orderItem.js"
 import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
@@ -27,6 +28,7 @@ export const resolvers = {
 		createCompany: companyResolvers.createCompany,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
+		createBill: billResolvers.createBill,
 		updateOrder: orderResolvers.updateOrder,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
@@ -60,7 +62,7 @@ export const resolvers = {
 		totalPrice: orderResolvers.totalPrice,
 		paidAt: orderResolvers.paidAt,
 		table: orderResolvers.table,
-		orderItems: orderResolvers.orderItems,
+		orderItems: orderResolvers.orderItems
 	},
 	OrderItem: {
 		order: orderItemResolvers.order,
