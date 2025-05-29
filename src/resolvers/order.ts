@@ -54,6 +54,49 @@ export async function listOrders(
 	}
 }
 
+export async function createOrder(
+	parent: any,
+	args: {
+		tableUuid: string
+	},
+	context: ResolverContext
+): Promise<Order> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Check if the table exists
+	const table = await context.prisma.table.findFirst({
+		where: {
+			uuid: args.tableUuid
+		}
+	})
+
+	if (table == null) {
+		throwApiError(apiErrors.tableDoesNotExist)
+	}
+
+	// Check if the table belongs to the same company as the user
+	// TODO
+
+	// Create the order
+	return await context.prisma.order.create({
+		data: {
+			table: {
+				connect: {
+					id: table.id
+				}
+			},
+			user: {
+				connect: {
+					id: context.user.id
+				}
+			}
+		}
+	})
+}
+
 export async function updateOrder(
 	parent: any,
 	args: {
@@ -675,7 +718,6 @@ export async function totalPrice(
 export function paidAt(order: Order): string {
 	return order.paidAt?.toISOString() ?? null
 }
-
 
 export async function table(
 	order: Order,

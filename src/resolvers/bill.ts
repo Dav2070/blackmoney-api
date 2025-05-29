@@ -14,11 +14,5 @@ export async function createBill(
 	}
 
 	// Create the bill
-	const uuid = crypto.randomUUID()
-
-	return await context.prisma.bill.create({
-		data: {
-			uuid
-		}
-	})
+	return await context.prisma.bill.create({})
 }

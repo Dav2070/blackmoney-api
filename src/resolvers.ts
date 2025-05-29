@@ -29,6 +29,7 @@ export const resolvers = {
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		createBill: billResolvers.createBill,
+		createOrder: orderResolvers.createOrder,
 		updateOrder: orderResolvers.updateOrder,
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,

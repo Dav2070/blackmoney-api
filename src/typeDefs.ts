@@ -22,6 +22,7 @@ export const typeDefs = `#graphql
 			name: String!
 		): Table!
 		createBill: Bill!
+		createOrder(tableUuid: String!): Order!
 		updateOrder(
 			uuid: String!
 			orderItems: [OrderItemInput!]!
