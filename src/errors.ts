@@ -73,6 +73,12 @@ export const apiErrors = {
 		message: "The user already has a company",
 		status: 400
 	},
+	billNotMatchingExistingBillOfOrder: {
+		code: "BILL_NOT_MATCHING_EXISTING_BILL_OF_ORDER",
+		message:
+			"The order already has a bill. The given bill must be the same as the existing bill.",
+		status: 400
+	},
 	orderAlreadyCompleted: {
 		code: "ORDER_ALREADY_COMPLETED",
 		message: "Order already completed",

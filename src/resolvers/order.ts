@@ -87,11 +87,6 @@ export async function createOrder(
 				connect: {
 					id: table.id
 				}
-			},
-			user: {
-				connect: {
-					id: context.user.id
-				}
 			}
 		}
 	})
@@ -657,7 +652,7 @@ export async function completeOrder(
 	}
 
 	// Get the bill
-	let bill = await context.prisma.bill.findFirst({
+	const bill = await context.prisma.bill.findFirst({
 		where: {
 			uuid: args.billUuid
 		}
@@ -668,6 +663,11 @@ export async function completeOrder(
 		throwApiError(apiErrors.billDoesNotExist)
 	}
 
+	// If the order has a billId, check if it matches the bill
+	if (order.billId != null && order.billId !== bill.id) {
+		throwApiError(apiErrors.billNotMatchingExistingBillOfOrder)
+	}
+
 	// Update the order
 	return await context.prisma.order.update({
 		where: {
@@ -676,6 +676,11 @@ export async function completeOrder(
 		data: {
 			paidAt: new Date(),
 			paymentMethod: args.paymentMethod,
+			bill: {
+				connect: {
+					id: bill.id
+				}
+			},
 			user: {
 				connect: {
 					id: context.user.id

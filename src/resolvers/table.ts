@@ -42,9 +42,6 @@ export async function retrieveTable(
 				table: {
 					connect: { id: table.id }
 				},
-				user: {
-					connect: { id: context.user.id }
-				},
 				bill: {
 					connect: { id: bill.id }
 				}
