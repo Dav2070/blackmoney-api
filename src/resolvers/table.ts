@@ -28,12 +28,28 @@ export async function retrieveTable(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	const order = await context.prisma.order.findFirst({
+	let order = await context.prisma.order.findFirst({
 		where: { paidAt: null, tableId: table.id }
 	})
 
 	if (order == null) {
-		await context.prisma.order.create({ data: { tableId: table.id } })
+		// Create a bill for the new order
+		const bill = await context.prisma.bill.create({})
+
+		// Create the order
+		order = await context.prisma.order.create({
+			data: {
+				table: {
+					connect: { id: table.id }
+				},
+				user: {
+					connect: { id: context.user.id }
+				},
+				bill: {
+					connect: { id: bill.id }
+				}
+			}
+		})
 	}
 
 	return table

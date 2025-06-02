@@ -1,4 +1,4 @@
-import { Order, OrderItem, Table } from "@prisma/client"
+import { Bill, Order, OrderItem, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
@@ -680,11 +680,6 @@ export async function completeOrder(
 				connect: {
 					id: context.user.id
 				}
-			},
-			billToOrders: {
-				create: {
-					billId: bill.id
-				}
 			}
 		}
 	})
@@ -727,6 +722,18 @@ export async function table(
 	return context.prisma.table.findFirst({
 		where: {
 			id: order.tableId
+		}
+	})
+}
+
+export async function bill(
+	order: Order,
+	args: {},
+	context: ResolverContext
+): Promise<Bill> {
+	return context.prisma.bill.findFirst({
+		where: {
+			id: order.billId
 		}
 	})
 }

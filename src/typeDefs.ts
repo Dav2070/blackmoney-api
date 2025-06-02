@@ -150,6 +150,7 @@ export const typeDefs = `#graphql
 		paidAt: String
 		paymentMethod: PaymentMethod
 		table: Table!
+		bill: Bill
 		orderItems: OrderItemList!
 	}
 
