@@ -736,6 +736,10 @@ export async function bill(
 	args: {},
 	context: ResolverContext
 ): Promise<Bill> {
+	if (order.billId == null) {
+		return null
+	}
+
 	return context.prisma.bill.findFirst({
 		where: {
 			id: order.billId
