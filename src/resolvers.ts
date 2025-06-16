@@ -2,6 +2,7 @@ import * as sessionResolvers from "./resolvers/session.js"
 import * as userResolvers from "./resolvers/user.js"
 import * as companyResolvers from "./resolvers/company.js"
 import * as restaurantResolvers from "./resolvers/restaurant.js"
+import * as registerResolvers from "./resolvers/register.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as categoryResolvers from "./resolvers/category.js"
@@ -27,6 +28,7 @@ export const resolvers = {
 		login: sessionResolvers.login,
 		createUser: userResolvers.createUser,
 		createCompany: companyResolvers.createCompany,
+		createRegister: registerResolvers.createRegister,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		createBill: billResolvers.createBill,
