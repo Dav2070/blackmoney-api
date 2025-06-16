@@ -1,6 +1,6 @@
-import { Company, Room, User } from "@prisma/client"
+import { Company } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext, List } from "../types.js"
+import { ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
@@ -47,46 +47,4 @@ export async function createCompany(
 			userId: BigInt(context.davUser.Id)
 		}
 	})
-}
-
-export async function users(
-	company: Company,
-	args: {},
-	context: ResolverContext
-): Promise<List<User>> {
-	let where = { companyId: company.id }
-
-	const [total, items] = await context.prisma.$transaction([
-		context.prisma.user.count({ where }),
-		context.prisma.user.findMany({
-			where,
-			orderBy: { name: "asc" }
-		})
-	])
-
-	return {
-		total,
-		items
-	}
-}
-
-export async function rooms(
-	company: Company,
-	args: {},
-	context: ResolverContext
-): Promise<List<Room>> {
-	let where = { companyId: company.id }
-
-	const [total, items] = await context.prisma.$transaction([
-		context.prisma.room.count({ where }),
-		context.prisma.room.findMany({
-			where,
-			orderBy: { name: "asc" }
-		})
-	])
-
-	return {
-		total,
-		items
-	}
 }

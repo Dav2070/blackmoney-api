@@ -1,6 +1,7 @@
 import * as sessionResolvers from "./resolvers/session.js"
 import * as userResolvers from "./resolvers/user.js"
 import * as companyResolvers from "./resolvers/company.js"
+import * as restaurantResolvers from "./resolvers/restaurant.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as categoryResolvers from "./resolvers/category.js"
@@ -39,9 +40,9 @@ export const resolvers = {
 	Session: {
 		user: sessionResolvers.user
 	},
-	Company: {
-		users: companyResolvers.users,
-		rooms: companyResolvers.rooms
+	Restaurant: {
+		users: restaurantResolvers.users,
+		rooms: restaurantResolvers.rooms
 	},
 	Room: {
 		tables: roomResolvers.tables
