@@ -11,10 +11,14 @@ export const typeDefs = `#graphql
 
 	type Mutation {
 		login(
+			restaurantUuid: String!
 			userName: String!
 			password: String!
 		): Session!
-		createUser(name: String!): User!
+		createUser(
+			restaurantUuid: String!
+			name: String!
+		): User!
 		createCompany(name: String!): Company!
 		createRoom(name: String!): Room!
 		createTable(
@@ -50,6 +54,9 @@ export const typeDefs = `#graphql
 	type Company {
 		uuid: String!
 		name: String!
+	}
+
+	type Restaurant {
 		users: UserList!
 		rooms: RoomList!
 	}

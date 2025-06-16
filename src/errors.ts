@@ -28,6 +28,11 @@ export const apiErrors = {
 		message: "Company does not exist",
 		status: 404
 	},
+	restaurantDoesNotExist: {
+		code: "RESTAURANT_DOES_NOT_EXIST",
+		message: "Restaurant does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",

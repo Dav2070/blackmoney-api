@@ -25,7 +25,7 @@ export async function retrieveTable(
 	}
 
 	// Check if the room belongs to the user
-	if (table.room.companyId != context.user.companyId) {
+	if (table.room.restaurantId != context.user.restaurantId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 

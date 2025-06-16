@@ -20,7 +20,7 @@ export async function retrieveUser(
 
 export async function createUser(
 	parent: any,
-	args: { name: string },
+	args: { restaurantUuid: string; name: string },
 	context: ResolverContext
 ): Promise<User> {
 	// Check if the user is logged in
@@ -28,13 +28,19 @@ export async function createUser(
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Check if the user has a company
-	const company = await context.prisma.company.findFirst({
-		where: { userId: BigInt(context.davUser.Id) }
+	// Get the restaurant
+	let restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid },
+		include: { company: true }
 	})
 
-	if (company == null) {
-		throwApiError(apiErrors.companyDoesNotExist)
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if the company of the restaurant belongs to the user
+	if (restaurant.company.userId !== BigInt(context.davUser.Id)) {
+		throwApiError(apiErrors.actionNotAllowed)
 	}
 
 	// Validate the name
@@ -43,9 +49,9 @@ export async function createUser(
 	// Create the user
 	return await context.prisma.user.create({
 		data: {
-			company: {
+			restaurant: {
 				connect: {
-					id: company.id
+					id: restaurant.id
 				}
 			},
 			name: args.name,

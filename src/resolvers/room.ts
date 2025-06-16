@@ -22,7 +22,7 @@ export async function createRoom(
 	return await context.prisma.room.create({
 		data: {
 			name: args.name,
-			companyId: context.user.companyId
+			restaurantId: context.user.restaurantId
 		}
 	})
 }
@@ -39,7 +39,7 @@ export async function listRooms(
 
 	// Get the rooms of the user
 	const where = {
-		companyId: context.user.companyId
+		restaurantId: context.user.restaurantId
 	}
 
 	const [total, items] = await context.prisma.$transaction([
