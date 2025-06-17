@@ -34,3 +34,12 @@ export interface Category {
 	id: bigint
 	name: string
 }
+
+//#region Fiskaly types
+export type TssState = "CREATED" | "UNINITIALIZED" | "INITIALIZED"
+
+export interface Tss {
+	admin_puk?: string
+	state: TssState
+}
+//#endregion

@@ -33,6 +33,11 @@ export const apiErrors = {
 		message: "Restaurant does not exist",
 		status: 404
 	},
+	registerDoesNotExist: {
+		code: "REGISTER_DOES_NOT_EXIST",
+		message: "Register does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",
@@ -68,6 +73,11 @@ export const apiErrors = {
 		message: "Variation item does not exist",
 		status: 404
 	},
+	tssDoesNotExist: {
+		code: "TSS_DOES_NOT_EXIST",
+		message: "Fiskaly TSS does not exist",
+		status: 404
+	},
 	productNotInOrder: {
 		code: "PRODUCT_NOT_IN_ORDER",
 		message: "Product is not in the order",
@@ -93,5 +103,7 @@ export const apiErrors = {
 
 export const validationErrors = {
 	nameTooShort: "NAME_TOO_SHORT",
-	nameTooLong: "NAME_TOO_LONG"
+	nameTooLong: "NAME_TOO_LONG",
+	serialNumberTooShort: "SERIAL_NUMBER_TOO_SHORT",
+	serialNumberTooLong: "SERIAL_NUMBER_TOO_LONG"
 }

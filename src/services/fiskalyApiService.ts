@@ -1,5 +1,6 @@
 import axios from "axios"
 import { fiskalyApiBaseUrl } from "../constants.js"
+import { Tss, TssState } from "../types.js"
 
 let fiskalyAccessToken = null
 
@@ -36,15 +37,36 @@ export async function authenticate(): Promise<{ access_token: string } | null> {
 	}
 }
 
-export async function createTss(uuid: string): Promise<{
-	admin_puk: string
-} | null> {
+export async function authenticateAdmin(
+	tssUuid: string,
+	adminPin: string
+): Promise<boolean> {
+	try {
+		await axios({
+			method: "post",
+			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/admin/auth`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				admin_pin: adminPin
+			}
+		})
+
+		return true
+	} catch (error) {
+		console.error(error)
+		return false
+	}
+}
+
+export async function createTss(uuid: string): Promise<Tss | null> {
 	try {
 		const response = await axios({
 			method: "put",
 			url: `${fiskalyApiBaseUrl}/tss/${uuid}`,
 			headers: {
-				Authorization: `Bearer ${await getAccessToken()}`,
+				Authorization: `Bearer ${await getAccessToken()}`
 			}
 		})
 
@@ -52,5 +74,70 @@ export async function createTss(uuid: string): Promise<{
 	} catch (error) {
 		console.error(error)
 		return null
+	}
+}
+
+export async function retrieveTss(uuid: string): Promise<Tss | null> {
+	try {
+		const response = await axios({
+			method: "get",
+			url: `${fiskalyApiBaseUrl}/tss/${uuid}`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			}
+		})
+
+		return response.data
+	} catch (error) {
+		console.error(error)
+		return null
+	}
+}
+
+export async function updateTss(
+	uuid: string,
+	state: TssState
+): Promise<Tss | null> {
+	try {
+		const response = await axios({
+			method: "patch",
+			url: `${fiskalyApiBaseUrl}/tss/${uuid}`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				state
+			}
+		})
+
+		return response.data
+	} catch (error) {
+		console.error(error)
+		return null
+	}
+}
+
+export async function setTssAdminPin(
+	uuid: string,
+	adminPuk: string,
+	newAdminPin: string
+): Promise<boolean> {
+	try {
+		await axios({
+			method: "patch",
+			url: `${fiskalyApiBaseUrl}/tss/${uuid}/admin`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				admin_puk: adminPuk,
+				new_admin_pin: newAdminPin
+			}
+		})
+
+		return true
+	} catch (error) {
+		console.error(error)
+		return false
 	}
 }

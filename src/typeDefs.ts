@@ -24,6 +24,11 @@ export const typeDefs = `#graphql
 			restaurantUuid: String!
 			name: String!
 		): Register!
+		createRegisterClient(
+			registerUuid: String!
+			name: String!
+			serialNumber: String!
+		): RegisterClient!
 		createRoom(name: String!): Room!
 		createTable(
 			roomUuid: String!
@@ -68,6 +73,12 @@ export const typeDefs = `#graphql
 	type Register {
 		uuid: String!
 		name: String!
+	}
+
+	type RegisterClient {
+		uuid: String!
+		name: String!
+		serialNumber: String!
 	}
 
 	type User {

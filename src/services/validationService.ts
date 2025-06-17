@@ -8,4 +8,12 @@ export function validateNameLength(name: string) {
 		return validationErrors.nameTooLong
 	}
 }
+
+export function validateSerialNumberLength(serialNumber: string) {
+	if (serialNumber.length < 2) {
+		return validationErrors.serialNumberTooShort
+	} else if (serialNumber.length > 100) {
+		return validationErrors.serialNumberTooLong
+	}
+}
 //#endregion
