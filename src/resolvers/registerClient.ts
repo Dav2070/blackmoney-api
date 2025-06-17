@@ -1,6 +1,16 @@
+import crypto from "crypto"
 import { apiErrors } from "../errors.js"
-import { authenticateAdmin, retrieveTss, setTssAdminPin, updateTss } from "../services/fiskalyApiService.js"
-import { validateNameLength, validateSerialNumberLength } from "../services/validationService.js"
+import {
+	authenticateAdmin,
+	createClient,
+	retrieveTss,
+	setTssAdminPin,
+	updateTss
+} from "../services/fiskalyApiService.js"
+import {
+	validateNameLength,
+	validateSerialNumberLength
+} from "../services/validationService.js"
 import { ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 
@@ -65,14 +75,21 @@ export async function createRegisterClient(
 
 	if (tss.state === "UNINITIALIZED") {
 		// Set an admin pin for the TSS
-		const setPinResponse = await setTssAdminPin(register.uuid, register.adminPuk, "12345678")
+		const setPinResponse = await setTssAdminPin(
+			register.uuid,
+			register.adminPuk,
+			"12345678"
+		)
 
 		if (!setPinResponse) {
 			throwApiError(apiErrors.unexpectedError)
 		}
 
 		// Authenticate the TSS for admin
-		const authenticateAdminResponse = await authenticateAdmin(register.uuid, "12345678")
+		const authenticateAdminResponse = await authenticateAdmin(
+			register.uuid,
+			"12345678"
+		)
 
 		if (!authenticateAdminResponse) {
 			throwApiError(apiErrors.unexpectedError)
@@ -86,9 +103,23 @@ export async function createRegisterClient(
 		}
 	}
 
+	// Create the fiskaly client
+	const uuid = crypto.randomUUID()
+
+	const fiskalyClient = await createClient(
+		register.uuid,
+		uuid,
+		args.serialNumber
+	)
+
+	if (fiskalyClient == null) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
 	// Create the register client
 	return await context.prisma.registerClient.create({
 		data: {
+			uuid,
 			name: args.name,
 			serialNumber: args.serialNumber,
 			register: {

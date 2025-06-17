@@ -141,3 +141,27 @@ export async function setTssAdminPin(
 		return false
 	}
 }
+
+export async function createClient(
+	tssUuid: string,
+	clientUuid: string,
+	serialNumber: string
+): Promise<{ state: string } | null> {
+	try {
+		const response = await axios({
+			method: "put",
+			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/client/${clientUuid}`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				serial_number: serialNumber
+			}
+		})
+
+		return response.data
+	} catch (error) {
+		console.error(error)
+		return null
+	}
+}
