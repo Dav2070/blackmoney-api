@@ -1,6 +1,6 @@
-import { Company } from "@prisma/client"
+import { Company, Restaurant } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { ResolverContext } from "../types.js"
+import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
@@ -47,4 +47,25 @@ export async function createCompany(
 			userId: BigInt(context.davUser.Id)
 		}
 	})
+}
+
+export async function restaurants(
+	company: Company,
+	args: {},
+	context: ResolverContext
+): Promise<List<Restaurant>> {
+	let where = { companyId: company.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.restaurant.count({ where }),
+		context.prisma.restaurant.findMany({
+			where,
+			orderBy: { name: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }

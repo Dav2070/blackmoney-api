@@ -63,11 +63,19 @@ export const typeDefs = `#graphql
 	type Company {
 		uuid: String!
 		name: String!
+		restaurants: RestaurantList!
 	}
 
 	type Restaurant {
+		uuid: String!
+		name: String!
 		users: UserList!
 		rooms: RoomList!
+	}
+
+	type RestaurantList {
+		total: Int!
+		items: [Restaurant!]!
 	}
 
 	type Register {

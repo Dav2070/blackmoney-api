@@ -44,6 +44,9 @@ export const resolvers = {
 	Session: {
 		user: sessionResolvers.user
 	},
+	Company: {
+		restaurants: companyResolvers.restaurants
+	},
 	Restaurant: {
 		users: restaurantResolvers.users,
 		rooms: restaurantResolvers.rooms
