@@ -19,6 +19,7 @@ export const resolvers = {
 	Query: {
 		retrieveUser: userResolvers.retrieveUser,
 		retrieveCompany: companyResolvers.retrieveCompany,
+		retrieveRestaurant: restaurantResolvers.retrieveRestaurant,
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,
 		retrieveTable: tableResolvers.retrieveTable,
