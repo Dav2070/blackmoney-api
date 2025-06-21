@@ -41,10 +41,16 @@ export async function createCompany(
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
+	// Create the company and the first restaurant for the company
 	return await context.prisma.company.create({
 		data: {
 			name: args.name,
-			userId: BigInt(context.davUser.Id)
+			userId: BigInt(context.davUser.Id),
+			restaurants: {
+				create: {
+					name: args.name
+				}
+			}
 		}
 	})
 }
