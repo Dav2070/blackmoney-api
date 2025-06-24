@@ -2,6 +2,10 @@ import { Bill, Order, OrderItem, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
+import {
+	startTransaction,
+	finishTransaction
+} from "../services/fiskalyApiService.js"
 
 export async function retrieveOrder(
 	parent: any,
@@ -655,6 +659,13 @@ export async function completeOrder(
 	const bill = await context.prisma.bill.findFirst({
 		where: {
 			uuid: args.billUuid
+		},
+		include: {
+			registerClient: {
+				include: {
+					register: true
+				}
+			}
 		}
 	})
 
@@ -666,6 +677,44 @@ export async function completeOrder(
 	// If the order has a billId, check if it matches the bill
 	if (order.billId != null && order.billId !== bill.id) {
 		throwApiError(apiErrors.billNotMatchingExistingBillOfOrder)
+	}
+
+	// Start the transaction with the ordered items
+	const orderItems = await context.prisma.orderItem.findMany({
+		where: {
+			orderId: order.id
+		},
+		include: {
+			product: true
+		}
+	})
+
+	const startTransactionResponse = await startTransaction(
+		bill.registerClient.register.uuid,
+		bill.registerClient.uuid,
+		order.uuid,
+		orderItems.map(item => ({
+			quantity: item.count,
+			text: item.product.name,
+			pricePerUnit: item.product.price
+		}))
+	)
+
+	if (startTransactionResponse == null) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	// Finish the transaction
+	const finishTransactionResponse = await finishTransaction(
+		bill.registerClient.register.uuid,
+		bill.registerClient.uuid,
+		order.uuid,
+		startTransactionResponse.schema.raw.process_type,
+		startTransactionResponse.schema.raw.process_data
+	)
+
+	if (finishTransactionResponse == null) {
+		throwApiError(apiErrors.unexpectedError)
 	}
 
 	// Update the order

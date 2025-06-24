@@ -1,6 +1,6 @@
 import axios from "axios"
 import { fiskalyApiBaseUrl } from "../constants.js"
-import { Tss, TssState } from "../types.js"
+import { Transaction, Tss, TssState } from "../types.js"
 
 let fiskalyAccessToken = null
 
@@ -156,6 +156,88 @@ export async function createClient(
 			},
 			data: {
 				serial_number: serialNumber
+			}
+		})
+
+		return response.data
+	} catch (error) {
+		console.error(error)
+		return null
+	}
+}
+
+export async function startTransaction(
+	tssUuid: string,
+	clientUuid: string,
+	transactionUuid: string,
+	lineItems: {
+		quantity: number
+		text: string
+		pricePerUnit: number
+	}[]
+): Promise<Transaction | null> {
+	try {
+		const response = await axios({
+			method: "put",
+			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/tx/${transactionUuid}`,
+			params: {
+				tx_revisition: 1
+			},
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				state: "ACTIVE",
+				client_id: clientUuid,
+				schema: {
+					standard_v1: {
+						order: {
+							line_items: lineItems.map(item => ({
+								quantity: item.quantity.toString(),
+								text: item.text,
+								price_per_unit: (item.pricePerUnit / 100)
+									.toFixed(2)
+									.toString()
+							}))
+						}
+					}
+				}
+			}
+		})
+
+		return response.data
+	} catch (error) {
+		console.error(error)
+		return null
+	}
+}
+
+export async function finishTransaction(
+	tssUuid: string,
+	clientUuid: string,
+	transactionUuid: string,
+	processType: string,
+	processData: string
+): Promise<Transaction | null> {
+	try {
+		const response = await axios({
+			method: "put",
+			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/tx/${transactionUuid}`,
+			params: {
+				tx_revisition: 2
+			},
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {
+				state: "FINISHED",
+				client_id: clientUuid,
+				schema: {
+					raw: {
+						process_type: processType,
+						process_data: processData
+					}
+				}
 			}
 		})
 

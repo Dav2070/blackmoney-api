@@ -42,4 +42,13 @@ export interface Tss {
 	admin_puk?: string
 	state: TssState
 }
+
+export interface Transaction {
+	schema: {
+		raw: {
+			process_type: string
+			process_data: string
+		}
+	}
+}
 //#endregion
