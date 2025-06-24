@@ -38,6 +38,11 @@ export const apiErrors = {
 		message: "Register does not exist",
 		status: 404
 	},
+	registerClientDoesNotExist: {
+		code: "REGISTER_CLIENT_DOES_NOT_EXIST",
+		message: "RegisterClient does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",

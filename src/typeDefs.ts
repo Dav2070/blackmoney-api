@@ -35,7 +35,7 @@ export const typeDefs = `#graphql
 			roomUuid: String!
 			name: String!
 		): Table!
-		createBill: Bill!
+		createBill(registerClientUuid: String!): Bill!
 		createOrder(tableUuid: String!): Order!
 		updateOrder(
 			uuid: String!
