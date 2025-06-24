@@ -49,6 +49,7 @@ model RegisterClient {
   serialNumber String   @unique @db.VarChar
   registerId   BigInt
   register     Register @relation(fields: [registerId], references: [id])
+  bills        Bill[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
 }
@@ -100,11 +101,13 @@ model Table {
 }
 
 model Bill {
-  id        BigInt   @id @default(autoincrement())
-  uuid      String   @unique @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  orders    Order[]
+  id               BigInt         @id @default(autoincrement())
+  uuid             String         @unique @default(uuid())
+  registerClientId BigInt
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  orders           Order[]
 }
 
 model Order {
