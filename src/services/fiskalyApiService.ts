@@ -181,7 +181,7 @@ export async function startTransaction(
 			method: "put",
 			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/tx/${transactionUuid}`,
 			params: {
-				tx_revisition: 1
+				tx_revision: 1
 			},
 			headers: {
 				Authorization: `Bearer ${await getAccessToken()}`
@@ -224,7 +224,7 @@ export async function finishTransaction(
 			method: "put",
 			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/tx/${transactionUuid}`,
 			params: {
-				tx_revisition: 2
+				tx_revision: 2
 			},
 			headers: {
 				Authorization: `Bearer ${await getAccessToken()}`

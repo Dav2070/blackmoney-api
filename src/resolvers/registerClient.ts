@@ -1,4 +1,5 @@
 import crypto from "crypto"
+import { RegisterClient } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import {
 	authenticateAdmin,
@@ -22,7 +23,7 @@ export async function createRegisterClient(
 		serialNumber: string
 	},
 	context: ResolverContext
-) {
+): Promise<RegisterClient> {
 	// Check if the user is logged in
 	if (context.davUser == null) {
 		throwApiError(apiErrors.notAuthenticated)
@@ -64,6 +65,16 @@ export async function createRegisterClient(
 		throwApiError(apiErrors.tssDoesNotExist)
 	}
 
+	// Authenticate the TSS for admin
+	const authenticateAdminResponse = await authenticateAdmin(
+		register.uuid,
+		"12345678"
+	)
+
+	if (!authenticateAdminResponse) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
 	if (tss.state === "CREATED") {
 		// Set the state to UNINITIALIZED
 		tss = await updateTss(register.uuid, "UNINITIALIZED")
@@ -82,16 +93,6 @@ export async function createRegisterClient(
 		)
 
 		if (!setPinResponse) {
-			throwApiError(apiErrors.unexpectedError)
-		}
-
-		// Authenticate the TSS for admin
-		const authenticateAdminResponse = await authenticateAdmin(
-			register.uuid,
-			"12345678"
-		)
-
-		if (!authenticateAdminResponse) {
 			throwApiError(apiErrors.unexpectedError)
 		}
 

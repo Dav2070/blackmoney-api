@@ -34,21 +34,11 @@ export async function retrieveTable(
 	})
 
 	if (order == null) {
-		// Create a bill for the new order
-		const bill = await context.prisma.bill.create({
-			data: {
-				uuid: crypto.randomUUID()
-			}
-		})
-
 		// Create the order
 		order = await context.prisma.order.create({
 			data: {
 				table: {
 					connect: { id: table.id }
-				},
-				bill: {
-					connect: { id: bill.id }
 				}
 			}
 		})
