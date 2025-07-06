@@ -83,14 +83,19 @@ export const apiErrors = {
 		message: "Fiskaly TSS does not exist",
 		status: 404
 	},
-	productNotInOrder: {
-		code: "PRODUCT_NOT_IN_ORDER",
-		message: "Product is not in the order",
-		status: 400
-	},
 	companyAlreadyExists: {
 		code: "COMPANY_ALREADY_EXISTS",
 		message: "The user already has a company",
+		status: 400
+	},
+	restaurantAlreadyHasOwner: {
+		code: "RESTAURANT_ALREADY_HAS_OWNER",
+		message: "The restaurant already has an owner",
+		status: 400
+	},
+	productNotInOrder: {
+		code: "PRODUCT_NOT_IN_ORDER",
+		message: "Product is not in the order",
 		status: 400
 	},
 	billNotMatchingExistingBillOfOrder: {
@@ -110,5 +115,7 @@ export const validationErrors = {
 	nameTooShort: "NAME_TOO_SHORT",
 	nameTooLong: "NAME_TOO_LONG",
 	serialNumberTooShort: "SERIAL_NUMBER_TOO_SHORT",
-	serialNumberTooLong: "SERIAL_NUMBER_TOO_LONG"
+	serialNumberTooLong: "SERIAL_NUMBER_TOO_LONG",
+	passwordTooShort: "PASSWORD_TOO_SHORT",
+	passwordTooLong: "PASSWORD_TOO_LONG"
 }

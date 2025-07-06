@@ -1,5 +1,8 @@
 import { User } from "@prisma/client"
-import { validateNameLength } from "../services/validationService.js"
+import {
+	validateNameLength,
+	validatePasswordLength
+} from "../services/validationService.js"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
@@ -16,6 +19,68 @@ export async function retrieveUser(
 
 	// Get the user
 	return context.user
+}
+
+export async function createOwner(
+	parent: any,
+	args: {
+		restaurantUuid: string
+		name: string
+		password: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	// Check if the user is logged in
+	if (context.davUser == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid },
+		include: { company: true }
+	})
+
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if the company of the restaurant belongs to the user
+	if (restaurant.company.userId !== BigInt(context.davUser.Id)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if the restaurant already has an owner
+	const existingOwner = await context.prisma.user.findFirst({
+		where: {
+			restaurantId: restaurant.id,
+			role: "OWNER"
+		}
+	})
+
+	if (existingOwner != null) {
+		throwApiError(apiErrors.restaurantAlreadyHasOwner)
+	}
+
+	// Validate the name
+	throwValidationError(validateNameLength(args.name))
+
+	// Validate the password
+	throwValidationError(validatePasswordLength(args.password))
+
+	// Create the user
+	return await context.prisma.user.create({
+		data: {
+			restaurant: {
+				connect: {
+					id: restaurant.id
+				}
+			},
+			name: args.name,
+			password: args.password,
+			role: "OWNER"
+		}
+	})
 }
 
 export async function createUser(

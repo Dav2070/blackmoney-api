@@ -16,4 +16,12 @@ export function validateSerialNumberLength(serialNumber: string) {
 		return validationErrors.serialNumberTooLong
 	}
 }
+
+export function validatePasswordLength(password: string) {
+	if (password.length < 6) {
+		return validationErrors.passwordTooShort
+	} else if (password.length > 25) {
+		return validationErrors.passwordTooLong
+	}
+}
 //#endregion

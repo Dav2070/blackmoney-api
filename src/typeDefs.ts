@@ -16,6 +16,11 @@ export const typeDefs = `#graphql
 			userName: String!
 			password: String!
 		): Session!
+		createOwner(
+			restaurantUuid: String!
+			name: String!
+			password: String!
+		): User!
 		createUser(
 			restaurantUuid: String!
 			name: String!
@@ -220,6 +225,7 @@ export const typeDefs = `#graphql
 	}
 
 	enum UserRole {
+		OWNER
 		ADMIN
 		USER
 	}
