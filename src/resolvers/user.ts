@@ -89,8 +89,13 @@ export async function createUser(
 	context: ResolverContext
 ): Promise<User> {
 	// Check if the user is logged in
-	if (context.davUser == null) {
+	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Check if the user is an owner
+	if (context.user.role !== "OWNER") {
+		throwApiError(apiErrors.actionNotAllowed)
 	}
 
 	// Get the restaurant
@@ -103,8 +108,8 @@ export async function createUser(
 		throwApiError(apiErrors.restaurantDoesNotExist)
 	}
 
-	// Check if the company of the restaurant belongs to the user
-	if (restaurant.company.userId !== BigInt(context.davUser.Id)) {
+	// Check if the restaurant belongs to the user
+	if (context.user.restaurantId !== restaurant.id) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
