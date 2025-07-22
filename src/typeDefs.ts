@@ -26,6 +26,15 @@ export const typeDefs = `#graphql
 			name: String!
 		): User!
 		createCompany(name: String!): Company!
+		updateRestaurant(
+			uuid: String!
+			name: String
+			city: String
+			country: Country
+			line1: String
+			line2: String
+			postalCode: String
+		): Restaurant!
 		createRegister(
 			restaurantUuid: String!
 			name: String!
@@ -75,6 +84,11 @@ export const typeDefs = `#graphql
 	type Restaurant {
 		uuid: String!
 		name: String!
+		city: String
+		country: Country
+		line1: String
+		line2: String
+		postalCode: String
 		users: UserList!
 		rooms: RoomList!
 	}
@@ -238,6 +252,10 @@ export const typeDefs = `#graphql
 	enum PaymentMethod {
 		CASH
 		CARD
+	}
+
+	enum Country {
+		GERMANY
 	}
 
 	input OrderItemInput {

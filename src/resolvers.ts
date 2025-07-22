@@ -31,6 +31,7 @@ export const resolvers = {
 		createOwner: userResolvers.createOwner,
 		createUser: userResolvers.createUser,
 		createCompany: companyResolvers.createCompany,
+		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,
 		createRegisterClient: registerClientResolvers.createRegisterClient,
 		createRoom: roomResolvers.createRoom,
