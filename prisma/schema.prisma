@@ -18,16 +18,21 @@ model Company {
 }
 
 model Restaurant {
-  id        BigInt     @id @default(autoincrement())
-  uuid      String     @unique @default(uuid())
-  name      String     @db.VarChar
-  companyId BigInt
-  company   Company    @relation(fields: [companyId], references: [id])
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now()) @updatedAt
-  users     User[]
-  rooms     Room[]
-  registers Register[]
+  id         BigInt     @id @default(autoincrement())
+  uuid       String     @unique @default(uuid())
+  companyId  BigInt
+  company    Company    @relation(fields: [companyId], references: [id])
+  name       String     @db.VarChar
+  city       String?    @db.VarChar
+  country    Country?
+  line1      String?    @db.VarChar
+  line2      String?    @db.VarChar
+  postalCode String?    @db.VarChar
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now()) @updatedAt
+  users      User[]
+  rooms      Room[]
+  registers  Register[]
 }
 
 model Register {
@@ -229,4 +234,8 @@ enum CategoryType {
 enum PaymentMethod {
   CASH
   CARD
+}
+
+enum Country {
+  GERMANY
 }
