@@ -27,25 +27,19 @@ export function validatePasswordLength(password: string) {
 }
 
 export function validateCityLength(city: string) {
-	if (city.length < 2) {
-		return validationErrors.cityTooShort
-	} else if (city.length > 50) {
+	if (city.length > 50) {
 		return validationErrors.cityTooLong
 	}
 }
 
 export function validateLine1Length(line1: string) {
-	if (line1.length < 2) {
-		return validationErrors.line1TooShort
-	} else if (line1.length > 100) {
+	if (line1.length > 100) {
 		return validationErrors.line1TooLong
 	}
 }
 
 export function validateLine2Length(line2: string) {
-	if (line2.length < 2) {
-		return validationErrors.line2TooShort
-	} else if (line2.length > 100) {
+	if (line2.length > 100) {
 		return validationErrors.line2TooLong
 	}
 }

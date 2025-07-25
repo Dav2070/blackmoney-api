@@ -118,11 +118,8 @@ export const validationErrors = {
 	serialNumberTooLong: "SERIAL_NUMBER_TOO_LONG",
 	passwordTooShort: "PASSWORD_TOO_SHORT",
 	passwordTooLong: "PASSWORD_TOO_LONG",
-	cityTooShort: "CITY_TOO_SHORT",
 	cityTooLong: "CITY_TOO_LONG",
-	line1TooShort: "LINE1_TOO_SHORT",
 	line1TooLong: "LINE1_TOO_LONG",
-	line2TooShort: "LINE2_TOO_SHORT",
 	line2TooLong: "LINE2_TOO_LONG",
 	postalCodeInvalid: "POSTAL_CODE_INVALID"
 }
