@@ -2,7 +2,7 @@ import { PrismaClient, User } from "@prisma/client"
 import { User as DavUser } from "dav-js"
 
 export type PaymentMethod = "CASH" | "CARD"
-export type Country = "GERMANY"
+export type Country = "DE"
 
 export interface ResolverContext {
 	prisma: PrismaClient

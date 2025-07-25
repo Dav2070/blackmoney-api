@@ -255,7 +255,7 @@ export const typeDefs = `#graphql
 	}
 
 	enum Country {
-		GERMANY
+		DE
 	}
 
 	input OrderItemInput {

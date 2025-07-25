@@ -237,5 +237,5 @@ enum PaymentMethod {
 }
 
 enum Country {
-  GERMANY
+  DE
 }
