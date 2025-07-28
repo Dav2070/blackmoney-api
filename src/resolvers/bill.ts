@@ -19,7 +19,11 @@ export async function createBill(
 	const registerClient = await context.prisma.registerClient.findFirst({
 		where: { uuid: args.registerClientUuid },
 		include: {
-			register: true
+			register: {
+				include: {
+					restaurant: true
+				}
+			}
 		}
 	})
 
@@ -28,7 +32,7 @@ export async function createBill(
 	}
 
 	// Check if the user belongs to the same restaurant as the register client
-	if (context.user.restaurantId !== registerClient.register.restaurantId) {
+	if (context.user.companyId !== registerClient.register.restaurant.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 

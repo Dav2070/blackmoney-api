@@ -73,14 +73,18 @@ export async function updateRestaurant(
 		throwApiError(apiErrors.restaurantDoesNotExist)
 	}
 
-	// Get the restaurant of the user
-	const userRestaurant = await context.prisma.restaurant.findFirst({
-		where: { id: context.user.restaurantId }
-	})
+	// Check if the user can edit the restaurant
+	if (context.user.role === "ADMIN") {
+		const userRestaurant = await context.prisma.userToRestaurant.findFirst({
+			where: {
+				userId: context.user.id,
+				restaurantId: restaurant.id
+			}
+		})
 
-	// Check if the user belongs to the same company as the restaurant
-	if (restaurant.companyId !== userRestaurant.companyId) {
-		throwApiError(apiErrors.actionNotAllowed)
+		if (userRestaurant == null) {
+			throwApiError(apiErrors.actionNotAllowed)
+		}
 	}
 
 	if (
@@ -157,7 +161,13 @@ export async function users(
 	args: {},
 	context: ResolverContext
 ): Promise<List<User>> {
-	let where = { restaurantId: restaurant.id }
+	let where = {
+		userToRestaurants: {
+			some: {
+				restaurantId: restaurant.id
+			}
+		}
+	}
 
 	const [total, items] = await context.prisma.$transaction([
 		context.prisma.user.count({ where }),

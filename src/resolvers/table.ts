@@ -1,4 +1,3 @@
-import crypto from "crypto"
 import { Order, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
@@ -17,15 +16,21 @@ export async function retrieveTable(
 	// Get the table
 	let table = await context.prisma.table.findFirst({
 		where: { uuid: args.uuid },
-		include: { room: true }
+		include: {
+			room: {
+				include: {
+					restaurant: true
+				}
+			}
+		}
 	})
 
 	if (table == null) {
 		return null
 	}
 
-	// Check if the room belongs to the user
-	if (table.room.restaurantId != context.user.restaurantId) {
+	// Check if the user can access the table
+	if (table.room.restaurant.companyId !== context.user.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 

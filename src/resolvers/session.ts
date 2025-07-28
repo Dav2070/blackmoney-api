@@ -5,7 +5,7 @@ import { throwApiError } from "../utils.js"
 
 export async function login(
 	parent: any,
-	args: { restaurantUuid: string; userName: string; password: string },
+	args: { companyUuid: string; userName: string; password: string },
 	context: ResolverContext
 ): Promise<Session> {
 	// Check if the user is logged in
@@ -13,31 +13,30 @@ export async function login(
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the restaurant
-	let restaurant = await context.prisma.restaurant.findFirst({
-		where: { uuid: args.restaurantUuid },
-		include: { company: true }
+	// Get the company
+	let company = await context.prisma.company.findFirst({
+		where: { uuid: args.companyUuid }
 	})
 
-	if (restaurant == null) {
-		throwApiError(apiErrors.restaurantDoesNotExist)
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
 	}
 
 	// Check if the company of the restaurant belongs to the user
-	if (restaurant.company.userId !== BigInt(context.davUser.Id)) {
+	if (company.userId !== BigInt(context.davUser.Id)) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
 	// Get the user of the company by name & password
 	let user = await context.prisma.user.findFirst({
 		where: {
-			restaurantId: restaurant.id,
+			companyId: company.id,
 			name: args.userName,
 			password: args.password
 		}
 	})
 
-	if (user == null) {
+	if (user == null || user.password == null) {
 		throwApiError(apiErrors.loginFailed)
 	}
 

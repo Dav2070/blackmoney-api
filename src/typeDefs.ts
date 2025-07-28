@@ -3,7 +3,7 @@ export const typeDefs = `#graphql
 		retrieveUser: User!
 		retrieveCompany: Company
 		retrieveRestaurant(uuid: String!): Restaurant
-		listRooms: RoomList!
+		listRooms(restaurantUuid: String!): RoomList!
 		listCategories: CategoryList!
 		retrieveTable(uuid: String!): Table
 		retrieveOrder(uuid: String!): Order
@@ -12,17 +12,17 @@ export const typeDefs = `#graphql
 
 	type Mutation {
 		login(
-			restaurantUuid: String!
+			companyUuid: String!
 			userName: String!
 			password: String!
 		): Session!
 		createOwner(
-			restaurantUuid: String!
+			companyUuid: String!
 			name: String!
 			password: String!
 		): User!
 		createUser(
-			restaurantUuid: String!
+			companyUuid: String!
 			name: String!
 		): User!
 		createCompany(name: String!): Company!
@@ -44,7 +44,10 @@ export const typeDefs = `#graphql
 			name: String!
 			serialNumber: String!
 		): RegisterClient!
-		createRoom(name: String!): Room!
+		createRoom(
+			restaurantUuid: String!
+			name: String!
+		): Room!
 		createTable(
 			roomUuid: String!
 			name: String!

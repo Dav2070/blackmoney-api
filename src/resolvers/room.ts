@@ -6,6 +6,7 @@ import { validateNameLength } from "../services/validationService.js"
 export async function createRoom(
 	parent: any,
 	args: {
+		restaurantUuid: string
 		name: string
 	},
 	context: ResolverContext
@@ -15,6 +16,18 @@ export async function createRoom(
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findUnique({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	// Check if the restaurant exists
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// TODO: Check if the user can create a room in this restaurant
+
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
@@ -22,14 +35,20 @@ export async function createRoom(
 	return await context.prisma.room.create({
 		data: {
 			name: args.name,
-			restaurantId: context.user.restaurantId
+			restaurant: {
+				connect: {
+					id: restaurant.id
+				}
+			}
 		}
 	})
 }
 
 export async function listRooms(
 	parent: any,
-	args: {},
+	args: {
+		restaurantUuid: string
+	},
 	context: ResolverContext
 ): Promise<List<Room>> {
 	// Check if the user is logged in
@@ -37,9 +56,19 @@ export async function listRooms(
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the rooms of the user
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	// Check if the restaurant exists
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Get the rooms of the restaurant
 	const where = {
-		restaurantId: context.user.restaurantId
+		restaurantId: restaurant.id
 	}
 
 	const [total, items] = await context.prisma.$transaction([
