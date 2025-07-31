@@ -82,6 +82,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		restaurants: RestaurantList!
+		users: UserList!
 	}
 
 	type Restaurant {
