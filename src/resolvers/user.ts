@@ -1,4 +1,4 @@
-import { User } from "@prisma/client"
+import { User, UserRole } from "@prisma/client"
 import {
 	validateNameLength,
 	validatePasswordLength
@@ -85,7 +85,7 @@ export async function createOwner(
 
 export async function createUser(
 	parent: any,
-	args: { companyUuid: string; name: string },
+	args: { companyUuid: string; name: string; role?: UserRole },
 	context: ResolverContext
 ): Promise<User> {
 	// Check if the user is logged in
@@ -124,7 +124,8 @@ export async function createUser(
 					id: company.id
 				}
 			},
-			name: args.name
+			name: args.name,
+			role: args.role ?? "USER"
 		}
 	})
 }

@@ -24,6 +24,7 @@ export const typeDefs = `#graphql
 		createUser(
 			companyUuid: String!
 			name: String!
+			role: UserRole
 		): User!
 		createCompany(name: String!): Company!
 		updateRestaurant(
