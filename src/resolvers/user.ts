@@ -7,7 +7,7 @@ import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 
-export async function retrieveUser(
+export async function retrieveOwnUser(
 	parent: any,
 	args: {},
 	context: ResolverContext
@@ -19,6 +19,41 @@ export async function retrieveUser(
 
 	// Get the user
 	return context.user
+}
+
+export async function retrieveUser(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Check if the user is an owner
+	if (!["OWNER", "ADMIN"].includes(context.user.role)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Retrieve the user
+	const user = await context.prisma.user.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	// Check if the user exists
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user belongs to the same company as the logged in user
+	if (user.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return user
 }
 
 export async function createOwner(
@@ -94,7 +129,7 @@ export async function createUser(
 	}
 
 	// Check if the user is an owner
-	if (context.user.role !== "OWNER") {
+	if (!["OWNER", "ADMIN"].includes(context.user.role)) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 

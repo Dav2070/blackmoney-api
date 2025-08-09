@@ -1,6 +1,7 @@
 export const typeDefs = `#graphql
 	type Query {
-		retrieveUser: User!
+		retrieveOwnUser: User!
+		retrieveUser(uuid: String!): User!
 		retrieveCompany: Company
 		retrieveRestaurant(uuid: String!): Restaurant
 		listRooms(restaurantUuid: String!): RoomList!

@@ -17,6 +17,7 @@ import * as variationItemResolvers from "./resolvers/variationItem.js"
 
 export const resolvers = {
 	Query: {
+		retrieveOwnUser: userResolvers.retrieveOwnUser,
 		retrieveUser: userResolvers.retrieveUser,
 		retrieveCompany: companyResolvers.retrieveCompany,
 		retrieveRestaurant: restaurantResolvers.retrieveRestaurant,
