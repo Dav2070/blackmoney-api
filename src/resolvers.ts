@@ -31,6 +31,7 @@ export const resolvers = {
 		login: sessionResolvers.login,
 		createOwner: userResolvers.createOwner,
 		createUser: userResolvers.createUser,
+		setPasswordForUser: userResolvers.setPasswordForUser,
 		createCompany: companyResolvers.createCompany,
 		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,

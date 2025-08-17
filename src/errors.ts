@@ -113,6 +113,16 @@ export const apiErrors = {
 		code: "ORDER_ALREADY_COMPLETED",
 		message: "Order already completed",
 		status: 400
+	},
+	userHasNoPassword: {
+		code: "USER_HAS_NO_PASSWORD",
+		message: "Please set a password for the user to log in",
+		status: 412
+	},
+	userAlreadyHasPassword: {
+		code: "USER_ALREADY_HAS_PASSWORD",
+		message: "User already has a password",
+		status: 412
 	}
 }
 

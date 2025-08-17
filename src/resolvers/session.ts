@@ -31,12 +31,15 @@ export async function login(
 	let user = await context.prisma.user.findFirst({
 		where: {
 			companyId: company.id,
-			name: args.userName,
-			password: args.password
+			name: args.userName
 		}
 	})
 
-	if (user == null || user.password == null) {
+	if (user == null) {
+		throwApiError(apiErrors.loginFailed)
+	} else if (user.password == null) {
+		throwApiError(apiErrors.userHasNoPassword)
+	} else if (user.password !== args.password) {
 		throwApiError(apiErrors.loginFailed)
 	}
 

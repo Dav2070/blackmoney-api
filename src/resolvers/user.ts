@@ -185,3 +185,49 @@ export async function createUser(
 		}
 	})
 }
+
+export async function setPasswordForUser(
+	parent: any,
+	args: {
+		uuid: string
+		password: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	// Check if the user is logged in
+	if (context.davUser == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the user
+	const user = await context.prisma.user.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user belongs to the same company as the logged in user
+	const company = await context.prisma.company.findFirst({
+		where: { userId: context.davUser.Id }
+	})
+
+	if (company == null || company.id !== user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if the user already has a password
+	if (user.password != null) {
+		throwApiError(apiErrors.userAlreadyHasPassword)
+	}
+
+	// Validate the password
+	throwValidationError(validatePasswordLength(args.password))
+
+	// Set the initial password
+	return await context.prisma.user.update({
+		where: { id: user.id },
+		data: { password: args.password }
+	})
+}

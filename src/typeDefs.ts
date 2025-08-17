@@ -28,6 +28,10 @@ export const typeDefs = `#graphql
 			role: UserRole
 			restaurants: [String!]!
 		): User!
+		setPasswordForUser(
+			uuid: String!
+			password: String!
+		): User!
 		createCompany(name: String!): Company!
 		updateRestaurant(
 			uuid: String!
