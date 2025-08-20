@@ -57,7 +57,8 @@ export const resolvers = {
 	},
 	Restaurant: {
 		users: restaurantResolvers.users,
-		rooms: restaurantResolvers.rooms
+		rooms: restaurantResolvers.rooms,
+		printers: restaurantResolvers.printers
 	},
 	Room: {
 		tables: roomResolvers.tables
