@@ -1,0 +1,70 @@
+import { Printer } from "@prisma/client"
+import { ResolverContext } from "../types.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { apiErrors } from "../errors.js"
+import { validateIpAddress, validateNameLength } from "../services/validationService.js"
+
+export async function createPrinter(
+	parent: any,
+	args: {
+		restaurantUuid: string
+		name: string
+		ipAddress: string
+	},
+	context: ResolverContext
+): Promise<Printer> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Check if the user is an admin or owner
+	if (context.user.role !== "ADMIN" && context.user.role !== "OWNER") {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if the restaurant belongs to the same company as the user
+	if (restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if there is alrady a printer with this ip address
+	const existingPrinter = await context.prisma.printer.findFirst({
+		where: {
+			ipAddress: args.ipAddress,
+			restaurantId: restaurant.id
+		}
+	})
+
+	if (existingPrinter != null) {
+		throwApiError(apiErrors.printerAlreadyExists)
+	}
+
+	// Validate the args
+	throwValidationError(
+		validateNameLength(args.name),
+		validateIpAddress(args.ipAddress)
+	)
+
+	// Create the printer
+	return await context.prisma.printer.create({
+		data: {
+			name: args.name,
+			ipAddress: args.ipAddress,
+			restaurant: {
+				connect: {
+					id: restaurant.id
+				}
+			}
+		}
+	})
+}

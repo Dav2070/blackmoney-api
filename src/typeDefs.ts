@@ -51,6 +51,11 @@ export const typeDefs = `#graphql
 			name: String!
 			serialNumber: String!
 		): RegisterClient!
+		createPrinter(
+			restaurantUuid: String!
+			name: String!
+			ipAddress: String!
+		): Printer!
 		createRoom(
 			restaurantUuid: String!
 			name: String!
@@ -118,6 +123,12 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		serialNumber: String!
+	}
+
+	type Printer {
+		uuid: String!
+		name: String!
+		ipAddress: String!
 	}
 
 	type User {

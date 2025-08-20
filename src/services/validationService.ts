@@ -1,4 +1,4 @@
-import { postalCodeRegex } from "../constants.js"
+import { ipAddressRegex, postalCodeRegex } from "../constants.js"
 import { validationErrors } from "../errors.js"
 
 //#region Field validations
@@ -47,6 +47,12 @@ export function validateLine2Length(line2: string) {
 export function validatePostalCode(postalCode: string) {
 	if (postalCode.length > 0 && !postalCodeRegex.test(postalCode)) {
 		return validationErrors.postalCodeInvalid
+	}
+}
+
+export function validateIpAddress(ipAddress: string) {
+	if (ipAddress.length > 0 && !ipAddressRegex.test(ipAddress)) {
+		return validationErrors.ipAddressInvalid
 	}
 }
 //#endregion

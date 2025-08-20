@@ -93,6 +93,11 @@ export const apiErrors = {
 		message: "The user already has a company",
 		status: 400
 	},
+	printerAlreadyExists: {
+		code: "PRINTER_ALREADY_EXISTS",
+		message: "Printer with this IP address already exists",
+		status: 400
+	},
 	restaurantAlreadyHasOwner: {
 		code: "RESTAURANT_ALREADY_HAS_OWNER",
 		message: "The restaurant already has an owner",
@@ -136,5 +141,6 @@ export const validationErrors = {
 	cityTooLong: "CITY_TOO_LONG",
 	line1TooLong: "LINE1_TOO_LONG",
 	line2TooLong: "LINE2_TOO_LONG",
-	postalCodeInvalid: "POSTAL_CODE_INVALID"
+	postalCodeInvalid: "POSTAL_CODE_INVALID",
+	ipAddressInvalid: "IP_ADDRESS_INVALID"
 }

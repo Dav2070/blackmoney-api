@@ -4,6 +4,7 @@ import * as companyResolvers from "./resolvers/company.js"
 import * as restaurantResolvers from "./resolvers/restaurant.js"
 import * as registerResolvers from "./resolvers/register.js"
 import * as registerClientResolvers from "./resolvers/registerClient.js"
+import * as printerResolvers from "./resolvers/printer.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as categoryResolvers from "./resolvers/category.js"
@@ -36,6 +37,7 @@ export const resolvers = {
 		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,
 		createRegisterClient: registerClientResolvers.createRegisterClient,
+		createPrinter: printerResolvers.createPrinter,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		createBill: billResolvers.createBill,
