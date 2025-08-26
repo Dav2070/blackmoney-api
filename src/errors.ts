@@ -48,6 +48,11 @@ export const apiErrors = {
 		message: "RegisterClient does not exist",
 		status: 404
 	},
+	printerDoesNotExist: {
+		code: "PRINTER_DOES_NOT_EXIST",
+		message: "Printer does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",

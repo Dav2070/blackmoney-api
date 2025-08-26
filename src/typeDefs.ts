@@ -56,6 +56,11 @@ export const typeDefs = `#graphql
 			name: String!
 			ipAddress: String!
 		): Printer!
+		updatePrinter(
+			uuid: String!
+			name: String
+			ipAddress: String
+		): Printer!
 		createRoom(
 			restaurantUuid: String!
 			name: String!

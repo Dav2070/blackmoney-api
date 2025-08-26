@@ -38,6 +38,7 @@ export const resolvers = {
 		createRegister: registerResolvers.createRegister,
 		createRegisterClient: registerClientResolvers.createRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
+		updatePrinter: printerResolvers.updatePrinter,
 		createRoom: roomResolvers.createRoom,
 		createTable: tableResolvers.createTable,
 		createBill: billResolvers.createBill,
