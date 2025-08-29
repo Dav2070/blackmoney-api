@@ -110,6 +110,20 @@ export async function updatePrinter(
 		return printer
 	}
 
+	if (args.ipAddress != null && args.ipAddress !== printer.ipAddress) {
+		// Check if there is alrady a printer with this ip address
+		const existingPrinter = await context.prisma.printer.findFirst({
+			where: {
+				ipAddress: args.ipAddress,
+				restaurantId: printer.restaurant.id
+			}
+		})
+
+		if (existingPrinter != null) {
+			throwApiError(apiErrors.printerAlreadyExists)
+		}
+	}
+
 	// Validate the args
 	let errors: string[] = []
 
