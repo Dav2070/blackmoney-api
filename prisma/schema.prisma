@@ -189,6 +189,30 @@ model OrderItemVariationToVariationItem {
   updatedAt            DateTime           @default(now()) @updatedAt
 }
 
+model Menu {
+  id           BigInt        @id @default(autoincrement())
+  uuid         String        @unique @default(uuid())
+  name         String        @db.VarChar
+  offerType    OfferType
+  discountType DiscountType?
+  offerValue   Int
+  startDate    DateTime?
+  endDate      DateTime?
+  startTime    String?       @db.VarChar
+  endTime      String?       @db.VarChar
+  weekdays     Weekday[]
+  menuItems    MenuItem[]
+}
+
+model MenuItem {
+  id       BigInt    @id @default(autoincrement())
+  uuid     String    @unique @default(uuid())
+  name     String    @db.VarChar
+  products Product[]
+  menuId   BigInt
+  menu     Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+}
+
 model Product {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
@@ -200,6 +224,7 @@ model Product {
   updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
   orderItems          OrderItem[]
+  menuItems           MenuItem[]
 }
 
 model ProductToVariation {
@@ -255,6 +280,16 @@ enum CategoryType {
   FOOD
 }
 
+enum OfferType {
+  FIXED_PRICE
+  DISCOUNT
+}
+
+enum DiscountType {
+  PERCENTAGE
+  AMOUNT
+}
+
 enum PaymentMethod {
   CASH
   CARD
@@ -262,4 +297,14 @@ enum PaymentMethod {
 
 enum Country {
   DE
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
 }
