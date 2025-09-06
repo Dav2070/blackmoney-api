@@ -1,8 +1,20 @@
-import { Product, Variation } from "@prisma/client"
+import { Category, Product, Variation } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 
 export function id(product: Product): number {
 	return Number(product.id)
+}
+
+export async function category(
+	product: Product,
+	args: {},
+	context: ResolverContext
+): Promise<Category> {
+	return await context.prisma.category.findFirst({
+		where: {
+			id: product.categoryId
+		}
+	})
 }
 
 export async function variations(

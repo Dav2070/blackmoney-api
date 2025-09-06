@@ -197,6 +197,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		price: Int!
+		category: Category!
 		variations: VariationList!
 	}
 

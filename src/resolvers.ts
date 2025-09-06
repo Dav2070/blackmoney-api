@@ -72,6 +72,7 @@ export const resolvers = {
 	},
 	Product: {
 		id: productResolvers.id,
+		category: productResolvers.category,
 		variations: productResolvers.variations
 	},
 	Variation: {
