@@ -184,6 +184,7 @@ export const typeDefs = `#graphql
 	type Menu {
 		uuid: String!
 		categories: CategoryList!
+		offers: OfferList!
 	}
 
 	type Category {
@@ -237,6 +238,16 @@ export const typeDefs = `#graphql
 
 	type Bill {
 		uuid: String!
+	}
+
+	type Offer {
+		uuid: String!
+		name: String!
+	}
+
+	type OfferList {
+		total: Int!
+		items: [Offer!]!
 	}
 
 	type Order {

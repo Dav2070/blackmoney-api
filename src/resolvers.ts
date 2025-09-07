@@ -70,7 +70,8 @@ export const resolvers = {
 		orders: tableResolvers.orders
 	},
 	Menu: {
-		categories: menuResolvers.categories
+		categories: menuResolvers.categories,
+		offers: menuResolvers.offers
 	},
 	Category: {
 		products: categoryResolvers.products
