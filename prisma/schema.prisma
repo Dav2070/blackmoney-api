@@ -221,14 +221,15 @@ model Offer {
 }
 
 model OfferItem {
-  id        BigInt    @id @default(autoincrement())
-  uuid      String    @unique @default(uuid())
-  name      String    @db.VarChar
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  products  Product[]
-  offerId   BigInt
-  offer     Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  id            BigInt    @id @default(autoincrement())
+  uuid          String    @unique @default(uuid())
+  offerId       BigInt
+  offer         Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  name          String    @db.VarChar
+  maxSelections Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  products      Product[]
 }
 
 model Product {
