@@ -36,6 +36,7 @@ model Restaurant {
   rooms             Room[]
   registers         Register[]
   printers          Printer[]
+  menus             Menu[]
 }
 
 model Register {
@@ -129,6 +130,17 @@ model Table {
   orders    Order[]
 }
 
+model Menu {
+  id           BigInt     @id @default(autoincrement())
+  uuid         String     @unique @default(uuid())
+  restaurantId BigInt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+  categories   Category[]
+  offers       Offer[]
+}
+
 model Bill {
   id               BigInt         @id @default(autoincrement())
   uuid             String         @unique @default(uuid())
@@ -189,9 +201,11 @@ model OrderItemVariationToVariationItem {
   updatedAt            DateTime           @default(now()) @updatedAt
 }
 
-model Menu {
+model Offer {
   id           BigInt        @id @default(autoincrement())
   uuid         String        @unique @default(uuid())
+  menuId       BigInt
+  menu         Menu          @relation(fields: [menuId], references: [id])
   name         String        @db.VarChar
   offerType    OfferType
   discountType DiscountType?
@@ -201,16 +215,20 @@ model Menu {
   startTime    String?       @db.VarChar
   endTime      String?       @db.VarChar
   weekdays     Weekday[]
-  menuItems    MenuItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+  offerItems   OfferItem[]
 }
 
-model MenuItem {
-  id       BigInt    @id @default(autoincrement())
-  uuid     String    @unique @default(uuid())
-  name     String    @db.VarChar
-  products Product[]
-  menuId   BigInt
-  menu     Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+model OfferItem {
+  id        BigInt    @id @default(autoincrement())
+  uuid      String    @unique @default(uuid())
+  name      String    @db.VarChar
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  products  Product[]
+  offerId   BigInt
+  offer     Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
 }
 
 model Product {
@@ -224,7 +242,7 @@ model Product {
   updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
   orderItems          OrderItem[]
-  menuItems           MenuItem[]
+  offerItems          OfferItem[]
 }
 
 model ProductToVariation {
@@ -262,6 +280,8 @@ model VariationItem {
 model Category {
   id        BigInt       @id @default(autoincrement())
   uuid      String       @unique @default(uuid())
+  menuId    BigInt
+  menu      Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
   name      String
   type      CategoryType @default(FOOD)
   createdAt DateTime     @default(now())
