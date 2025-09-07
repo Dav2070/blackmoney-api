@@ -113,6 +113,7 @@ export const typeDefs = `#graphql
 		users: UserList!
 		rooms: RoomList!
 		printers: PrinterList!
+		menu: Menu
 	}
 
 	type RestaurantList {
@@ -178,6 +179,10 @@ export const typeDefs = `#graphql
 	type TableList {
 		total: Int!
 		items: [Table!]!
+	}
+
+	type Menu {
+		uuid: String!
 	}
 
 	type Category {

@@ -1,4 +1,4 @@
-import { Printer, Restaurant, Room, User } from "@prisma/client"
+import { Menu, Printer, Restaurant, Room, User } from "@prisma/client"
 import { Country, List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
@@ -153,6 +153,16 @@ export async function updateRestaurant(
 	return await context.prisma.restaurant.update({
 		where: { id: restaurant.id },
 		data
+	})
+}
+
+export async function menu(
+	restaurant: Restaurant,
+	args: {},
+	context: ResolverContext
+): Promise<Menu> {
+	return await context.prisma.menu.findFirst({
+		where: { restaurantId: restaurant.id }
 	})
 }
 
