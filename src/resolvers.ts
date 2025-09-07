@@ -7,6 +7,7 @@ import * as registerClientResolvers from "./resolvers/registerClient.js"
 import * as printerResolvers from "./resolvers/printer.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
+import * as menuResolvers from "./resolvers/menu.js"
 import * as categoryResolvers from "./resolvers/category.js"
 import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
@@ -67,6 +68,9 @@ export const resolvers = {
 	},
 	Table: {
 		orders: tableResolvers.orders
+	},
+	Menu: {
+		categories: menuResolvers.categories
 	},
 	Category: {
 		products: categoryResolvers.products
