@@ -243,11 +243,31 @@ export const typeDefs = `#graphql
 	type Offer {
 		uuid: String!
 		name: String!
+		offerType: OfferType!
+		discountType: DiscountType
+		offerValue: Int!
+		startDate: String
+		endDate: String
+		startTime: String
+		endTime: String
+		weekdays: [Weekday!]!
+		offerItems: OfferItemList!
 	}
 
 	type OfferList {
 		total: Int!
 		items: [Offer!]!
+	}
+
+	type OfferItem {
+		uuid: String!
+		name: String!
+		maxSelections: Int!
+	}
+
+	type OfferItemList {
+		total: Int!
+		items: [OfferItem!]!
 	}
 
 	type Order {
@@ -300,6 +320,16 @@ export const typeDefs = `#graphql
 		DRINK
 	}
 
+	enum OfferType {
+		FIXED_PRICE
+		DISCOUNT
+	}
+
+	enum DiscountType {
+		PERCENTAGE
+		AMOUNT
+	}
+
 	enum PaymentMethod {
 		CASH
 		CARD
@@ -307,6 +337,16 @@ export const typeDefs = `#graphql
 
 	enum Country {
 		DE
+	}
+
+	enum Weekday {
+		MONDAY
+		TUESDAY
+		WEDNESDAY
+		THURSDAY
+		FRIDAY
+		SATURDAY
+		SUNDAY
 	}
 
 	input OrderItemInput {

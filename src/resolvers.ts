@@ -8,6 +8,7 @@ import * as printerResolvers from "./resolvers/printer.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as menuResolvers from "./resolvers/menu.js"
+import * as offerResolvers from "./resolvers/offer.js"
 import * as categoryResolvers from "./resolvers/category.js"
 import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
@@ -72,6 +73,9 @@ export const resolvers = {
 	Menu: {
 		categories: menuResolvers.categories,
 		offers: menuResolvers.offers
+	},
+	Offer: {
+		offerItems: offerResolvers.offerItems
 	},
 	Category: {
 		products: categoryResolvers.products
