@@ -9,6 +9,7 @@ import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as menuResolvers from "./resolvers/menu.js"
 import * as offerResolvers from "./resolvers/offer.js"
+import * as offerItemResolvers from "./resolvers/offerItem.js"
 import * as categoryResolvers from "./resolvers/category.js"
 import * as productResolvers from "./resolvers/product.js"
 import * as variationResolvers from "./resolvers/variation.js"
@@ -76,6 +77,9 @@ export const resolvers = {
 	},
 	Offer: {
 		offerItems: offerResolvers.offerItems
+	},
+	OfferItem: {
+		products: offerItemResolvers.products
 	},
 	Category: {
 		products: categoryResolvers.products

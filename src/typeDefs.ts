@@ -263,6 +263,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		maxSelections: Int!
+		products: ProductList!
 	}
 
 	type OfferItemList {
