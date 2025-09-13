@@ -1,6 +1,10 @@
 import { Offer, OfferItem } from "@prisma/client"
 import { List, ResolverContext } from "../types.js"
 
+export function id(offer: Offer): number {
+	return Number(offer.id)
+}
+
 export async function offerItems(
 	offer: Offer,
 	args: {},

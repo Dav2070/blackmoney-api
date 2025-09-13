@@ -241,6 +241,7 @@ export const typeDefs = `#graphql
 	}
 
 	type Offer {
+		id: Int!
 		uuid: String!
 		name: String!
 		offerType: OfferType!

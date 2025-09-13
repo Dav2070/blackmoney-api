@@ -76,6 +76,7 @@ export const resolvers = {
 		offers: menuResolvers.offers
 	},
 	Offer: {
+		id: offerResolvers.id,
 		offerItems: offerResolvers.offerItems
 	},
 	OfferItem: {
