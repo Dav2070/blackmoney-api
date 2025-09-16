@@ -174,6 +174,7 @@ export const typeDefs = `#graphql
 	type Table {
 		uuid: String!
 		name: Int!
+		seats: Int!
 		orders(paid: Boolean): OrderList!
 	}
 
