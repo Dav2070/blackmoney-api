@@ -3,6 +3,35 @@ import { ResolverContext, List, Room, Table } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
+export async function retrieveRoom(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<Room> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const room = await context.prisma.room.findFirst({
+		where: { uuid: args.uuid },
+		include: { restaurant: true }
+	})
+
+	if (room == null) {
+		return null
+	}
+
+	// Check if the user has access to the restaurant of the room
+	if (context.user.companyId !== room.restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return room
+}
+
 export async function createRoom(
 	parent: any,
 	args: {
