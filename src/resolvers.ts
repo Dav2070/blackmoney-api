@@ -44,6 +44,7 @@ export const resolvers = {
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
 		createRoom: roomResolvers.createRoom,
+		updateRoom: roomResolvers.updateRoom,
 		createTable: tableResolvers.createTable,
 		createBill: billResolvers.createBill,
 		createOrder: orderResolvers.createOrder,

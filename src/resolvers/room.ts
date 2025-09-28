@@ -55,7 +55,15 @@ export async function createRoom(
 		throwApiError(apiErrors.restaurantDoesNotExist)
 	}
 
-	// TODO: Check if the user can create a room in this restaurant
+	// Check if the room belongs to the same company as the user
+	if (context.user.companyId !== restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if the user is an owner or an admin
+	if (context.user.role !== "OWNER" && context.user.role !== "ADMIN") {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
 
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
@@ -69,6 +77,55 @@ export async function createRoom(
 					id: restaurant.id
 				}
 			}
+		}
+	})
+}
+
+export async function updateRoom(
+	parent: any,
+	args: {
+		uuid: string
+		name?: string
+	},
+	context: ResolverContext
+): Promise<Room> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the room
+	const room = await context.prisma.room.findFirst({
+		where: { uuid: args.uuid },
+		include: { restaurant: true }
+	})
+
+	if (room == null) {
+		throwApiError(apiErrors.roomDoesNotExist)
+	}
+
+	// Check if the room belongs to the same company as the user
+	if (context.user.companyId !== room.restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if the user is an owner or an admin
+	if (context.user.role !== "OWNER" && context.user.role !== "ADMIN") {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (args.name == null) {
+		return room
+	}
+
+	// Validate the name
+	throwValidationError(validateNameLength(args.name))
+
+	// Update the room
+	return await context.prisma.room.update({
+		where: { id: room.id },
+		data: {
+			name: args.name
 		}
 	})
 }
