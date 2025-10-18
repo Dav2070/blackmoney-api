@@ -99,12 +99,13 @@ model UserToRestaurant {
 }
 
 model Session {
-  id        BigInt   @id @default(autoincrement())
-  uuid      String   @unique @default(uuid())
-  userId    BigInt
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id         BigInt   @id @default(autoincrement())
+  uuid       String   @unique @default(uuid())
+  userId     BigInt
+  user       User     @relation(fields: [userId], references: [id])
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 }
 
 model Room {

@@ -71,7 +71,14 @@ app.use(
 					include: { user: true }
 				})
 
-				user = session?.user
+				if (session != null) {
+					user = session?.user
+
+					await prisma.session.update({
+						where: { uuid: accessToken },
+						data: { lastActive: new Date() }
+					})
+				}
 
 				if (user == null) {
 					let userResponse = await UsersController.retrieveUser(
