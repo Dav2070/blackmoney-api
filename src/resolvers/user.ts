@@ -1,10 +1,12 @@
 import { Restaurant, User, UserRole } from "@prisma/client"
+import bcrypt from "bcrypt"
 import {
 	validateNameLength,
 	validatePasswordLength
 } from "../services/validationService.js"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
+import { bcryptRounds } from "../constants.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 
 export async function retrieveOwnUser(
@@ -112,7 +114,7 @@ export async function createOwner(
 				}
 			},
 			name: args.name,
-			password: args.password,
+			password: await bcrypt.hash(args.password, bcryptRounds),
 			role: "OWNER"
 		}
 	})
@@ -228,6 +230,6 @@ export async function setPasswordForUser(
 	// Set the initial password
 	return await context.prisma.user.update({
 		where: { id: user.id },
-		data: { password: args.password }
+		data: { password: await bcrypt.hash(args.password, bcryptRounds) }
 	})
 }

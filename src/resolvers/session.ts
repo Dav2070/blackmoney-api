@@ -1,4 +1,5 @@
 import { Session, User } from "@prisma/client"
+import bcrypt from "bcrypt"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError } from "../utils.js"
@@ -39,7 +40,7 @@ export async function login(
 		throwApiError(apiErrors.loginFailed)
 	} else if (user.password == null) {
 		throwApiError(apiErrors.userHasNoPassword)
-	} else if (user.password !== args.password) {
+	} else if (!(await bcrypt.compare(args.password, user.password))) {
 		throwApiError(apiErrors.loginFailed)
 	}
 
