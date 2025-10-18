@@ -15,6 +15,7 @@ import {
 } from "dav-js"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
+import { setupTasks } from "./src/tasks.js"
 import "dotenv/config"
 
 const port = process.env.PORT || 2000
@@ -52,6 +53,11 @@ const server = new ApolloServer({
 })
 
 await server.start()
+
+if (process.env.ENV == "production") {
+	// Setup cron jobs
+	setupTasks()
+}
 
 app.use(
 	"/",
