@@ -1,7 +1,8 @@
 import { Order, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { validateSeats } from "../services/validationService.js"
 
 export async function retrieveTable(
 	parent: any,
@@ -94,6 +95,54 @@ export async function createTable(
 		data: {
 			name: highestTableNumber + 1,
 			roomId: room.id
+		}
+	})
+}
+
+export async function updateTable(
+	parent: any,
+	args: {
+		uuid: string
+		seats?: number
+	},
+	context: ResolverContext
+): Promise<Table> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the table
+	const table = await context.prisma.table.findFirst({
+		where: { uuid: args.uuid },
+		include: {
+			room: {
+				include: {
+					restaurant: true
+				}
+			}
+		}
+	})
+
+	if (table == null) {
+		throwApiError(apiErrors.tableDoesNotExist)
+	}
+
+	// Check if the user can access the table
+	if (table.room.restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (args.seats == null) return table
+
+	// Validate the args
+	throwValidationError(validateSeats(args.seats))
+
+	// Update the table
+	return await context.prisma.table.update({
+		where: { id: table.id },
+		data: {
+			seats: args.seats
 		}
 	})
 }

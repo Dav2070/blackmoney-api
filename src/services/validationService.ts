@@ -55,4 +55,10 @@ export function validateIpAddress(ipAddress: string) {
 		return validationErrors.ipAddressInvalid
 	}
 }
+
+export function validateSeats(seats: number) {
+	if (seats < 1) {
+		return validationErrors.seatsInvalid
+	}
+}
 //#endregion

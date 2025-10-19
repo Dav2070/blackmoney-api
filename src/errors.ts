@@ -147,5 +147,6 @@ export const validationErrors = {
 	line1TooLong: "LINE1_TOO_LONG",
 	line2TooLong: "LINE2_TOO_LONG",
 	postalCodeInvalid: "POSTAL_CODE_INVALID",
-	ipAddressInvalid: "IP_ADDRESS_INVALID"
+	ipAddressInvalid: "IP_ADDRESS_INVALID",
+	seatsInvalid: "SEATS_INVALID"
 }
