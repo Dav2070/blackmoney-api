@@ -158,8 +158,8 @@ model Order {
   uuid          String         @unique @default(uuid())
   paidAt        DateTime?
   paymentMethod PaymentMethod?
-  tableId       BigInt
-  table         Table          @relation(fields: [tableId], references: [id])
+  tableId       BigInt?
+  table         Table?         @relation(fields: [tableId], references: [id], onDelete: SetNull)
   userId        BigInt?
   user          User?          @relation(fields: [userId], references: [id])
   billId        BigInt?

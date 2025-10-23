@@ -147,6 +147,43 @@ export async function updateTable(
 	})
 }
 
+export async function deleteTable(
+	parent: any,
+	args: { uuid: string },
+	context: ResolverContext
+): Promise<Table> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the table
+	const table = await context.prisma.table.findFirst({
+		where: { uuid: args.uuid },
+		include: {
+			room: {
+				include: {
+					restaurant: true
+				}
+			}
+		}
+	})
+
+	if (table == null) {
+		throwApiError(apiErrors.tableDoesNotExist)
+	}
+
+	// Check if the user can access the table
+	if (table.room.restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Delete the table
+	return await context.prisma.table.delete({
+		where: { id: table.id }
+	})
+}
+
 export async function orders(
 	table: Table,
 	args: { paid?: boolean },

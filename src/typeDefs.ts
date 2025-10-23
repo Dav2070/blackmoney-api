@@ -75,6 +75,9 @@ export const typeDefs = `#graphql
 			uuid: String!
 			seats: Int
 		): Table!
+		deleteTable(
+			uuid: String!
+		): Table!
 		createBill(registerClientUuid: String!): Bill!
 		createOrder(tableUuid: String!): Order!
 		updateOrder(
