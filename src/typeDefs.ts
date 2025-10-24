@@ -69,7 +69,8 @@ export const typeDefs = `#graphql
 		updateRoom(uuid: String!, name: String): Room!
 		createTable(
 			roomUuid: String!
-			name: String!
+			name: Int!
+			seats: Int!
 		): Table!
 		updateTable(
 			uuid: String!

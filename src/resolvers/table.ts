@@ -2,7 +2,10 @@ import { Order, Table } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
-import { validateSeats } from "../services/validationService.js"
+import {
+	validateTableName,
+	validateSeats
+} from "../services/validationService.js"
 
 export async function retrieveTable(
 	parent: any,
@@ -57,6 +60,8 @@ export async function createTable(
 	parent: any,
 	args: {
 		roomUuid: string
+		name: number
+		seats: number
 	},
 	context: ResolverContext
 ): Promise<Table> {
@@ -67,34 +72,39 @@ export async function createTable(
 
 	// Get the room
 	let room = await context.prisma.room.findFirst({
-		where: { uuid: args.roomUuid }
+		where: { uuid: args.roomUuid },
+		include: { restaurant: true }
 	})
 
 	if (room == null) {
 		throwApiError(apiErrors.roomDoesNotExist)
 	}
 
-	// Check if the room belongs to the user
-	if (room.userId != BigInt(context.davUser.Id)) {
+	// Check if the room belongs to the same restaurant as the user
+	if (room.restaurant.companyId !== context.user.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Get the highest table number of the room
-	let highestTableNumber = 0
+	// Validate the args
+	throwValidationError(validateTableName(args.name), validateSeats(args.seats))
 
-	const tables = await context.prisma.table.findMany({
-		where: { roomId: room.id }
+	// Check if the table with the name already exists
+	let existingTable = await context.prisma.table.findFirst({
+		where: { roomId: room.id, name: args.name }
 	})
 
-	if (tables.length > 0) {
-		highestTableNumber = Math.max(...tables.map(table => table.name))
+	if (existingTable != null) {
+		throwApiError(apiErrors.tableAlreadyExists)
 	}
 
 	// Create the table
 	return await context.prisma.table.create({
 		data: {
-			name: highestTableNumber + 1,
-			roomId: room.id
+			room: {
+				connect: { id: room.id }
+			},
+			name: args.name,
+			seats: args.seats
 		}
 	})
 }

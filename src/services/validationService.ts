@@ -56,6 +56,12 @@ export function validateIpAddress(ipAddress: string) {
 	}
 }
 
+export function validateTableName(name: number) {
+	if (name < 1) {
+		return validationErrors.tableNameInvalid
+	}
+}
+
 export function validateSeats(seats: number) {
 	if (seats < 1) {
 		return validationErrors.seatsInvalid

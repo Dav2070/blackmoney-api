@@ -103,6 +103,11 @@ export const apiErrors = {
 		message: "Printer with this IP address already exists",
 		status: 400
 	},
+	tableAlreadyExists: {
+		code: "TABLE_ALREADY_EXISTS",
+		message: "Table with this name already exists",
+		status: 400
+	},
 	restaurantAlreadyHasOwner: {
 		code: "RESTAURANT_ALREADY_HAS_OWNER",
 		message: "The restaurant already has an owner",
@@ -148,5 +153,6 @@ export const validationErrors = {
 	line2TooLong: "LINE2_TOO_LONG",
 	postalCodeInvalid: "POSTAL_CODE_INVALID",
 	ipAddressInvalid: "IP_ADDRESS_INVALID",
+	tableNameInvalid: "TABLE_NAME_INVALID",
 	seatsInvalid: "SEATS_INVALID"
 }
