@@ -33,6 +33,7 @@ export const typeDefs = `#graphql
 			uuid: String!
 			password: String!
 		): User!
+		resetPasswordOfUser(uuid: String!): User!
 		createCompany(name: String!): Company!
 		updateRestaurant(
 			uuid: String!

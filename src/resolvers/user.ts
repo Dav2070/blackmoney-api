@@ -233,3 +233,41 @@ export async function setPasswordForUser(
 		data: { password: await bcrypt.hash(args.password, bcryptRounds) }
 	})
 }
+
+export async function resetPasswordOfUser(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Check if the user is an owner
+	if (!["OWNER", "ADMIN"].includes(context.user.role)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	const user = await context.prisma.user.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user belongs to the same company as the logged in user
+	if (user.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Reset the password
+	return await context.prisma.user.update({
+		where: { id: user.id },
+		data: { password: null }
+	})
+}
