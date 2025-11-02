@@ -188,6 +188,11 @@ export async function deleteTable(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
+	// Check if the user is an owner or an admin
+	if (context.user.role !== "OWNER" && context.user.role !== "ADMIN") {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
 	// Delete the table
 	return await context.prisma.table.delete({
 		where: { id: table.id }

@@ -32,6 +32,47 @@ export async function retrieveRoom(
 	return room
 }
 
+export async function listRooms(
+	parent: any,
+	args: {
+		restaurantUuid: string
+	},
+	context: ResolverContext
+): Promise<List<Room>> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	// Check if the restaurant exists
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Get the rooms of the restaurant
+	const where = {
+		restaurantId: restaurant.id
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.room.count({ where }),
+		context.prisma.room.findMany({
+			where,
+			orderBy: { name: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
 export async function createRoom(
 	parent: any,
 	args: {
@@ -130,45 +171,42 @@ export async function updateRoom(
 	})
 }
 
-export async function listRooms(
+export async function deleteRoom(
 	parent: any,
 	args: {
-		restaurantUuid: string
+		uuid: string
 	},
 	context: ResolverContext
-): Promise<List<Room>> {
+): Promise<Room> {
 	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the restaurant
-	const restaurant = await context.prisma.restaurant.findFirst({
-		where: { uuid: args.restaurantUuid }
+	// Get the room
+	const room = await context.prisma.room.findFirst({
+		where: { uuid: args.uuid },
+		include: { restaurant: true }
 	})
 
-	// Check if the restaurant exists
-	if (restaurant == null) {
-		throwApiError(apiErrors.restaurantDoesNotExist)
+	if (room == null) {
+		throwApiError(apiErrors.roomDoesNotExist)
 	}
 
-	// Get the rooms of the restaurant
-	const where = {
-		restaurantId: restaurant.id
+	// Check if the room belongs to the same company as the user
+	if (context.user.companyId !== room.restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	const [total, items] = await context.prisma.$transaction([
-		context.prisma.room.count({ where }),
-		context.prisma.room.findMany({
-			where,
-			orderBy: { name: "asc" }
-		})
-	])
-
-	return {
-		total,
-		items
+	// Check if the user is an owner or an admin
+	if (context.user.role !== "OWNER" && context.user.role !== "ADMIN") {
+		throwApiError(apiErrors.actionNotAllowed)
 	}
+
+	// Delete the room
+	return await context.prisma.room.delete({
+		where: { id: room.id }
+	})
 }
 
 export async function tables(

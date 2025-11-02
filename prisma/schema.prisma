@@ -124,7 +124,7 @@ model Table {
   id        BigInt   @id @default(autoincrement())
   uuid      String   @unique @default(uuid())
   roomId    BigInt
-  room      Room     @relation(fields: [roomId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   name      Int      @default(1)
   seats     Int      @default(2)
   createdAt DateTime @default(now())

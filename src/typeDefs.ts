@@ -67,6 +67,7 @@ export const typeDefs = `#graphql
 			name: String!
 		): Room!
 		updateRoom(uuid: String!, name: String): Room!
+		deleteRoom(uuid: String!): Room!
 		createTable(
 			roomUuid: String!
 			name: Int!
