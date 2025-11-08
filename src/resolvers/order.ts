@@ -74,6 +74,13 @@ export async function createOrder(
 	const table = await context.prisma.table.findFirst({
 		where: {
 			uuid: args.tableUuid
+		},
+		include: {
+			room: {
+				include: {
+					restaurant: true
+				}
+			}
 		}
 	})
 
@@ -82,7 +89,9 @@ export async function createOrder(
 	}
 
 	// Check if the table belongs to the same company as the user
-	// TODO
+	if (table.room.restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
 
 	// Create the order
 	return await context.prisma.order.create({
