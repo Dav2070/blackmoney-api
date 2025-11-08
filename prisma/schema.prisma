@@ -52,15 +52,16 @@ model Register {
 }
 
 model RegisterClient {
-  id           BigInt   @id @default(autoincrement())
-  uuid         String   @unique @default(uuid())
-  name         String   @db.VarChar
-  serialNumber String   @unique @db.VarChar
+  id           BigInt    @id @default(autoincrement())
+  uuid         String    @unique @default(uuid())
+  name         String?   @db.VarChar
+  serialNumber String    @unique @db.VarChar
   registerId   BigInt
-  register     Register @relation(fields: [registerId], references: [id])
+  register     Register  @relation(fields: [registerId], references: [id])
   bills        Bill[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  sessions     Session[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
 }
 
 model Printer {
@@ -99,13 +100,15 @@ model UserToRestaurant {
 }
 
 model Session {
-  id         BigInt   @id @default(autoincrement())
-  uuid       String   @unique @default(uuid())
-  userId     BigInt
-  user       User     @relation(fields: [userId], references: [id])
-  lastActive DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  id               BigInt          @id @default(autoincrement())
+  uuid             String          @unique @default(uuid())
+  userId           BigInt
+  user             User            @relation(fields: [userId], references: [id])
+  registerClientId BigInt?
+  registerClient   RegisterClient? @relation(fields: [registerClientId], references: [id])
+  lastActive       DateTime        @default(now())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
 }
 
 model Room {
