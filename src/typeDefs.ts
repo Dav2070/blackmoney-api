@@ -17,6 +17,8 @@ export const typeDefs = `#graphql
 			companyUuid: String!
 			userName: String!
 			password: String!
+			registerUuid: String!
+			registerClientSerialNumber: String!
 		): Session!
 		createOwner(
 			companyUuid: String!

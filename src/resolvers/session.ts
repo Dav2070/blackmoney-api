@@ -2,11 +2,18 @@ import { Session, User } from "@prisma/client"
 import bcrypt from "bcrypt"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { validateSerialNumberLength } from "../services/validationService.js"
 
 export async function login(
 	parent: any,
-	args: { companyUuid: string; userName: string; password: string },
+	args: {
+		companyUuid: string
+		userName: string
+		password: string
+		registerUuid: string
+		registerClientSerialNumber: string
+	},
 	context: ResolverContext
 ): Promise<Session> {
 	// Check if the user is logged in
@@ -44,10 +51,57 @@ export async function login(
 		throwApiError(apiErrors.loginFailed)
 	}
 
+	// Get the register
+	const register = await context.prisma.register.findFirst({
+		where: {
+			uuid: args.registerUuid
+		},
+		include: {
+			restaurant: true
+		}
+	})
+
+	if (register == null) {
+		throwApiError(apiErrors.registerDoesNotExist)
+	}
+
+	// Check if the register belongs to the company
+	if (register.restaurant.companyId !== company.id) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Try to find an existing register client with the serial number
+	let registerClient = await context.prisma.registerClient.findFirst({
+		where: {
+			serialNumber: args.registerClientSerialNumber,
+			registerId: register.id
+		}
+	})
+
+	if (registerClient == null) {
+		// Validate the serial number
+		throwValidationError(
+			validateSerialNumberLength(args.registerClientSerialNumber)
+		)
+
+		// Create a new register client
+		registerClient = await context.prisma.registerClient.create({
+			data: {
+				serialNumber: args.registerClientSerialNumber,
+				registerId: register.id
+			}
+		})
+	}
+
 	// Create a session for the user
 	return context.prisma.session.create({
 		data: {
-			userId: user.id
+			user: {
+				connect: { id: user.id }
+			},
+			registerClient: {
+				connect: { id: registerClient.id }
+			}
 		}
 	})
 }
