@@ -4,6 +4,7 @@ export const typeDefs = `#graphql
 		retrieveUser(uuid: String!): User!
 		retrieveCompany: Company
 		retrieveRestaurant(uuid: String!): Restaurant
+		retrieveRegister(uuid: String!): Register
 		retrieveRoom(uuid: String!): Room
 		listRooms(restaurantUuid: String!): RoomList!
 		listCategories: CategoryList!
@@ -139,6 +140,7 @@ export const typeDefs = `#graphql
 	type Register {
 		uuid: String!
 		name: String!
+		registerClients: RegisterClientList!
 	}
 
 	type RegisterList {
@@ -148,8 +150,13 @@ export const typeDefs = `#graphql
 
 	type RegisterClient {
 		uuid: String!
-		name: String!
+		name: String
 		serialNumber: String!
+	}
+
+	type RegisterClientList {
+		total: Int!
+		items: [RegisterClient!]!
 	}
 
 	type Printer {

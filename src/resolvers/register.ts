@@ -1,10 +1,39 @@
-import { Register } from "@prisma/client"
+import { Register, RegisterClient } from "@prisma/client"
 import crypto from "crypto"
-import { ResolverContext } from "../types.js"
+import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import { validateNameLength } from "../services/validationService.js"
 import { createTss } from "../services/fiskalyApiService.js"
+
+export async function retrieveRegister(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<Register> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const register = await context.prisma.register.findFirst({
+		where: { uuid: args.uuid },
+		include: { restaurant: true }
+	})
+
+	if (register == null) {
+		return null
+	}
+
+	// Check if the user has access to the restaurant of the register
+	if (context.user.companyId !== register.restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return register
+}
 
 export async function createRegister(
 	parent: any,
@@ -59,4 +88,22 @@ export async function createRegister(
 			}
 		}
 	})
+}
+
+export async function registerClients(
+	register: Register,
+	args: {},
+	context: ResolverContext
+): Promise<List<RegisterClient>> {
+	let where = { registerId: register.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.registerClient.count({ where }),
+		context.prisma.registerClient.findMany({ where })
+	])
+
+	return {
+		total,
+		items
+	}
 }

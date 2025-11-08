@@ -25,6 +25,7 @@ export const resolvers = {
 		retrieveUser: userResolvers.retrieveUser,
 		retrieveCompany: companyResolvers.retrieveCompany,
 		retrieveRestaurant: restaurantResolvers.retrieveRestaurant,
+		retrieveRegister: registerResolvers.retrieveRegister,
 		retrieveRoom: roomResolvers.retrieveRoom,
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,
@@ -71,6 +72,9 @@ export const resolvers = {
 		rooms: restaurantResolvers.rooms,
 		registers: restaurantResolvers.registers,
 		printers: restaurantResolvers.printers
+	},
+	Register: {
+		registerClients: registerResolvers.registerClients
 	},
 	Room: {
 		tables: roomResolvers.tables
