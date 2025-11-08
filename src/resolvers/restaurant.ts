@@ -1,4 +1,4 @@
-import { Menu, Printer, Restaurant, Room, User } from "@prisma/client"
+import { Menu, Printer, Register, Restaurant, Room, User } from "@prisma/client"
 import { Country, List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
@@ -203,6 +203,27 @@ export async function rooms(
 	const [total, items] = await context.prisma.$transaction([
 		context.prisma.room.count({ where }),
 		context.prisma.room.findMany({
+			where,
+			orderBy: { name: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
+export async function registers(
+	restaurant: Restaurant,
+	args: {},
+	context: ResolverContext
+): Promise<List<Register>> {
+	let where = { restaurantId: restaurant.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.register.count({ where }),
+		context.prisma.register.findMany({
 			where,
 			orderBy: { name: "asc" }
 		})

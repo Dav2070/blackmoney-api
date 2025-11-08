@@ -66,10 +66,11 @@ export const resolvers = {
 		users: companyResolvers.users
 	},
 	Restaurant: {
+		menu: restaurantResolvers.menu,
 		users: restaurantResolvers.users,
 		rooms: restaurantResolvers.rooms,
-		printers: restaurantResolvers.printers,
-		menu: restaurantResolvers.menu
+		registers: restaurantResolvers.registers,
+		printers: restaurantResolvers.printers
 	},
 	Room: {
 		tables: roomResolvers.tables

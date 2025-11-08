@@ -126,6 +126,7 @@ export const typeDefs = `#graphql
 		postalCode: String
 		users: UserList!
 		rooms: RoomList!
+		registers: RegisterList!
 		printers: PrinterList!
 		menu: Menu
 	}
@@ -138,6 +139,11 @@ export const typeDefs = `#graphql
 	type Register {
 		uuid: String!
 		name: String!
+	}
+
+	type RegisterList {
+		total: Int!
+		items: [Register!]!
 	}
 
 	type RegisterClient {
