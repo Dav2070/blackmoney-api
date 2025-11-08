@@ -15,6 +15,46 @@ import {
 import { ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 
+export async function retrieveRegisterClientBySerialNumber(
+	parent: any,
+	args: { serialNumber: string },
+	context: ResolverContext
+): Promise<RegisterClient> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the register client
+	const registerClient = await context.prisma.registerClient.findFirst({
+		where: { serialNumber: args.serialNumber },
+		include: {
+			register: {
+				include: {
+					restaurant: {
+						include: {
+							company: true
+						}
+					}
+				}
+			}
+		}
+	})
+
+	if (registerClient == null) {
+		return null
+	}
+
+	// Check if the register client and the user belong to the same company
+	if (
+		registerClient.register.restaurant.companyId !== context.user.companyId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return registerClient
+}
+
 export async function createRegisterClient(
 	parent: any,
 	args: {
