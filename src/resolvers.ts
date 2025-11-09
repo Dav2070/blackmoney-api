@@ -44,7 +44,7 @@ export const resolvers = {
 		createCompany: companyResolvers.createCompany,
 		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,
-		createRegisterClient: registerClientResolvers.createRegisterClient,
+		updateRegisterClient: registerClientResolvers.updateRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
 		createRoom: roomResolvers.createRoom,

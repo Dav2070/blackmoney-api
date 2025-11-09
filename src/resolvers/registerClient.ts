@@ -57,60 +57,54 @@ export async function retrieveRegisterClientBySerialNumber(
 	return registerClient
 }
 
-export async function createRegisterClient(
+export async function updateRegisterClient(
 	parent: any,
 	args: {
-		registerUuid: string
-		name: string
-		serialNumber: string
+		uuid: string
+		name?: string
 	},
 	context: ResolverContext
 ): Promise<RegisterClient> {
 	// Check if the user is logged in
-	if (context.davUser == null) {
+	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the register
-	const register = await context.prisma.register.findFirst({
+	// Get the register client
+	const registerClient = await context.prisma.registerClient.findFirst({
 		where: {
-			uuid: args.registerUuid
+			uuid: args.uuid
 		},
 		include: {
-			restaurant: {
+			register: {
 				include: {
-					company: true
+					restaurant: true
 				}
 			}
 		}
 	})
 
-	if (register == null) {
-		throwApiError(apiErrors.registerDoesNotExist)
+	if (registerClient == null) {
+		throwApiError(apiErrors.registerClientDoesNotExist)
 	}
 
-	// Check if the company of the register belongs to the user
-	if (register.restaurant.company.userId !== BigInt(context.davUser.Id)) {
+	// Check if the user can access the register client
+	if (
+		registerClient.register.restaurant.companyId !== context.user.companyId
+	) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Validate the name
+	if (args.name == null) return registerClient
+
+	// Validate the args
 	throwValidationError(validateNameLength(args.name))
 
-	// Validate the serial number
-	throwValidationError(validateSerialNumberLength(args.serialNumber))
-
-	// Create the register client
-	return await context.prisma.registerClient.create({
+	// Update the register client
+	return await context.prisma.registerClient.update({
+		where: { id: registerClient.id },
 		data: {
-			uuid: crypto.randomUUID(),
-			name: args.name,
-			serialNumber: args.serialNumber,
-			register: {
-				connect: {
-					id: register.id
-				}
-			}
+			name: args.name
 		}
 	})
 }

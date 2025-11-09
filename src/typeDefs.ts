@@ -55,10 +55,9 @@ export const typeDefs = `#graphql
 			restaurantUuid: String!
 			name: String!
 		): Register!
-		createRegisterClient(
-			registerUuid: String!
-			name: String!
-			serialNumber: String!
+		updateRegisterClient(
+			uuid: String!
+			name: String
 		): RegisterClient!
 		createPrinter(
 			restaurantUuid: String!
