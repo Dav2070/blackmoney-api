@@ -43,7 +43,7 @@ model Register {
   id              BigInt           @id @default(autoincrement())
   uuid            String           @unique @default(uuid())
   name            String           @db.VarChar
-  adminPuk        String           @db.VarChar
+  adminPin        String           @db.VarChar
   restaurantId    BigInt
   restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
   createdAt       DateTime         @default(now())
@@ -55,13 +55,15 @@ model RegisterClient {
   id           BigInt    @id @default(autoincrement())
   uuid         String    @unique @default(uuid())
   name         String?   @db.VarChar
-  serialNumber String    @unique @db.VarChar
+  serialNumber String    @db.VarChar
   registerId   BigInt
   register     Register  @relation(fields: [registerId], references: [id])
   bills        Bill[]
   sessions     Session[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @default(now()) @updatedAt
+
+  @@unique([registerId, serialNumber])
 }
 
 model Printer {

@@ -73,3 +73,13 @@ export async function findCorrectVariationForOrderItem(
 		return orderItemVariation
 	}
 }
+
+export function generateAdminPin(): string {
+	let pin = ""
+
+	for (let i = 0; i < 10; i++) {
+		pin += Math.floor(Math.random() * 10).toString()
+	}
+
+	return pin
+}

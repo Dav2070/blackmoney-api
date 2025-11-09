@@ -98,52 +98,6 @@ export async function createRegisterClient(
 	// Validate the serial number
 	throwValidationError(validateSerialNumberLength(args.serialNumber))
 
-	// Get the TSS & initialize it if necessary
-	let tss = await retrieveTss(register.uuid)
-
-	if (tss == null) {
-		throwApiError(apiErrors.tssDoesNotExist)
-	}
-
-	// Authenticate the TSS for admin
-	const authenticateAdminResponse = await authenticateAdmin(
-		register.uuid,
-		"12345678"
-	)
-
-	if (!authenticateAdminResponse) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	if (tss.state === "CREATED") {
-		// Set the state to UNINITIALIZED
-		tss = await updateTss(register.uuid, "UNINITIALIZED")
-
-		if (tss == null) {
-			throwApiError(apiErrors.unexpectedError)
-		}
-	}
-
-	if (tss.state === "UNINITIALIZED") {
-		// Set an admin pin for the TSS
-		const setPinResponse = await setTssAdminPin(
-			register.uuid,
-			register.adminPuk,
-			"12345678"
-		)
-
-		if (!setPinResponse) {
-			throwApiError(apiErrors.unexpectedError)
-		}
-
-		// Set the state to INITIALIZED
-		tss = await updateTss(register.uuid, "INITIALIZED")
-
-		if (tss == null) {
-			throwApiError(apiErrors.unexpectedError)
-		}
-	}
-
 	// Create the fiskaly client
 	const uuid = crypto.randomUUID()
 

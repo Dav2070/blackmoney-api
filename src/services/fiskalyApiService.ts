@@ -60,6 +60,24 @@ export async function authenticateAdmin(
 	}
 }
 
+export async function logoutAdmin(tssUuid: string): Promise<boolean> {
+	try {
+		await axios({
+			method: "post",
+			url: `${fiskalyApiBaseUrl}/tss/${tssUuid}/admin/logout`,
+			headers: {
+				Authorization: `Bearer ${await getAccessToken()}`
+			},
+			data: {}
+		})
+
+		return true
+	} catch (error) {
+		console.error(error)
+		return false
+	}
+}
+
 export async function createTss(uuid: string): Promise<Tss | null> {
 	try {
 		const response = await axios({
