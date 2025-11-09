@@ -4,6 +4,7 @@ import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateSerialNumberLength } from "../services/validationService.js"
+import { createClient } from "../services/fiskalyApiService.js"
 
 export async function login(
 	parent: any,
@@ -91,6 +92,17 @@ export async function login(
 				registerId: register.id
 			}
 		})
+
+		// Create the fiskaly client
+		const fiskalyClient = await createClient(
+			register.uuid,
+			registerClient.uuid,
+			registerClient.serialNumber
+		)
+
+		if (fiskalyClient == null) {
+			throwApiError(apiErrors.unexpectedError)
+		}
 	}
 
 	// Create a session for the user

@@ -5,7 +5,10 @@ export const typeDefs = `#graphql
 		retrieveCompany: Company
 		retrieveRestaurant(uuid: String!): Restaurant
 		retrieveRegister(uuid: String!): Register
-		retrieveRegisterClientBySerialNumber(serialNumber: String!): RegisterClient
+		retrieveRegisterClientBySerialNumber(
+			registerUuid: String!
+			serialNumber: String!
+		): RegisterClient
 		retrieveRoom(uuid: String!): Room
 		listRooms(restaurantUuid: String!): RoomList!
 		listCategories: CategoryList!
