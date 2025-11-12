@@ -1,13 +1,46 @@
-import crypto from "crypto"
 import { RegisterClient } from "@prisma/client"
 import { apiErrors } from "../errors.js"
-import { createClient } from "../services/fiskalyApiService.js"
-import {
-	validateNameLength,
-	validateSerialNumberLength
-} from "../services/validationService.js"
+import { validateNameLength } from "../services/validationService.js"
 import { ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
+
+export async function retrieveRegisterClient(
+	parent: any,
+	args: { uuid: string },
+	context: ResolverContext
+): Promise<RegisterClient> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the register client
+	const registerClient = await context.prisma.registerClient.findFirst({
+		where: {
+			uuid: args.uuid
+		},
+		include: {
+			register: {
+				include: {
+					restaurant: true
+				}
+			}
+		}
+	})
+
+	if (registerClient == null) {
+		throwApiError(apiErrors.registerClientDoesNotExist)
+	}
+
+	// Check if the user can access the register client
+	if (
+		registerClient.register.restaurant.companyId !== context.user.companyId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return registerClient
+}
 
 export async function retrieveRegisterClientBySerialNumber(
 	parent: any,

@@ -26,6 +26,7 @@ export const resolvers = {
 		retrieveCompany: companyResolvers.retrieveCompany,
 		retrieveRestaurant: restaurantResolvers.retrieveRestaurant,
 		retrieveRegister: registerResolvers.retrieveRegister,
+		retrieveRegisterClient: registerClientResolvers.retrieveRegisterClient,
 		retrieveRegisterClientBySerialNumber:
 			registerClientResolvers.retrieveRegisterClientBySerialNumber,
 		retrieveRoom: roomResolvers.retrieveRoom,

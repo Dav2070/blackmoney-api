@@ -5,6 +5,7 @@ export const typeDefs = `#graphql
 		retrieveCompany: Company
 		retrieveRestaurant(uuid: String!): Restaurant
 		retrieveRegister(uuid: String!): Register
+		retrieveRegisterClient(uuid: String!): RegisterClient
 		retrieveRegisterClientBySerialNumber(
 			registerUuid: String!
 			serialNumber: String!
