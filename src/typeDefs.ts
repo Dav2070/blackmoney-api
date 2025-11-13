@@ -156,6 +156,9 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String
 		serialNumber: String!
+		categoryTypePrintRules: CategoryTypePrintRuleList!
+		categoryPrintRules: CategoryPrintRuleList!
+		productPrintRules: ProductPrintRuleList!
 	}
 
 	type RegisterClientList {
@@ -172,6 +175,39 @@ export const typeDefs = `#graphql
 	type PrinterList {
 		total: Int!
 		items: [Printer!]!
+	}
+
+	type CategoryTypePrintRule {
+		uuid: String!
+		categoryType: CategoryType
+		printers: PrinterList!
+	}
+
+	type CategoryTypePrintRuleList {
+		total: Int!
+		items: [CategoryTypePrintRule!]!
+	}
+
+	type CategoryPrintRule {
+		uuid: String!
+		printers: PrinterList!
+		categories: CategoryList!
+	}
+
+	type CategoryPrintRuleList {
+		total: Int!
+		items: [CategoryPrintRule!]!
+	}
+
+	type ProductPrintRule {
+		uuid: String!
+		printers: PrinterList!
+		products: ProductList!
+	}
+
+	type ProductPrintRuleList {
+		total: Int!
+		items: [ProductPrintRule!]!
 	}
 
 	type User {

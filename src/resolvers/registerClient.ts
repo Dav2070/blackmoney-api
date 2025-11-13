@@ -1,7 +1,12 @@
-import { RegisterClient } from "@prisma/client"
+import {
+	CategoryPrintRule,
+	CategoryTypePrintRule,
+	ProductPrintRule,
+	RegisterClient
+} from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { validateNameLength } from "../services/validationService.js"
-import { ResolverContext } from "../types.js"
+import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 
 export async function retrieveRegisterClient(
@@ -140,4 +145,67 @@ export async function updateRegisterClient(
 			name: args.name
 		}
 	})
+}
+
+export async function categoryTypePrintRules(
+	registerClient: RegisterClient,
+	args: {},
+	context: ResolverContext
+): Promise<List<CategoryTypePrintRule>> {
+	const where = {
+		registerClients: {
+			some: {
+				id: registerClient.id
+			}
+		}
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.categoryTypePrintRule.count({ where }),
+		context.prisma.categoryTypePrintRule.findMany({ where })
+	])
+
+	return { total, items }
+}
+
+export async function categoryPrintRules(
+	registerClient: RegisterClient,
+	args: {},
+	context: ResolverContext
+): Promise<List<CategoryPrintRule>> {
+	const where = {
+		registerClients: {
+			some: {
+				id: registerClient.id
+			}
+		}
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.categoryPrintRule.count({ where }),
+		context.prisma.categoryPrintRule.findMany({ where })
+	])
+
+	return { total, items }
+}
+
+export async function productPrintRules(
+	registerClient: RegisterClient,
+	args: {},
+	context: ResolverContext
+): Promise<List<ProductPrintRule>> {
+	const where = {
+		registerClients: {
+			some: {
+				id: registerClient.id
+			}
+		}
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.productPrintRule.count({ where }),
+		context.prisma.productPrintRule.findMany({ where })
+	])
+
+	return { total, items }
 }

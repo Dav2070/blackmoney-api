@@ -5,6 +5,9 @@ import * as restaurantResolvers from "./resolvers/restaurant.js"
 import * as registerResolvers from "./resolvers/register.js"
 import * as registerClientResolvers from "./resolvers/registerClient.js"
 import * as printerResolvers from "./resolvers/printer.js"
+import * as categoryTypePrintRuleResolvers from "./resolvers/categoryTypePrintRule.js"
+import * as categoryPrintRuleResolvers from "./resolvers/categoryPrintRule.js"
+import * as productPrintRuleResolvers from "./resolvers/productPrintRule.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as menuResolvers from "./resolvers/menu.js"
@@ -78,6 +81,22 @@ export const resolvers = {
 	},
 	Register: {
 		registerClients: registerResolvers.registerClients
+	},
+	RegisterClient: {
+		categoryTypePrintRules: registerClientResolvers.categoryTypePrintRules,
+		categoryPrintRules: registerClientResolvers.categoryPrintRules,
+		productPrintRules: registerClientResolvers.productPrintRules
+	},
+	CategoryTypePrintRule: {
+		printers: categoryTypePrintRuleResolvers.printers
+	},
+	CategoryPrintRule: {
+		printers: categoryPrintRuleResolvers.printers,
+		categories: categoryPrintRuleResolvers.categories
+	},
+	ProductPrintRule: {
+		printers: productPrintRuleResolvers.printers,
+		products: productPrintRuleResolvers.products
 	},
 	Room: {
 		tables: roomResolvers.tables
