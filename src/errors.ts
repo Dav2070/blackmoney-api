@@ -113,6 +113,11 @@ export const apiErrors = {
 		message: "The restaurant already has an owner",
 		status: 400
 	},
+	noPrintersSpecified: {
+		code: "NO_PRINTERS_SPECIFIED",
+		message: "Please specify at least one printer uuid for the PrintRule",
+		status: 400
+	},
 	productNotInOrder: {
 		code: "PRODUCT_NOT_IN_ORDER",
 		message: "Product is not in the order",

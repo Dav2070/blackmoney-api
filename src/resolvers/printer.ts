@@ -92,7 +92,7 @@ export async function createPrinter(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Check if there is alrady a printer with this ip address
+	// Check if there is already a printer with this ip address
 	const existingPrinter = await context.prisma.printer.findFirst({
 		where: {
 			ipAddress: args.ipAddress,

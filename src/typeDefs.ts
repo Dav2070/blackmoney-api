@@ -74,6 +74,11 @@ export const typeDefs = `#graphql
 			name: String
 			ipAddress: String
 		): Printer!
+		createCategoryTypePrintRule(
+			registerClientUuid: String!
+			categoryType: CategoryType
+			printerUuids: [String!]!
+		): CategoryTypePrintRule!
 		createRoom(
 			restaurantUuid: String!
 			name: String!

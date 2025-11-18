@@ -52,6 +52,8 @@ export const resolvers = {
 		updateRegisterClient: registerClientResolvers.updateRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
+		createCategoryTypePrintRule:
+			categoryTypePrintRuleResolvers.createCategoryTypePrintRule,
 		createRoom: roomResolvers.createRoom,
 		updateRoom: roomResolvers.updateRoom,
 		deleteRoom: roomResolvers.deleteRoom,

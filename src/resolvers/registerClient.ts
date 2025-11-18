@@ -153,10 +153,8 @@ export async function categoryTypePrintRules(
 	context: ResolverContext
 ): Promise<List<CategoryTypePrintRule>> {
 	const where = {
-		registerClients: {
-			some: {
-				id: registerClient.id
-			}
+		registerClient: {
+			id: registerClient.id
 		}
 	}
 
@@ -174,10 +172,8 @@ export async function categoryPrintRules(
 	context: ResolverContext
 ): Promise<List<CategoryPrintRule>> {
 	const where = {
-		registerClients: {
-			some: {
-				id: registerClient.id
-			}
+		registerClient: {
+			id: registerClient.id
 		}
 	}
 
@@ -195,10 +191,8 @@ export async function productPrintRules(
 	context: ResolverContext
 ): Promise<List<ProductPrintRule>> {
 	const where = {
-		registerClients: {
-			some: {
-				id: registerClient.id
-			}
+		registerClient: {
+			id: registerClient.id
 		}
 	}
 
