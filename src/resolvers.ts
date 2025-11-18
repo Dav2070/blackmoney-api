@@ -32,6 +32,7 @@ export const resolvers = {
 		retrieveRegisterClient: registerClientResolvers.retrieveRegisterClient,
 		retrieveRegisterClientBySerialNumber:
 			registerClientResolvers.retrieveRegisterClientBySerialNumber,
+		searchPrinters: printerResolvers.searchPrinters,
 		retrieveRoom: roomResolvers.retrieveRoom,
 		listRooms: roomResolvers.listRooms,
 		listCategories: categoryResolvers.listCategories,

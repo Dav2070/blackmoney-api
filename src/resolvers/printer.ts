@@ -1,11 +1,63 @@
-import { Printer } from "@prisma/client"
-import { ResolverContext } from "../types.js"
+import { Prisma, Printer } from "@prisma/client"
+import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import {
 	validateIpAddress,
 	validateNameLength
 } from "../services/validationService.js"
+
+export async function searchPrinters(
+	parent: any,
+	args: {
+		restaurantUuid: string
+		query: string
+	},
+	context: ResolverContext
+): Promise<List<Printer>> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if the restaurant belongs to the same company as the user
+	if (restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Search for printers
+	const where: Prisma.PrinterWhereInput = {
+		restaurantId: restaurant.id,
+		name: {
+			contains: args.query,
+			mode: "insensitive"
+		}
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.printer.count({ where }),
+		context.prisma.printer.findMany({
+			where,
+			orderBy: {
+				name: "asc"
+			}
+		})
+	])
+
+	return {
+		total,
+		items
+	}
+}
 
 export async function createPrinter(
 	parent: any,

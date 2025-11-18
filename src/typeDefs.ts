@@ -10,6 +10,10 @@ export const typeDefs = `#graphql
 			registerUuid: String!
 			serialNumber: String!
 		): RegisterClient
+		searchPrinters(
+			restaurantUuid: String!
+			query: String!
+		): PrinterList!
 		retrieveRoom(uuid: String!): Room
 		listRooms(restaurantUuid: String!): RoomList!
 		listCategories: CategoryList!
