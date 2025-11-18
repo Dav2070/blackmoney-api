@@ -84,33 +84,36 @@ model Printer {
 }
 
 model CategoryTypePrintRule {
-  id              BigInt           @id @default(autoincrement())
-  uuid            String           @unique @default(uuid())
-  categoryType    CategoryType?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now()) @updatedAt
-  registerClients RegisterClient[]
-  printers        Printer[]
+  id               BigInt         @id @default(autoincrement())
+  uuid             String         @unique @default(uuid())
+  categoryType     CategoryType?
+  registerClientId BigInt
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  printers         Printer[]
 }
 
 model CategoryPrintRule {
-  id              BigInt           @id @default(autoincrement())
-  uuid            String           @unique @default(uuid())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now()) @updatedAt
-  registerClients RegisterClient[]
-  printers        Printer[]
-  categories      Category[]
+  id               BigInt         @id @default(autoincrement())
+  uuid             String         @unique @default(uuid())
+  registerClientId BigInt
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  printers         Printer[]
+  categories       Category[]
 }
 
 model ProductPrintRule {
-  id              BigInt           @id @default(autoincrement())
-  uuid            String           @unique @default(uuid())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now()) @updatedAt
-  registerClients RegisterClient[]
-  printers        Printer[]
-  products        Product[]
+  id               BigInt         @id @default(autoincrement())
+  uuid             String         @unique @default(uuid())
+  registerClientId BigInt
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  printers         Printer[]
+  products         Product[]
 }
 
 model User {
