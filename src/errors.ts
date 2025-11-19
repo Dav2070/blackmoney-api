@@ -78,6 +78,11 @@ export const apiErrors = {
 		message: "Order item does not exist",
 		status: 404
 	},
+	categoryDoesNotExist: {
+		code: "CATEGORY_DOES_NOT_EXIST",
+		message: "Category does not exist",
+		status: 404
+	},
 	productDoesNotExist: {
 		code: "PRODUCT_DOES_NOT_EXIST",
 		message: "Product does not exist",
@@ -116,6 +121,16 @@ export const apiErrors = {
 	noPrintersSpecified: {
 		code: "NO_PRINTERS_SPECIFIED",
 		message: "Please specify at least one printer uuid for the PrintRule",
+		status: 400
+	},
+	noCategoriesSpecified: {
+		code: "NO_CATEGORIES_SPECIFIED",
+		message: "Please specify at least one category uuid for the PrintRule",
+		status: 400
+	},
+	noProductsSpecified: {
+		code: "NO_PRODUCTS_SPECIFIED",
+		message: "Please specify at least one product uuid for the PrintRule",
 		status: 400
 	},
 	productNotInOrder: {

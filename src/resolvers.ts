@@ -5,9 +5,7 @@ import * as restaurantResolvers from "./resolvers/restaurant.js"
 import * as registerResolvers from "./resolvers/register.js"
 import * as registerClientResolvers from "./resolvers/registerClient.js"
 import * as printerResolvers from "./resolvers/printer.js"
-import * as categoryTypePrintRuleResolvers from "./resolvers/categoryTypePrintRule.js"
-import * as categoryPrintRuleResolvers from "./resolvers/categoryPrintRule.js"
-import * as productPrintRuleResolvers from "./resolvers/productPrintRule.js"
+import * as printRuleResolvers from "./resolvers/printRule.js"
 import * as roomResolvers from "./resolvers/room.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as menuResolvers from "./resolvers/menu.js"
@@ -52,8 +50,7 @@ export const resolvers = {
 		updateRegisterClient: registerClientResolvers.updateRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
-		createCategoryTypePrintRule:
-			categoryTypePrintRuleResolvers.createCategoryTypePrintRule,
+		createPrintRule: printRuleResolvers.createPrintRule,
 		createRoom: roomResolvers.createRoom,
 		updateRoom: roomResolvers.updateRoom,
 		deleteRoom: roomResolvers.deleteRoom,
@@ -86,20 +83,12 @@ export const resolvers = {
 		registerClients: registerResolvers.registerClients
 	},
 	RegisterClient: {
-		categoryTypePrintRules: registerClientResolvers.categoryTypePrintRules,
-		categoryPrintRules: registerClientResolvers.categoryPrintRules,
-		productPrintRules: registerClientResolvers.productPrintRules
+		printRules: registerClientResolvers.printRules
 	},
-	CategoryTypePrintRule: {
-		printers: categoryTypePrintRuleResolvers.printers
-	},
-	CategoryPrintRule: {
-		printers: categoryPrintRuleResolvers.printers,
-		categories: categoryPrintRuleResolvers.categories
-	},
-	ProductPrintRule: {
-		printers: productPrintRuleResolvers.printers,
-		products: productPrintRuleResolvers.products
+	PrintRule: {
+		printers: printRuleResolvers.printers,
+		categories: printRuleResolvers.categories,
+		products: printRuleResolvers.products
 	},
 	Room: {
 		tables: roomResolvers.tables
