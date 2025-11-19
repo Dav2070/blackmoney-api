@@ -62,9 +62,7 @@ model RegisterClient {
   updatedAt              DateTime                @default(now()) @updatedAt
   bills                  Bill[]
   sessions               Session[]
-  categoryTypePrintRules CategoryTypePrintRule[]
-  categoryPrintRules     CategoryPrintRule[]
-  productPrintRules      ProductPrintRule[]
+  printRules             PrintRule[]
 
   @@unique([registerId, serialNumber])
 }
@@ -78,41 +76,20 @@ model Printer {
   restaurant             Restaurant              @relation(fields: [restaurantId], references: [id])
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @default(now()) @updatedAt
-  categoryTypePrintRules CategoryTypePrintRule[]
-  categoryPrintRules     CategoryPrintRule[]
-  productPrintRules      ProductPrintRule[]
+  printRules             PrintRule[]
 }
 
-model CategoryTypePrintRule {
+model PrintRule {
   id               BigInt         @id @default(autoincrement())
   uuid             String         @unique @default(uuid())
+  type             PrintRuleType  @default(CATEGORY_TYPE)
   categoryType     CategoryType?
   registerClientId BigInt
   registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @default(now()) @updatedAt
   printers         Printer[]
-}
-
-model CategoryPrintRule {
-  id               BigInt         @id @default(autoincrement())
-  uuid             String         @unique @default(uuid())
-  registerClientId BigInt
-  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
-  printers         Printer[]
   categories       Category[]
-}
-
-model ProductPrintRule {
-  id               BigInt         @id @default(autoincrement())
-  uuid             String         @unique @default(uuid())
-  registerClientId BigInt
-  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
-  printers         Printer[]
   products         Product[]
 }
 
@@ -292,7 +269,7 @@ model Product {
   productToVariations ProductToVariation[]
   orderItems          OrderItem[]
   offerItems          OfferItem[]
-  productPrintRules   ProductPrintRule[]
+  printRules          PrintRule[]
 }
 
 model ProductToVariation {
@@ -337,13 +314,20 @@ model Category {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @default(now()) @updatedAt
   products           Product[]
-  categoryPrintRules CategoryPrintRule[]
+  printRules         PrintRule[]
 }
 
 enum UserRole {
   OWNER
   ADMIN
   USER
+}
+
+enum PrintRuleType {
+  BILL
+  CATEGORY_TYPE
+  CATEGORIES
+  PRODUCTS
 }
 
 enum CategoryType {
