@@ -180,6 +180,50 @@ export async function createPrintRule(
 	})
 }
 
+export async function deletePrintRule(
+	parent: any,
+	args: { uuid: string },
+	context: ResolverContext
+): Promise<PrintRule> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the PrintRule
+	const printRule = await context.prisma.printRule.findFirst({
+		where: { uuid: args.uuid },
+		include: {
+			registerClient: {
+				include: {
+					register: {
+						include: {
+							restaurant: true
+						}
+					}
+				}
+			}
+		}
+	})
+
+	if (printRule == null) {
+		throwApiError(apiErrors.printRuleDoesNotExist)
+	}
+
+	// Check if the PrintRule belongs to the same company as the user
+	if (
+		printRule.registerClient.register.restaurant.companyId !==
+		context.user.companyId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Delete the PrintRule
+	return await context.prisma.printRule.delete({
+		where: { id: printRule.id }
+	})
+}
+
 export async function printers(
 	printRule: PrintRule,
 	args: {},

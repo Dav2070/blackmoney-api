@@ -53,6 +53,11 @@ export const apiErrors = {
 		message: "Printer does not exist",
 		status: 404
 	},
+	printRuleDoesNotExist: {
+		code: "PRINT_RULE_DOES_NOT_EXIST",
+		message: "PrintRule does not exist",
+		status: 404
+	},
 	roomDoesNotExist: {
 		code: "ROOM_DOES_NOT_EXIST",
 		message: "Room does not exist",

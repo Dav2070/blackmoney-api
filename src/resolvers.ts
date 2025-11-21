@@ -51,6 +51,7 @@ export const resolvers = {
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
 		createPrintRule: printRuleResolvers.createPrintRule,
+		deletePrintRule: printRuleResolvers.deletePrintRule,
 		createRoom: roomResolvers.createRoom,
 		updateRoom: roomResolvers.updateRoom,
 		deleteRoom: roomResolvers.deleteRoom,

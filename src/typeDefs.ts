@@ -82,6 +82,7 @@ export const typeDefs = `#graphql
 			categoryUuids: [String!]
 			productUuids: [String!]
 		): PrintRule!
+		deletePrintRule(uuid: String!): PrintRule!
 		createRoom(
 			restaurantUuid: String!
 			name: String!

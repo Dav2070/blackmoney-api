@@ -324,7 +324,7 @@ enum UserRole {
 }
 
 enum PrintRuleType {
-  BILL
+  BILLS
   CATEGORY_TYPE
   CATEGORIES
   PRODUCTS
