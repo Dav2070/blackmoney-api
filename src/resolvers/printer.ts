@@ -12,6 +12,7 @@ export async function searchPrinters(
 	args: {
 		restaurantUuid: string
 		query: string
+		exclude?: string[]
 	},
 	context: ResolverContext
 ): Promise<List<Printer>> {
@@ -40,6 +41,9 @@ export async function searchPrinters(
 		name: {
 			contains: args.query,
 			mode: "insensitive"
+		},
+		uuid: {
+			notIn: args.exclude ?? []
 		}
 	}
 
@@ -47,6 +51,7 @@ export async function searchPrinters(
 		context.prisma.printer.count({ where }),
 		context.prisma.printer.findMany({
 			where,
+			take: 10,
 			orderBy: {
 				name: "asc"
 			}

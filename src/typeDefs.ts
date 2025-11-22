@@ -13,10 +13,21 @@ export const typeDefs = `#graphql
 		searchPrinters(
 			restaurantUuid: String!
 			query: String!
+			exclude: [String!]
 		): PrinterList!
 		retrieveRoom(uuid: String!): Room
 		listRooms(restaurantUuid: String!): RoomList!
-		listCategories: CategoryList!
+		searchCategories(
+			restaurantUuid: String!
+			query: String!
+			exclude: [String!]
+		): CategoryList!
+		listCategories(restaurantUuid: String!): CategoryList!
+		searchProducts(
+			restaurantUuid: String!
+			query: String!
+			exclude: [String!]
+		): ProductList!
 		retrieveTable(uuid: String!): Table
 		retrieveOrder(uuid: String!): Order
 		listOrders(completed: Boolean): OrderList!
