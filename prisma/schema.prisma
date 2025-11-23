@@ -52,38 +52,38 @@ model Register {
 }
 
 model RegisterClient {
-  id                     BigInt                  @id @default(autoincrement())
-  uuid                   String                  @unique @default(uuid())
-  name                   String?                 @db.VarChar
-  serialNumber           String                  @db.VarChar
-  registerId             BigInt
-  register               Register                @relation(fields: [registerId], references: [id])
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @default(now()) @updatedAt
-  bills                  Bill[]
-  sessions               Session[]
-  printRules             PrintRule[]
+  id           BigInt      @id @default(autoincrement())
+  uuid         String      @unique @default(uuid())
+  name         String?     @db.VarChar
+  serialNumber String      @db.VarChar
+  registerId   BigInt
+  register     Register    @relation(fields: [registerId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  bills        Bill[]
+  sessions     Session[]
+  printRules   PrintRule[]
 
   @@unique([registerId, serialNumber])
 }
 
 model Printer {
-  id                     BigInt                  @id @default(autoincrement())
-  uuid                   String                  @unique @default(uuid())
-  name                   String                  @db.VarChar
-  ipAddress              String                  @db.VarChar
-  restaurantId           BigInt
-  restaurant             Restaurant              @relation(fields: [restaurantId], references: [id])
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @default(now()) @updatedAt
-  printRules             PrintRule[]
+  id           BigInt      @id @default(autoincrement())
+  uuid         String      @unique @default(uuid())
+  name         String      @db.VarChar
+  ipAddress    String      @db.VarChar
+  restaurantId BigInt
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  printRules   PrintRule[]
 }
 
 model PrintRule {
   id               BigInt         @id @default(autoincrement())
   uuid             String         @unique @default(uuid())
-  type             PrintRuleType  @default(CATEGORY_TYPE)
-  categoryType     CategoryType?
+  type             PrintRuleType  @default(PRODUCT_TYPE)
+  productType      ProductType?
   registerClientId BigInt
   registerClient   RegisterClient @relation(fields: [registerClientId], references: [id])
   createdAt        DateTime       @default(now())
@@ -241,7 +241,8 @@ model Offer {
   uuid         String        @unique @default(uuid())
   menuId       BigInt
   menu         Menu          @relation(fields: [menuId], references: [id])
-  name         String        @db.VarChar
+  productId    BigInt?       @unique
+  product      Product?      @relation(fields: [productId], references: [id])
   offerType    OfferType
   discountType DiscountType?
   offerValue   Int
@@ -271,10 +272,12 @@ model OfferItem {
 model Product {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
+  type                ProductType          @default(FOOD)
   name                String
   price               Int
   categoryId          BigInt
   category            Category             @relation(fields: [categoryId], references: [id])
+  offer               Offer?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
@@ -316,16 +319,15 @@ model VariationItem {
 }
 
 model Category {
-  id                 BigInt              @id @default(autoincrement())
-  uuid               String              @unique @default(uuid())
-  menuId             BigInt
-  menu               Menu                @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  name               String
-  type               CategoryType        @default(FOOD)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @default(now()) @updatedAt
-  products           Product[]
-  printRules         PrintRule[]
+  id         BigInt      @id @default(autoincrement())
+  uuid       String      @unique @default(uuid())
+  menuId     BigInt
+  menu       Menu        @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @default(now()) @updatedAt
+  products   Product[]
+  printRules PrintRule[]
 }
 
 enum UserRole {
@@ -334,16 +336,18 @@ enum UserRole {
   USER
 }
 
-enum PrintRuleType {
-  BILLS
-  CATEGORY_TYPE
-  CATEGORIES
-  PRODUCTS
-}
-
-enum CategoryType {
+enum ProductType {
   DRINK
   FOOD
+  SPECIAL
+  MENU
+}
+
+enum PrintRuleType {
+  BILLS
+  PRODUCT_TYPE
+  CATEGORIES
+  PRODUCTS
 }
 
 enum OrderItemType {
