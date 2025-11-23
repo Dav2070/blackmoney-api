@@ -1,4 +1,10 @@
-import { Product, Order, OrderItem, OrderItemVariation } from "@prisma/client"
+import {
+	Product,
+	Order,
+	OrderItem,
+	OrderItemVariation,
+	Offer
+} from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError } from "../utils.js"
@@ -122,6 +128,20 @@ export async function product(
 	return await context.prisma.product.findFirst({
 		where: {
 			id: orderItem.productId
+		}
+	})
+}
+
+export async function offer(
+	orderItem: OrderItem,
+	args: {},
+	context: ResolverContext
+): Promise<Offer> {
+	if (orderItem.offerId == null) return null
+
+	return await context.prisma.offer.findFirst({
+		where: {
+			id: orderItem.offerId
 		}
 	})
 }

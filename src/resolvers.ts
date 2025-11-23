@@ -132,6 +132,7 @@ export const resolvers = {
 	OrderItem: {
 		order: orderItemResolvers.order,
 		product: orderItemResolvers.product,
+		offer: orderItemResolvers.offer,
 		orderItemVariations: orderItemResolvers.orderItemVariations
 	},
 	OrderItemVariation: {
