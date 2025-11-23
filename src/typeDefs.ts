@@ -88,7 +88,7 @@ export const typeDefs = `#graphql
 		createPrintRule(
 			registerClientUuid: String!
 			type: PrintRuleType!
-			categoryType: CategoryType
+			productType: ProductType
 			printerUuids: [String!]!
 			categoryUuids: [String!]
 			productUuids: [String!]
@@ -208,7 +208,7 @@ export const typeDefs = `#graphql
 	type PrintRule {
 		uuid: String!
 		type: PrintRuleType!
-		categoryType: CategoryType
+		productType: ProductType
 		printers: PrinterList!
 		categories: CategoryList!
 		products: ProductList!
@@ -267,7 +267,6 @@ export const typeDefs = `#graphql
 	type Category {
 		uuid: String!
 		name: String!
-		type: CategoryType!
 		products: ProductList!
 	}
 
@@ -279,6 +278,7 @@ export const typeDefs = `#graphql
 	type Product {
 		id: Int!
 		uuid: String!
+		type: ProductType!
 		name: String!
 		price: Int!
 		category: Category!
@@ -320,7 +320,6 @@ export const typeDefs = `#graphql
 	type Offer {
 		id: Int!
 		uuid: String!
-		name: String!
 		offerType: OfferType!
 		discountType: DiscountType
 		offerValue: Int!
@@ -395,14 +394,16 @@ export const typeDefs = `#graphql
 		USER
 	}
 
-	enum CategoryType {
+	enum ProductType {
 		FOOD
 		DRINK
+		SPECIAL
+		MENU
 	}
 
 	enum PrintRuleType {
 		BILLS
-		CATEGORY_TYPE
+		PRODUCT_TYPE
 		CATEGORIES
 		PRODUCTS
 	}

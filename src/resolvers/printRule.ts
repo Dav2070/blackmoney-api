@@ -1,6 +1,6 @@
 import {
 	Category,
-	CategoryType,
+	ProductType,
 	Printer,
 	PrintRule,
 	PrintRuleType,
@@ -15,7 +15,7 @@ export async function createPrintRule(
 	args: {
 		registerClientUuid: string
 		type: PrintRuleType
-		categoryType?: CategoryType
+		productType?: ProductType
 		printerUuids: string[]
 		categoryUuids?: string[]
 		productUuids?: string[]
@@ -106,9 +106,7 @@ export async function createPrintRule(
 			}
 
 			// Check if the category belongs to the same company
-			if (
-				category.menu.restaurant.companyId !== context.user.companyId
-			) {
+			if (category.menu.restaurant.companyId !== context.user.companyId) {
 				throwApiError(apiErrors.actionNotAllowed)
 			}
 
@@ -144,7 +142,8 @@ export async function createPrintRule(
 
 			// Check if the product belongs to the same company
 			if (
-				product.category.menu.restaurant.companyId !== context.user.companyId
+				product.category.menu.restaurant.companyId !==
+				context.user.companyId
 			) {
 				throwApiError(apiErrors.actionNotAllowed)
 			}
@@ -161,7 +160,7 @@ export async function createPrintRule(
 	return await context.prisma.printRule.create({
 		data: {
 			type: args.type,
-			categoryType: args.categoryType,
+			productType: args.productType,
 			registerClient: {
 				connect: {
 					id: registerClient.id
