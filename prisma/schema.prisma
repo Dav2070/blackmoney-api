@@ -195,13 +195,23 @@ model Order {
 model OrderItem {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
+  type                OrderItemType        @default(PRODUCT)
   count               Int                  @default(1)
+  orderItemId         BigInt?
+  orderItem           OrderItem?           @relation("OrderItemToChildren", fields: [orderItemId], references: [id])
   orderId             BigInt
   productId           BigInt
+  offerId             BigInt?
+  discount            Int                  @default(0)
+  notes               String?              @db.VarChar
+  takeAway            Boolean              @default(false)
+  course              Int?
   order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  offer               Offer?               @relation(fields: [offerId], references: [id])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
+  orderItems          OrderItem[]          @relation("OrderItemToChildren")
   orderItemVariations OrderItemVariation[]
 }
 
@@ -242,6 +252,7 @@ model Offer {
   weekdays     Weekday[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
+  orderItems   OrderItem[]
   offerItems   OfferItem[]
 }
 
@@ -333,6 +344,12 @@ enum PrintRuleType {
 enum CategoryType {
   DRINK
   FOOD
+}
+
+enum OrderItemType {
+  PRODUCT
+  MENU
+  SPECIAL
 }
 
 enum OfferType {
