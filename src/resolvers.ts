@@ -117,6 +117,7 @@ export const resolvers = {
 	Product: {
 		id: productResolvers.id,
 		category: productResolvers.category,
+		offer: productResolvers.offer,
 		variations: productResolvers.variations
 	},
 	Variation: {

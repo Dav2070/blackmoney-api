@@ -282,6 +282,7 @@ export const typeDefs = `#graphql
 		name: String!
 		price: Int!
 		category: Category!
+		offer: Offer
 		variations: VariationList!
 	}
 

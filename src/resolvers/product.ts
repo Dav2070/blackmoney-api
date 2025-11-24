@@ -1,4 +1,4 @@
-import { Category, Prisma, Product, Variation } from "@prisma/client"
+import { Category, Prisma, Product, Variation, Offer } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { throwApiError } from "../utils.js"
 import { apiErrors } from "../errors.js"
@@ -76,6 +76,18 @@ export async function category(
 	return await context.prisma.category.findFirst({
 		where: {
 			id: product.categoryId
+		}
+	})
+}
+
+export async function offer(
+	product: Product,
+	args: {},
+	context: ResolverContext
+): Promise<Offer> {
+	return await context.prisma.offer.findFirst({
+		where: {
+			productId: product.id
 		}
 	})
 }
