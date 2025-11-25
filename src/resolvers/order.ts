@@ -1,4 +1,13 @@
-import { Bill, Order, OrderItem, Table } from "@prisma/client"
+import {
+	Bill,
+	Order,
+	OrderItem,
+	OrderItemType,
+	Prisma,
+	Product,
+	ProductType,
+	Table
+} from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
@@ -341,6 +350,12 @@ export async function addProductsToOrder(
 				variationItemUuids: string[]
 				count: number
 			}[]
+			orderItems?: {
+				count: number
+				notes?: string
+				takeAway: boolean
+				course?: number
+			}[]
 		}[]
 	},
 	context: ResolverContext
@@ -351,7 +366,7 @@ export async function addProductsToOrder(
 	}
 
 	// Get the order
-	let order = await context.prisma.order.findFirst({
+	const order = await context.prisma.order.findFirst({
 		where: {
 			uuid: args.uuid
 		}
@@ -363,16 +378,23 @@ export async function addProductsToOrder(
 	}
 
 	// Get the products from the database
-	let products: {
+	const products: {
 		id: bigint
 		count: number
+		type: ProductType
 		variations: {
 			variationItemIds: bigint[]
 			count: number
 		}[]
+		orderItems: {
+			count: number
+			notes?: string
+			takeAway: boolean
+			course?: number
+		}[]
 	}[] = []
 
-	for (let item of args.products) {
+	for (const item of args.products) {
 		const product = await context.prisma.product.findFirst({
 			where: {
 				uuid: item.uuid
@@ -383,16 +405,18 @@ export async function addProductsToOrder(
 			throwApiError(apiErrors.productDoesNotExist)
 		}
 
+		// TODO: Get the offer of the product & add it to the menues and specials order items
+
 		const variations: {
 			variationItemIds: bigint[]
 			count: number
 		}[] = []
 
 		if (item.variations != null) {
-			for (let variationItem of item.variations) {
+			for (const variationItem of item.variations) {
 				const variationItemIds: bigint[] = []
 
-				for (let variationItemUuid of variationItem.variationItemUuids) {
+				for (const variationItemUuid of variationItem.variationItemUuids) {
 					const variationItem =
 						await context.prisma.variationItem.findFirst({
 							where: {
@@ -419,12 +443,22 @@ export async function addProductsToOrder(
 		products.push({
 			id: product.id,
 			count: item.count,
-			variations
+			type: product.type,
+			variations,
+			orderItems: item.orderItems ?? []
 		})
 	}
 
 	// Add the products to the order
-	for (let product of products) {
+	for (const product of products) {
+		let type: OrderItemType = "PRODUCT"
+
+		if (product.type === "MENU") {
+			type = "MENU"
+		} else if (product.type === "SPECIAL") {
+			type = "SPECIAL"
+		}
+
 		// Check if there is already a OrderItem
 		let orderItem = await context.prisma.orderItem.findFirst({
 			where: {
@@ -447,12 +481,13 @@ export async function addProductsToOrder(
 							id: product.id
 						}
 					},
-					count: product.count
+					count: product.count,
+					type
 				}
 			})
 
 			// Add the variations to the OrderItem
-			for (let variation of product.variations) {
+			for (const variation of product.variations) {
 				// For each variation in product, create an OrderItemVariation
 				let orderItemVariation =
 					await context.prisma.orderItemVariation.create({
@@ -466,7 +501,7 @@ export async function addProductsToOrder(
 						}
 					})
 
-				for (let variationItemId of variation.variationItemIds) {
+				for (const variationItemId of variation.variationItemIds) {
 					// For each variationItemId in variation, create an OrderItemVariationToVariationItem
 					await context.prisma.orderItemVariationToVariationItem.create({
 						data: {
@@ -484,8 +519,36 @@ export async function addProductsToOrder(
 					})
 				}
 			}
+
+			if (type === "MENU" || type === "SPECIAL") {
+				// Add the order items to the OrderItem
+				for (const item of product.orderItems) {
+					// Create a new OrderItem for each order item
+					await context.prisma.orderItem.create({
+						data: {
+							order: {
+								connect: {
+									id: order.id
+								}
+							},
+							product: {
+								connect: {
+									id: product.id
+								}
+							},
+							count: item.count,
+							type,
+							orderItem: {
+								connect: {
+									id: orderItem.id
+								}
+							}
+						}
+					})
+				}
+			}
 		} else {
-			for (let variation of product.variations) {
+			for (const variation of product.variations) {
 				// Check if there is already a OrderItemVariation
 				let orderVariationItem = await findCorrectVariationForOrderItem(
 					context.prisma,
@@ -534,6 +597,59 @@ export async function addProductsToOrder(
 						},
 						data: {
 							count: orderVariationItem.count + variation.count
+						}
+					})
+				}
+			}
+
+			for (const item of product.orderItems) {
+				// Check if there is already a OrderItem for the order item
+				let orderSubItem = await context.prisma.orderItem.findFirst({
+					where: {
+						orderId: order.id,
+						productId: product.id,
+						orderItemId: orderItem.id,
+						notes: item.notes,
+						takeAway: item.takeAway,
+						course: item.course,
+						type: type
+					}
+				})
+
+				if (orderSubItem == null) {
+					// Create a new OrderItem for the order item
+					await context.prisma.orderItem.create({
+						data: {
+							order: {
+								connect: {
+									id: order.id
+								}
+							},
+							product: {
+								connect: {
+									id: product.id
+								}
+							},
+							count: item.count,
+							notes: item.notes,
+							takeAway: item.takeAway,
+							course: item.course,
+							type: type,
+							orderItem: {
+								connect: {
+									id: orderItem.id
+								}
+							}
+						}
+					})
+				} else {
+					// Update the OrderItem for the order item
+					await context.prisma.orderItem.update({
+						where: {
+							id: orderSubItem.id
+						},
+						data: {
+							count: orderSubItem.count + item.count
 						}
 					})
 				}
@@ -810,8 +926,9 @@ export async function orderItems(
 	args: {},
 	context: ResolverContext
 ): Promise<List<OrderItem>> {
-	const where = {
-		orderId: order.id
+	const where: Prisma.OrderItemWhereInput = {
+		orderId: order.id,
+		orderItemId: null
 	}
 
 	const [total, items] = await context.prisma.$transaction([

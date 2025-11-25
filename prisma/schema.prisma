@@ -211,7 +211,7 @@ model OrderItem {
   offer               Offer?               @relation(fields: [offerId], references: [id])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
-  orderItems          OrderItem[]          @relation("OrderItemToChildren")
+  orderItems          OrderItem[]          @relation("OrderItemToOrderItem")
   orderItemVariations OrderItemVariation[]
 }
 
