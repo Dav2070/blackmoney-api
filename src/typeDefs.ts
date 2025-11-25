@@ -369,6 +369,7 @@ export const typeDefs = `#graphql
 		count: Int!
 		order: Order!
 		product: Product!
+		orderItems: OrderItemList!
 		offer: Offer
 		orderItemVariations: OrderItemVariationList!
 	}

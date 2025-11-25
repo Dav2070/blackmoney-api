@@ -146,6 +146,24 @@ export async function offer(
 	})
 }
 
+export async function orderItems(
+	orderItem: OrderItem,
+	args: {},
+	context: ResolverContext
+): Promise<List<OrderItem>> {
+	const where = { orderId: orderItem.orderId }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.orderItem.count({ where }),
+		context.prisma.orderItem.findMany({ where })
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
 export async function orderItemVariations(
 	orderItem: OrderItem,
 	args: {},
