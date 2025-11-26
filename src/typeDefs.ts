@@ -367,6 +367,7 @@ export const typeDefs = `#graphql
 	type OrderItem {
 		uuid: String!
 		count: Int!
+		type: OrderItemType!
 		notes: String
 		takeAway: Boolean!
 		course: Int
@@ -411,6 +412,12 @@ export const typeDefs = `#graphql
 		PRODUCT_TYPE
 		CATEGORIES
 		PRODUCTS
+	}
+
+	enum OrderItemType {
+		PRODUCT
+		MENU
+		SPECIAL
 	}
 
 	enum OfferType {

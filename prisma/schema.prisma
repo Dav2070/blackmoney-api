@@ -198,7 +198,7 @@ model OrderItem {
   type                OrderItemType        @default(PRODUCT)
   count               Int                  @default(1)
   orderItemId         BigInt?
-  orderItem           OrderItem?           @relation("OrderItemToChildren", fields: [orderItemId], references: [id])
+  orderItem           OrderItem?           @relation("OrderItemToOrderItem", fields: [orderItemId], references: [id])
   orderId             BigInt
   productId           BigInt
   offerId             BigInt?
