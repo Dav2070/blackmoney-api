@@ -368,6 +368,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		count: Int!
 		type: OrderItemType!
+		discount: Int
 		notes: String
 		takeAway: Boolean!
 		course: Int
@@ -468,10 +469,8 @@ export const typeDefs = `#graphql
 	}
 
 	input AddProductOrderItemInput {
+		productUuid: String!
 		count: Int!
-		notes: String
-		takeAway: Boolean!
-		course: Int
 	}
 
 	input OrderItemVariationInput {

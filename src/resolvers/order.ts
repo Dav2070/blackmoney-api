@@ -351,10 +351,8 @@ export async function addProductsToOrder(
 				count: number
 			}[]
 			orderItems?: {
+				productUuid: string
 				count: number
-				notes?: string
-				takeAway: boolean
-				course?: number
 			}[]
 		}[]
 	},
@@ -387,10 +385,8 @@ export async function addProductsToOrder(
 			count: number
 		}[]
 		orderItems: {
+			productUuid: string
 			count: number
-			notes?: string
-			takeAway: boolean
-			course?: number
 		}[]
 	}[] = []
 
@@ -523,6 +519,17 @@ export async function addProductsToOrder(
 			if (type === "MENU" || type === "SPECIAL") {
 				// Add the order items to the OrderItem
 				for (const item of product.orderItems) {
+					// Get the product of the order item
+					const subProduct = await context.prisma.product.findFirst({
+						where: {
+							uuid: item.productUuid
+						}
+					})
+
+					if (subProduct == null) {
+						throwApiError(apiErrors.productDoesNotExist)
+					}
+
 					// Create a new OrderItem for each order item
 					await context.prisma.orderItem.create({
 						data: {
@@ -533,11 +540,11 @@ export async function addProductsToOrder(
 							},
 							product: {
 								connect: {
-									id: product.id
+									id: subProduct.id
 								}
 							},
 							count: item.count,
-							type,
+							type: "PRODUCT",
 							orderItem: {
 								connect: {
 									id: orderItem.id
@@ -609,10 +616,7 @@ export async function addProductsToOrder(
 						orderId: order.id,
 						productId: product.id,
 						orderItemId: orderItem.id,
-						notes: item.notes,
-						takeAway: item.takeAway,
-						course: item.course,
-						type: type
+						type: "PRODUCT"
 					}
 				})
 
@@ -631,10 +635,7 @@ export async function addProductsToOrder(
 								}
 							},
 							count: item.count,
-							notes: item.notes,
-							takeAway: item.takeAway,
-							course: item.course,
-							type: type,
+							type: "PRODUCT",
 							orderItem: {
 								connect: {
 									id: orderItem.id
