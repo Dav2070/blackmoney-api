@@ -151,7 +151,12 @@ export async function orderItems(
 	args: {},
 	context: ResolverContext
 ): Promise<List<OrderItem>> {
-	const where = { orderId: orderItem.orderId }
+	const where = {
+		orderId: orderItem.orderId,
+		orderItemId: {
+			not: null
+		}
+	}
 
 	const [total, items] = await context.prisma.$transaction([
 		context.prisma.orderItem.count({ where }),
