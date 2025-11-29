@@ -346,6 +346,7 @@ export async function addProductsToOrder(
 		products: {
 			uuid: string
 			count: number
+			discount?: number
 			variations?: {
 				variationItemUuids: string[]
 				count: number
@@ -380,6 +381,7 @@ export async function addProductsToOrder(
 		id: bigint
 		count: number
 		type: ProductType
+		discount: number
 		variations: {
 			variationItemIds: bigint[]
 			count: number
@@ -440,6 +442,7 @@ export async function addProductsToOrder(
 			id: product.id,
 			count: item.count,
 			type: product.type,
+			discount: item.discount,
 			variations,
 			orderItems: item.orderItems ?? []
 		})
@@ -478,6 +481,7 @@ export async function addProductsToOrder(
 						}
 					},
 					count: product.count,
+					discount: product.discount,
 					type
 				}
 			})

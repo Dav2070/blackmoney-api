@@ -459,6 +459,7 @@ export const typeDefs = `#graphql
 	input AddProductsInput {
 		uuid: String!
 		count: Int!
+		discount: Int
 		variations: [AddProductVariationInput!]
 		orderItems: [AddProductOrderItemInput!]
 	}
