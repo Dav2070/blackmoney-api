@@ -3,18 +3,36 @@ import {
 	Order,
 	OrderItem,
 	OrderItemType,
+	OrderItemVariation,
+	OrderItemVariationToVariationItem,
 	Prisma,
+	PrismaClient,
 	Product,
 	ProductType,
 	Table
 } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
-import { throwApiError, findCorrectVariationForOrderItem } from "../utils.js"
+import { throwApiError } from "../utils.js"
 import {
 	startTransaction,
 	finishTransaction
 } from "../services/fiskalyApiService.js"
+
+interface ProductInput {
+	id: bigint
+	count: number
+	type: ProductType
+	discount: number
+	variations: {
+		variationItemIds: bigint[]
+		count: number
+	}[]
+	orderItems: {
+		productUuid: string
+		count: number
+	}[]
+}
 
 export async function retrieveOrder(
 	parent: any,
@@ -377,20 +395,7 @@ export async function addProductsToOrder(
 	}
 
 	// Get the products from the database
-	const products: {
-		id: bigint
-		count: number
-		type: ProductType
-		discount: number
-		variations: {
-			variationItemIds: bigint[]
-			count: number
-		}[]
-		orderItems: {
-			productUuid: string
-			count: number
-		}[]
-	}[] = []
+	const products: ProductInput[] = []
 
 	for (const item of args.products) {
 		const product = await context.prisma.product.findFirst({
@@ -459,216 +464,70 @@ export async function addProductsToOrder(
 		}
 
 		// Check if there is already a OrderItem
-		let orderItem = await context.prisma.orderItem.findFirst({
+		let orderItems = await context.prisma.orderItem.findMany({
 			where: {
 				orderId: order.id,
-				productId: product.id
+				productId: product.id,
+				orderItemId: null,
+				discount: product.discount
+			},
+			include: {
+				orderItems: {
+					include: {
+						product: true
+					}
+				},
+				orderItemVariations: {
+					include: {
+						orderItemVariationToVariationItems: true
+					}
+				}
 			}
 		})
 
-		if (orderItem == null) {
+		if (orderItems.length == 0) {
 			// Create a new OrderItem
-			orderItem = await context.prisma.orderItem.create({
-				data: {
-					order: {
-						connect: {
-							id: order.id
-						}
-					},
-					product: {
-						connect: {
-							id: product.id
-						}
-					},
-					count: product.count,
-					discount: product.discount,
-					type
-				}
-			})
+			await createOrderItemForProductInput(
+				context.prisma,
+				product,
+				order,
+				type
+			)
+		} else if (type === "MENU") {
+			let foundOrderItem = false
 
-			// Add the variations to the OrderItem
-			for (const variation of product.variations) {
-				// For each variation in product, create an OrderItemVariation
-				let orderItemVariation =
-					await context.prisma.orderItemVariation.create({
-						data: {
-							orderItem: {
-								connect: {
-									id: orderItem.id
-								}
-							},
-							count: variation.count
-						}
-					})
-
-				for (const variationItemId of variation.variationItemIds) {
-					// For each variationItemId in variation, create an OrderItemVariationToVariationItem
-					await context.prisma.orderItemVariationToVariationItem.create({
-						data: {
-							orderItemVariation: {
-								connect: {
-									id: orderItemVariation.id
-								}
-							},
-							variationItem: {
-								connect: {
-									id: variationItemId
-								}
-							}
-						}
-					})
-				}
-			}
-
-			if (type === "MENU" || type === "SPECIAL") {
-				// Add the order items to the OrderItem
-				for (const item of product.orderItems) {
-					// Get the product of the order item
-					const subProduct = await context.prisma.product.findFirst({
-						where: {
-							uuid: item.productUuid
-						}
-					})
-
-					if (subProduct == null) {
-						throwApiError(apiErrors.productDoesNotExist)
-					}
-
-					// Create a new OrderItem for each order item
-					await context.prisma.orderItem.create({
-						data: {
-							order: {
-								connect: {
-									id: order.id
-								}
-							},
-							product: {
-								connect: {
-									id: subProduct.id
-								}
-							},
-							count: item.count,
-							type: "PRODUCT",
-							orderItem: {
-								connect: {
-									id: orderItem.id
-								}
-							}
-						}
-					})
-				}
-			}
-		} else {
-			for (const variation of product.variations) {
-				// Check if there is already a OrderItemVariation
-				let orderVariationItem = await findCorrectVariationForOrderItem(
+			for (const orderItem of orderItems) {
+				// Check if the existing OrderItem has exactly the same properties and sub order items
+				const equal = await productInputAndOrderItemEqual(
 					context.prisma,
-					orderItem,
-					variation.variationItemIds
+					product,
+					orderItem
 				)
 
-				if (orderVariationItem == null) {
-					// Create a new OrderItemVariation
-					orderVariationItem =
-						await context.prisma.orderItemVariation.create({
-							data: {
-								orderItem: {
-									connect: {
-										id: orderItem.id
-									}
-								},
-								count: variation.count
-							}
-						})
-
-					for (let variationItemId of variation.variationItemIds) {
-						// For each variationItemId in variation, create an OrderItemVariationToVariationItem
-						await context.prisma.orderItemVariationToVariationItem.create(
-							{
-								data: {
-									orderItemVariation: {
-										connect: {
-											id: orderVariationItem.id
-										}
-									},
-									variationItem: {
-										connect: {
-											id: variationItemId
-										}
-									}
-								}
-							}
-						)
-					}
-				} else {
-					// Update the OrderItemVariation
-					await context.prisma.orderItemVariation.update({
-						where: {
-							id: orderVariationItem.id
-						},
-						data: {
-							count: orderVariationItem.count + variation.count
-						}
-					})
-				}
-			}
-
-			for (const item of product.orderItems) {
-				// Check if there is already a OrderItem for the order item
-				let orderSubItem = await context.prisma.orderItem.findFirst({
-					where: {
-						orderId: order.id,
-						productId: product.id,
-						orderItemId: orderItem.id,
-						type: "PRODUCT"
-					}
-				})
-
-				if (orderSubItem == null) {
-					// Create a new OrderItem for the order item
-					await context.prisma.orderItem.create({
-						data: {
-							order: {
-								connect: {
-									id: order.id
-								}
-							},
-							product: {
-								connect: {
-									id: product.id
-								}
-							},
-							count: item.count,
-							type: "PRODUCT",
-							orderItem: {
-								connect: {
-									id: orderItem.id
-								}
-							}
-						}
-					})
-				} else {
-					// Update the OrderItem for the order item
+				if (equal) {
+					// Update the count of the existing OrderItem
 					await context.prisma.orderItem.update({
 						where: {
-							id: orderSubItem.id
+							id: orderItem.id
 						},
 						data: {
-							count: orderSubItem.count + item.count
+							count: orderItem.count + product.count
 						}
 					})
+
+					foundOrderItem = true
 				}
 			}
 
-			// Update the OrderItem
-			orderItem = await context.prisma.orderItem.update({
-				where: {
-					id: orderItem.id
-				},
-				data: {
-					count: orderItem.count + product.count
-				}
-			})
+			if (!foundOrderItem) {
+				// Create a new OrderItem
+				await createOrderItemForProductInput(
+					context.prisma,
+					product,
+					order,
+					type
+				)
+			}
 		}
 	}
 
@@ -950,3 +809,158 @@ export async function orderItems(
 		items
 	}
 }
+
+//#region Helper Functions
+async function createOrderItemForProductInput(
+	prisma: PrismaClient,
+	product: ProductInput,
+	order: Order,
+	type: OrderItemType
+) {
+	const newOrderItem = await prisma.orderItem.create({
+		data: {
+			order: {
+				connect: {
+					id: order.id
+				}
+			},
+			product: {
+				connect: {
+					id: product.id
+				}
+			},
+			count: product.count,
+			discount: product.discount,
+			type
+		}
+	})
+
+	// Add the variations to the OrderItem
+	for (const variation of product.variations) {
+		// For each variation in product, create an OrderItemVariation
+		let orderItemVariation = await prisma.orderItemVariation.create({
+			data: {
+				orderItem: {
+					connect: {
+						id: newOrderItem.id
+					}
+				},
+				count: variation.count
+			}
+		})
+
+		for (const variationItemId of variation.variationItemIds) {
+			// For each variationItemId in variation, create an OrderItemVariationToVariationItem
+			await prisma.orderItemVariationToVariationItem.create({
+				data: {
+					orderItemVariation: {
+						connect: {
+							id: orderItemVariation.id
+						}
+					},
+					variationItem: {
+						connect: {
+							id: variationItemId
+						}
+					}
+				}
+			})
+		}
+	}
+
+	if (type === "MENU" || type === "SPECIAL") {
+		// Add the order items to the OrderItem
+		for (const item of product.orderItems) {
+			// Get the product of the order item
+			const subProduct = await prisma.product.findFirst({
+				where: {
+					uuid: item.productUuid
+				}
+			})
+
+			if (subProduct == null) {
+				throwApiError(apiErrors.productDoesNotExist)
+			}
+
+			// Create a new OrderItem for each order item
+			await prisma.orderItem.create({
+				data: {
+					order: {
+						connect: {
+							id: order.id
+						}
+					},
+					product: {
+						connect: {
+							id: subProduct.id
+						}
+					},
+					count: item.count,
+					type: "PRODUCT",
+					orderItem: {
+						connect: {
+							id: newOrderItem.id
+						}
+					}
+				}
+			})
+		}
+	}
+}
+
+async function productInputAndOrderItemEqual(
+	prisma: PrismaClient,
+	product: ProductInput,
+	orderItem: OrderItem & {
+		orderItems: (OrderItem & { product: Product })[]
+		orderItemVariations: (OrderItemVariation & {
+			orderItemVariationToVariationItems: OrderItemVariationToVariationItem[]
+		})[]
+	}
+): Promise<boolean> {
+	// Compare basic properties
+	if (product.type !== orderItem.type) {
+		return false
+	}
+
+	if (product.discount !== orderItem.discount) {
+		return false
+	}
+
+	// Compare the variations
+	if (product.variations.length !== orderItem.orderItemVariations.length) {
+		return false
+	}
+
+	for (const variation of product.variations) {
+		for (const variationItemId of variation.variationItemIds) {
+			const match = orderItem.orderItemVariations.find(oiv =>
+				oiv.orderItemVariationToVariationItems.some(
+					oii => oii.variationItemId === variationItemId
+				)
+			)
+
+			if (match == null) {
+				return false
+			}
+		}
+	}
+
+	// Compare the sub order items
+	if (product.orderItems.length !== orderItem.orderItems.length) {
+		return false
+	}
+
+	for (const subOrderItem of product.orderItems) {
+		const match = orderItem.orderItems.find(
+			oi => oi.product.uuid === subOrderItem.productUuid
+		)
+
+		if (match == null) {
+			return false
+		}
+	}
+
+	return true
+}
+//#endregion

@@ -152,10 +152,7 @@ export async function orderItems(
 	context: ResolverContext
 ): Promise<List<OrderItem>> {
 	const where = {
-		orderId: orderItem.orderId,
-		orderItemId: {
-			not: null
-		}
+		orderItemId: orderItem.id
 	}
 
 	const [total, items] = await context.prisma.$transaction([
