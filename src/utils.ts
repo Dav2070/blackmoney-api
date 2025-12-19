@@ -1,8 +1,15 @@
 import { GraphQLError } from "graphql"
-import { OrderItem, PrismaClient } from "@prisma/client"
+import { OrderItem, PrismaClient, Register } from "@prisma/client"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 import { OrderItemVariation } from "@prisma/client"
+import {
+	authenticateAdmin,
+	createTss,
+	logoutAdmin,
+	setTssAdminPin,
+	updateTss
+} from "./services/fiskalyApiService.js"
 
 export function throwApiError(error: ApiError) {
 	throw new GraphQLError(error.message, {
@@ -82,4 +89,67 @@ export function generateAdminPin(): string {
 	}
 
 	return pin
+}
+
+export async function createRegisterForRestaurant(
+	prisma: PrismaClient,
+	restaurantId: bigint,
+	registerName: string
+): Promise<Register> {
+	const uuid = crypto.randomUUID()
+
+	// Create the TSS
+	let tss = await createTss(uuid)
+
+	if (tss == null) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	const adminPuk = tss.admin_puk
+	const adminPin = generateAdminPin()
+
+	// Set the state to UNINITIALIZED
+	tss = await updateTss(uuid, "UNINITIALIZED")
+
+	if (tss == null) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	// Set an admin pin for the TSS
+	const setPinResponse = await setTssAdminPin(uuid, adminPuk, adminPin)
+
+	if (!setPinResponse) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	// Admin authentication
+	const authenticateAdminResponse = await authenticateAdmin(uuid, adminPin)
+
+	if (!authenticateAdminResponse) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	// Set the state to INITIALIZED
+	tss = await updateTss(uuid, "INITIALIZED")
+
+	if (tss == null) {
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	// Logout admin
+	await logoutAdmin(uuid)
+
+	// Create the register
+	return await prisma.register.create({
+		data: {
+			uuid,
+			name: registerName,
+			adminPin,
+			restaurant: {
+				connect: {
+					id: restaurantId
+				}
+			}
+		}
+	})
 }

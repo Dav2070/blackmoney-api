@@ -1,7 +1,11 @@
 import { Company, Restaurant, User } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
-import { throwApiError, throwValidationError } from "../utils.js"
+import {
+	createRegisterForRestaurant,
+	throwApiError,
+	throwValidationError
+} from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
 export async function retrieveCompany(
@@ -42,7 +46,7 @@ export async function createCompany(
 	throwValidationError(validateNameLength(args.name))
 
 	// Create the company and the first restaurant for the company
-	return await context.prisma.company.create({
+	const company = await context.prisma.company.create({
 		data: {
 			name: args.name,
 			userId: BigInt(context.davUser.Id),
@@ -51,8 +55,20 @@ export async function createCompany(
 					name: args.name
 				}
 			}
+		},
+		include: {
+			restaurants: true
 		}
 	})
+
+	// Create the default register for the restaurant
+	await createRegisterForRestaurant(
+		context.prisma,
+		company.restaurants[0].id,
+		"Hauptkasse"
+	)
+
+	return company
 }
 
 export async function restaurants(

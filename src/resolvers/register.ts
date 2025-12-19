@@ -1,20 +1,12 @@
 import { Register, RegisterClient } from "@prisma/client"
-import crypto from "crypto"
 import { List, ResolverContext } from "../types.js"
 import {
 	throwApiError,
 	throwValidationError,
-	generateAdminPin
+	createRegisterForRestaurant
 } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import { validateNameLength } from "../services/validationService.js"
-import {
-	createTss,
-	updateTss,
-	setTssAdminPin,
-	authenticateAdmin,
-	logoutAdmin
-} from "../services/fiskalyApiService.js"
 
 export async function retrieveRegister(
 	parent: any,
@@ -80,62 +72,11 @@ export async function createRegister(
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
-	const uuid = crypto.randomUUID()
-
-	// Create the TSS
-	let tss = await createTss(uuid)
-
-	if (tss == null) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	const adminPuk = tss.admin_puk
-	const adminPin = generateAdminPin()
-
-	// Set the state to UNINITIALIZED
-	tss = await updateTss(uuid, "UNINITIALIZED")
-
-	if (tss == null) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Set an admin pin for the TSS
-	const setPinResponse = await setTssAdminPin(uuid, adminPuk, adminPin)
-
-	if (!setPinResponse) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Admin authentication
-	const authenticateAdminResponse = await authenticateAdmin(uuid, adminPin)
-
-	if (!authenticateAdminResponse) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Set the state to INITIALIZED
-	tss = await updateTss(uuid, "INITIALIZED")
-
-	if (tss == null) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Logout admin
-	await logoutAdmin(uuid)
-
-	// Create the register
-	return await context.prisma.register.create({
-		data: {
-			uuid,
-			name: args.name,
-			adminPin,
-			restaurant: {
-				connect: {
-					id: restaurant.id
-				}
-			}
-		}
-	})
+	return await createRegisterForRestaurant(
+		context.prisma,
+		restaurant.id,
+		args.name
+	)
 }
 
 export async function registerClients(
