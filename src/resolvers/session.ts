@@ -4,7 +4,11 @@ import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateSerialNumberLength } from "../services/validationService.js"
-import { createClient } from "../services/fiskalyApiService.js"
+import {
+	authenticateAdmin,
+	createClient,
+	logoutAdmin
+} from "../services/fiskalyApiService.js"
 
 export async function login(
 	parent: any,
@@ -94,11 +98,16 @@ export async function login(
 		})
 
 		// Create the fiskaly client
+		// TODO: Check if fiskaly can have multiple clients with the same serial number
+		await authenticateAdmin(register.uuid, register.adminPin)
+
 		const fiskalyClient = await createClient(
 			register.uuid,
 			registerClient.uuid,
 			registerClient.serialNumber
 		)
+
+		await logoutAdmin(register.uuid)
 
 		if (fiskalyClient == null) {
 			throwApiError(apiErrors.unexpectedError)
