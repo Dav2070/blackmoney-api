@@ -115,7 +115,12 @@ export async function createOwner(
 			},
 			name: args.name,
 			password: await bcrypt.hash(args.password, bcryptRounds),
-			role: "OWNER"
+			role: "OWNER",
+			restaurants: {
+				connect: company.restaurants.map(restaurant => ({
+					id: restaurant.id
+				}))
+			}
 		}
 	})
 }
