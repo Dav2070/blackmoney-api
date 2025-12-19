@@ -223,6 +223,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		role: UserRole!
+		company: Company!
 	}
 
 	type UserList {
@@ -472,6 +473,7 @@ export const typeDefs = `#graphql
 	input AddProductOrderItemInput {
 		productUuid: String!
 		count: Int!
+		variations: [AddProductVariationInput!]
 	}
 
 	input OrderItemVariationInput {

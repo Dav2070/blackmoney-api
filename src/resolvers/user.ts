@@ -1,4 +1,4 @@
-import { Restaurant, User, UserRole } from "@prisma/client"
+import { Company, Restaurant, User, UserRole } from "@prisma/client"
 import bcrypt from "bcrypt"
 import {
 	validateNameLength,
@@ -269,5 +269,15 @@ export async function resetPasswordOfUser(
 	return await context.prisma.user.update({
 		where: { id: user.id },
 		data: { password: null }
+	})
+}
+
+export async function company(
+	user: User,
+	args: {},
+	context: ResolverContext
+): Promise<Company> {
+	return await context.prisma.company.findFirst({
+		where: { id: user.companyId }
 	})
 }

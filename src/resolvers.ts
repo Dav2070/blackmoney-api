@@ -76,6 +76,9 @@ export const resolvers = {
 		restaurants: companyResolvers.restaurants,
 		users: companyResolvers.users
 	},
+	User: {
+		company: userResolvers.company
+	},
 	Restaurant: {
 		menu: restaurantResolvers.menu,
 		users: restaurantResolvers.users,
