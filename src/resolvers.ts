@@ -63,6 +63,7 @@ export const resolvers = {
 		updateTable: tableResolvers.updateTable,
 		deleteTable: tableResolvers.deleteTable,
 		updateCategory: categoryResolvers.updateCategory,
+		deleteCategory: categoryResolvers.deleteCategory,
 		createBill: billResolvers.createBill,
 		createOrder: orderResolvers.createOrder,
 		updateOrder: orderResolvers.updateOrder,

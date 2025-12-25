@@ -123,6 +123,7 @@ export const typeDefs = `#graphql
 			uuid: String!
 			name: String
 		): Category!
+		deleteCategory(uuid: String!): Category!
 		createBill(registerClientUuid: String!): Bill!
 		createOrder(tableUuid: String!): Order!
 		updateOrder(
