@@ -3,6 +3,35 @@ import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Category } from "../types.js"
 import { throwApiError } from "../utils.js"
 
+export async function retrieveCategory(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<Category> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const category = await context.prisma.category.findFirst({
+		where: { uuid: args.uuid },
+		include: { menu: { include: { restaurant: true } } }
+	})
+
+	if (category == null) {
+		throwApiError(apiErrors.categoryDoesNotExist)
+	}
+
+	// Check if the user belongs to the same company as the category's restaurant
+	if (context.user.companyId !== category.menu.restaurant.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return category
+}
+
 export async function searchCategories(
 	parent: any,
 	args: {

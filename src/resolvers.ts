@@ -33,6 +33,7 @@ export const resolvers = {
 		searchPrinters: printerResolvers.searchPrinters,
 		retrieveRoom: roomResolvers.retrieveRoom,
 		listRooms: roomResolvers.listRooms,
+		retrieveCategory: categoryResolvers.retrieveCategory,
 		searchCategories: categoryResolvers.searchCategories,
 		listCategories: categoryResolvers.listCategories,
 		searchProducts: productResolvers.searchProducts,

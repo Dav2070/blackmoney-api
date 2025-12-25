@@ -17,6 +17,7 @@ export const typeDefs = `#graphql
 		): PrinterList!
 		retrieveRoom(uuid: String!): Room
 		listRooms(restaurantUuid: String!): RoomList!
+		retrieveCategory(uuid: String!): Category
 		searchCategories(
 			restaurantUuid: String!
 			query: String!
