@@ -31,6 +31,10 @@ interface ProductInput {
 	orderItems: {
 		productUuid: string
 		count: number
+		variations: {
+			variationItemIds: bigint[]
+			count: number
+		}[]
 	}[]
 }
 
@@ -365,6 +369,7 @@ export async function addProductsToOrder(
 			uuid: string
 			count: number
 			discount?: number
+			// TODO: Add additional properties
 			variations?: {
 				variationItemUuids: string[]
 				count: number
@@ -372,6 +377,10 @@ export async function addProductsToOrder(
 			orderItems?: {
 				productUuid: string
 				count: number
+				variations?: {
+					variationItemUuids: string[]
+					count: number
+				}[]
 			}[]
 		}[]
 	},
@@ -443,13 +452,59 @@ export async function addProductsToOrder(
 			}
 		}
 
+		const orderItems: {
+			productUuid: string
+			count: number
+			variations: {
+				variationItemIds: bigint[]
+				count: number
+			}[]
+		}[] = []
+
+		for (const orderItem of item.orderItems ?? []) {
+			const subVariations: {
+				variationItemIds: bigint[]
+				count: number
+			}[] = []
+
+			for (const variationItem of orderItem.variations ?? []) {
+				const variationItemIds: bigint[] = []
+
+				for (const variationItemUuid of variationItem.variationItemUuids) {
+					const variationItem =
+						await context.prisma.variationItem.findFirst({
+							where: {
+								uuid: variationItemUuid
+							}
+						})
+
+					if (variationItem == null) {
+						throwApiError(apiErrors.variationItemDoesNotExist)
+					}
+
+					variationItemIds.push(variationItem.id)
+				}
+
+				subVariations.push({
+					variationItemIds,
+					count: variationItem.count
+				})
+			}
+
+			orderItems.push({
+				productUuid: orderItem.productUuid,
+				count: orderItem.count,
+				variations: subVariations
+			})
+		}
+
 		products.push({
 			id: product.id,
 			count: item.count,
 			type: product.type,
 			discount: item.discount,
 			variations,
-			orderItems: item.orderItems ?? []
+			orderItems
 		})
 	}
 
@@ -493,7 +548,7 @@ export async function addProductsToOrder(
 				order,
 				type
 			)
-		} else if (type === "MENU") {
+		} else if (type === "MENU" || type === "SPECIAL") {
 			let foundOrderItem = false
 
 			for (const orderItem of orderItems) {
