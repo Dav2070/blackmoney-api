@@ -1,7 +1,8 @@
 import { Prisma, Product } from "@prisma/client"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Category } from "../types.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import { validateNameLength } from "../services/validationService.js"
 
 export async function retrieveCategory(
 	parent: any,
@@ -136,6 +137,53 @@ export async function listCategories(
 		total,
 		items
 	}
+}
+
+export async function updateCategory(
+	parent: any,
+	args: {
+		uuid: string
+		name?: string
+	},
+	context: ResolverContext
+): Promise<Category> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the category
+	const category = await context.prisma.category.findFirst({
+		where: { uuid: args.uuid },
+		include: { menu: { include: { restaurant: true } } }
+	})
+
+	if (category == null) {
+		throwApiError(apiErrors.categoryDoesNotExist)
+	}
+
+	// Check if the category belongs to the same company as the user and if the user has the correct role
+	if (
+		context.user.companyId !== category.menu.restaurant.companyId ||
+		!["ADMIN", "OWNER"].includes(context.user.role)
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (args.name == null) {
+		return category
+	}
+
+	// Validate the name
+	throwValidationError(validateNameLength(args.name))
+
+	// Update the category
+	return await context.prisma.category.update({
+		where: { id: category.id },
+		data: {
+			name: args.name
+		}
+	})
 }
 
 export async function products(

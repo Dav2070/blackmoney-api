@@ -119,6 +119,10 @@ export const typeDefs = `#graphql
 		deleteTable(
 			uuid: String!
 		): Table!
+		updateCategory(
+			uuid: String!
+			name: String
+		): Category!
 		createBill(registerClientUuid: String!): Bill!
 		createOrder(tableUuid: String!): Order!
 		updateOrder(
