@@ -186,6 +186,42 @@ export async function updateCategory(
 	})
 }
 
+export async function deleteCategory(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<Category> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the category
+	const category = await context.prisma.category.findFirst({
+		where: { uuid: args.uuid },
+		include: { menu: { include: { restaurant: true } } }
+	})
+
+	if (category == null) {
+		throwApiError(apiErrors.categoryDoesNotExist)
+	}
+
+	// Check if the category belongs to the same company as the user and if the user has the correct role
+	if (
+		context.user.companyId !== category.menu.restaurant.companyId ||
+		!["ADMIN", "OWNER"].includes(context.user.role)
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Delete the category
+	return await context.prisma.category.delete({
+		where: { id: category.id }
+	})
+}
+
 export async function products(
 	category: Category,
 	args: {},

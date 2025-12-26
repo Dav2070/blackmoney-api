@@ -275,8 +275,8 @@ model Product {
   type                ProductType          @default(FOOD)
   name                String
   price               Int
-  categoryId          BigInt?
-  category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId          BigInt
+  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   offer               Offer?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
