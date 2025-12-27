@@ -1,4 +1,4 @@
-import { Variation, VariationItem } from "@prisma/client"
+import { Variation, VariationItem } from "../../prisma/generated/client.js"
 import { ResolverContext, List } from "../types.js"
 
 export async function variationItems(

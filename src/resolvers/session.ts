@@ -1,4 +1,4 @@
-import { Session, User } from "@prisma/client"
+import { Session, User } from "../../prisma/generated/client.js"
 import bcrypt from "bcrypt"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"

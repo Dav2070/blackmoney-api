@@ -1,4 +1,10 @@
-import { Category, Prisma, Product, Variation, Offer } from "@prisma/client"
+import {
+	Category,
+	Prisma,
+	Product,
+	Variation,
+	Offer
+} from "../../prisma/generated/client.js"
 import { ResolverContext, List } from "../types.js"
 import { throwApiError } from "../utils.js"
 import { apiErrors } from "../errors.js"

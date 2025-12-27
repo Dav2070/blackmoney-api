@@ -1,4 +1,9 @@
-import { PrismaClient, Company, Restaurant, User } from "@prisma/client"
+import {
+	PrismaClient,
+	Company,
+	Restaurant,
+	User
+} from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
 import {

@@ -1,4 +1,4 @@
-import { Bill } from "@prisma/client"
+import { Bill } from "../../prisma/generated/client.js"
 import { ResolverContext } from "../types.js"
 import { throwApiError } from "../utils.js"
 import { apiErrors } from "../errors.js"
@@ -32,7 +32,9 @@ export async function createBill(
 	}
 
 	// Check if the user belongs to the same restaurant as the register client
-	if (context.user.companyId !== registerClient.register.restaurant.companyId) {
+	if (
+		context.user.companyId !== registerClient.register.restaurant.companyId
+	) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 

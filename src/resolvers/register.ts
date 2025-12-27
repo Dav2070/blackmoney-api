@@ -1,4 +1,4 @@
-import { Register, RegisterClient } from "@prisma/client"
+import { Register, RegisterClient } from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 import {
 	throwApiError,

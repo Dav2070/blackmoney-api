@@ -4,7 +4,7 @@ import {
 	OrderItem,
 	OrderItemVariation,
 	Offer
-} from "@prisma/client"
+} from "../../prisma/generated/client.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError } from "../utils.js"

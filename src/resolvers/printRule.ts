@@ -5,7 +5,7 @@ import {
 	PrintRule,
 	PrintRuleType,
 	Product
-} from "@prisma/client"
+} from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 import { throwApiError } from "../utils.js"
 import { apiErrors } from "../errors.js"

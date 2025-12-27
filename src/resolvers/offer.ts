@@ -1,4 +1,4 @@
-import { Offer, OfferItem } from "@prisma/client"
+import { Offer, OfferItem } from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 
 export function id(offer: Offer): number {

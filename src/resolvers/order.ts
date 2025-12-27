@@ -10,7 +10,7 @@ import {
 	Product,
 	ProductType,
 	Table
-} from "@prisma/client"
+} from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError } from "../utils.js"

@@ -1,4 +1,4 @@
-import { OfferItem, Product } from "@prisma/client"
+import { OfferItem, Product } from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 
 export async function products(

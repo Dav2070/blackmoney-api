@@ -1,4 +1,4 @@
-import { Order, Table } from "@prisma/client"
+import { Order, Table } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"

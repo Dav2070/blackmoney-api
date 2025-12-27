@@ -1,4 +1,4 @@
-import { Prisma, Printer } from "@prisma/client"
+import { Prisma, Printer } from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"

@@ -1,4 +1,4 @@
-import { Prisma, Product } from "@prisma/client"
+import { Prisma, Product } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Category } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"

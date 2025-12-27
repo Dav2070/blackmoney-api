@@ -1,4 +1,4 @@
-import { PrintRule, RegisterClient } from "@prisma/client"
+import { PrintRule, RegisterClient } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { validateNameLength } from "../services/validationService.js"
 import { List, ResolverContext } from "../types.js"

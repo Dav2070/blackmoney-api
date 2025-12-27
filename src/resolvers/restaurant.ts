@@ -1,4 +1,11 @@
-import { Menu, Printer, Register, Restaurant, Room, User } from "@prisma/client"
+import {
+	Menu,
+	Printer,
+	Register,
+	Restaurant,
+	Room,
+	User
+} from "../../prisma/generated/client.js"
 import { Country, List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"

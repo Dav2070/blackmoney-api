@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client"
+import { PrismaClient, User } from "../prisma/generated/client.js"
 import { User as DavUser } from "dav-js"
 
 export type PaymentMethod = "CASH" | "CARD"

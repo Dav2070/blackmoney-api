@@ -1,11 +1,11 @@
 import { ApolloServer } from "@apollo/server"
-import { expressMiddleware } from "@apollo/server/express4"
+import { expressMiddleware } from "@as-integrations/express5"
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { makeExecutableSchema } from "@graphql-tools/schema"
 import express from "express"
 import http from "http"
 import cors from "cors"
-import { PrismaClient, User } from "@prisma/client"
 import {
 	Dav,
 	Environment,
@@ -13,6 +13,7 @@ import {
 	UsersController,
 	convertUserResourceToUser
 } from "dav-js"
+import { PrismaClient, User } from "./prisma/generated/client.js"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 import { setupTasks } from "./src/tasks.js"
@@ -27,7 +28,9 @@ let schema = makeExecutableSchema({
 	resolvers
 })
 
-export const prisma = new PrismaClient()
+export const prisma = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+})
 
 // Init dav
 let environment = Environment.Staging

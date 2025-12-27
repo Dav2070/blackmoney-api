@@ -1,4 +1,4 @@
-import { Category, Menu, Offer } from "@prisma/client"
+import { Category, Menu, Offer } from "../../prisma/generated/client.js"
 import { List, ResolverContext } from "../types.js"
 
 export async function categories(

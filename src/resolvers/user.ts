@@ -1,4 +1,9 @@
-import { Company, Restaurant, User, UserRole } from "@prisma/client"
+import {
+	Company,
+	Restaurant,
+	User,
+	UserRole
+} from "../../prisma/generated/client.js"
 import bcrypt from "bcrypt"
 import {
 	validateNameLength,
