@@ -274,7 +274,7 @@ export const typeDefs = `#graphql
 	type Category {
 		uuid: String!
 		name: String!
-		products: ProductList!
+		products(type: ProductType): ProductList!
 	}
 
 	type CategoryList {

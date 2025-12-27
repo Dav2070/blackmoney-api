@@ -1,4 +1,4 @@
-import { Prisma, Product } from "../../prisma/generated/client.js"
+import { Prisma, Product, ProductType } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Category } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
@@ -224,10 +224,18 @@ export async function deleteCategory(
 
 export async function products(
 	category: Category,
-	args: {},
+	args: {
+		type?: ProductType
+	},
 	context: ResolverContext
 ): Promise<List<Product>> {
-	let where = { categoryId: category.id }
+	const where: Prisma.ProductWhereInput = {
+		categoryId: category.id
+	}
+
+	if (args.type != null) {
+		where.type = args.type
+	}
 
 	const [total, items] = await context.prisma.$transaction([
 		context.prisma.product.count({ where }),
