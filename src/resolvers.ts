@@ -121,7 +121,7 @@ export const resolvers = {
 		products: categoryResolvers.products
 	},
 	Product: {
-		id: productResolvers.id,
+		shortcut: productResolvers.shortcut,
 		category: productResolvers.category,
 		offer: productResolvers.offer,
 		variations: productResolvers.variations

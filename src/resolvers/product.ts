@@ -70,8 +70,8 @@ export async function searchProducts(
 	}
 }
 
-export function id(product: Product): number {
-	return Number(product.id)
+export function shortcut(product: Product): number {
+	return product.shortcut ?? Number(product.id)
 }
 
 export async function category(

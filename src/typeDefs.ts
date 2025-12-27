@@ -283,11 +283,11 @@ export const typeDefs = `#graphql
 	}
 
 	type Product {
-		id: Int!
 		uuid: String!
 		type: ProductType!
 		name: String!
 		price: Int!
+		shortcut: Int!
 		category: Category!
 		offer: Offer
 		variations: VariationList!

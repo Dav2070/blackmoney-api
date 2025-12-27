@@ -275,6 +275,7 @@ model Product {
   type                ProductType          @default(FOOD)
   name                String
   price               Int
+  shortcut            Int?
   categoryId          BigInt
   category            Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   offer               Offer?
