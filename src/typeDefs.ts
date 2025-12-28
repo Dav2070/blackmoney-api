@@ -268,6 +268,7 @@ export const typeDefs = `#graphql
 	type Menu {
 		uuid: String!
 		categories: CategoryList!
+		variations: VariationList!
 		offers: OfferList!
 	}
 

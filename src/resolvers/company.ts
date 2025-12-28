@@ -225,10 +225,10 @@ async function createDefaultDataForRestaurant(
 		variationSizeFanta
 	] = await prisma.variation.createManyAndReturn({
 		data: [
-			{ name: "Größe" },
-			{ name: "Größe" },
-			{ name: "Größe" },
-			{ name: "Größe" }
+			{ name: "Größe", menuId: menu.id },
+			{ name: "Größe", menuId: menu.id },
+			{ name: "Größe", menuId: menu.id },
+			{ name: "Größe", menuId: menu.id }
 		]
 	})
 
