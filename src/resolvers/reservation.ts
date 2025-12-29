@@ -1,4 +1,4 @@
-import { Reservation } from "../../prisma/generated/client.js"
+import { Reservation, Table } from "../../prisma/generated/client.js"
 import { DateTime } from "luxon"
 import { apiErrors } from "../errors.js"
 import { List, ResolverContext } from "../types.js"
@@ -22,7 +22,7 @@ export async function listReservations(
 			uuid: args.restaurantUuid
 		},
 		include: {
-         company: true
+			company: true
 		}
 	})
 
@@ -33,34 +33,46 @@ export async function listReservations(
 	// Check if the user has access to the restaurant
 	if (context.user.companyId !== restaurant.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
-   }
+	}
 
-   const date = DateTime.fromJSDate(new Date(args.date))
-   
-   const [total, items] = await context.prisma.$transaction([
-      context.prisma.reservation.count({ where: {} }),
-      context.prisma.reservation.findMany({
-         where: {
-            table: {
-               room: {
-                  restaurantId: restaurant.id
-               }
-            },
-            date: {
-               gte: date.startOf("day").toJSDate(),
-               lte: date.endOf("day").toJSDate()
-            }
-         },
-         orderBy: {
-            date: "asc"
-         }
-      })
-   ])
+	const date = DateTime.fromJSDate(new Date(args.date))
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.reservation.count({ where: {} }),
+		context.prisma.reservation.findMany({
+			where: {
+				table: {
+					room: {
+						restaurantId: restaurant.id
+					}
+				},
+				date: {
+					gte: date.startOf("day").toJSDate(),
+					lte: date.endOf("day").toJSDate()
+				}
+			},
+			orderBy: {
+				date: "asc"
+			}
+		})
+	])
 
 	return {
 		total,
 		items
 	}
+}
+
+export async function table(
+	reservation: Reservation,
+	args: {},
+	context: ResolverContext
+): Promise<Table> {
+	return context.prisma.table.findFirst({
+		where: {
+			id: reservation.tableId
+		}
+	})
 }
 
 export function date(reservation: Reservation): string {

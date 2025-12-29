@@ -153,6 +153,7 @@ export const resolvers = {
 		id: variationItemResolvers.id
 	},
 	Reservation: {
+		table: reservationResolvers.table,
 		date: reservationResolvers.date
 	}
 }

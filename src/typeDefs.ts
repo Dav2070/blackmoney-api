@@ -409,6 +409,7 @@ export const typeDefs = `#graphql
 
 	type Reservation {
 		uuid: String!
+		table: Table!
 		name: String!
 		phoneNumber: String
 		email: String
