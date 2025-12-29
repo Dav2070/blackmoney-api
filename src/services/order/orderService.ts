@@ -1,7 +1,7 @@
-import { Order, PrismaClient } from "../../prisma/generated/client.js"
-import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
-import { ProductInputArgs } from "../types/orderTypes.js"
+import { Order, PrismaClient } from "../../../prisma/generated/client.js"
+import { apiErrors } from "../../errors.js"
+import { throwApiError } from "../../utils.js"
+import { ProductInputArgs } from "../../types/orderTypes.js"
 import { OrderItemService } from "./orderItemService.js"
 
 /**

@@ -8,10 +8,10 @@ import {
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError } from "../utils.js"
-import { OrderService } from "../services/orderService.js"
-import { OrderCompletionService } from "../services/orderCompletionService.js"
-import { OrderItemService } from "../services/orderItemService.js"
-import { OrderUpdateService } from "../services/orderUpdateService.js"
+import { OrderService } from "../services/order/orderService.js"
+import { OrderCompletionService } from "../services/order/orderCompletionService.js"
+import { OrderItemService } from "../services/order/orderItemService.js"
+import { OrderUpdateService } from "../services/order/orderUpdateService.js"
 import { ProductInputArgs } from "../types/orderTypes.js"
 
 export async function retrieveOrder(

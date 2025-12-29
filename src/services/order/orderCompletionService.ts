@@ -1,8 +1,8 @@
-import { Order, PrismaClient } from "../../prisma/generated/client.js"
-import { apiErrors } from "../errors.js"
-import { PaymentMethod } from "../types.js"
-import { throwApiError } from "../utils.js"
-import { startTransaction, finishTransaction } from "./fiskalyApiService.js"
+import { Order, PrismaClient } from "../../../prisma/generated/client.js"
+import { apiErrors } from "../../errors.js"
+import { PaymentMethod } from "../../types.js"
+import { throwApiError } from "../../utils.js"
+import { startTransaction, finishTransaction } from "../fiskalyApiService.js"
 
 /**
  * Service for handling order completion and payment processing

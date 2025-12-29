@@ -2,14 +2,14 @@ import {
 	Order,
 	PrismaClient,
 	OrderItemType
-} from "../../prisma/generated/client.js"
-import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
-import { ProductInput, ProductInputArgs } from "../types/orderTypes.js"
+} from "../../../prisma/generated/client.js"
+import { apiErrors } from "../../errors.js"
+import { throwApiError } from "../../utils.js"
+import { ProductInput, ProductInputArgs } from "../../types/orderTypes.js"
 import {
 	createOrderItemForProductInput,
 	productInputAndOrderItemEqual
-} from "../utils/orderItemHelpers.js"
+} from "../../utils/orderItemHelpers.js"
 
 /**
  * Service for handling OrderItem operations

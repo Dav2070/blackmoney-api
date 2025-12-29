@@ -2,9 +2,9 @@ import {
 	Order,
 	OrderItem,
 	PrismaClient
-} from "../../prisma/generated/client.js"
-import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+} from "../../../prisma/generated/client.js"
+import { apiErrors } from "../../errors.js"
+import { throwApiError } from "../../utils.js"
 
 interface OrderItemUpdateInput {
 	count: number
