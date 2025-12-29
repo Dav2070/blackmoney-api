@@ -29,7 +29,11 @@ let schema = makeExecutableSchema({
 })
 
 export const prisma = new PrismaClient({
-	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+	transactionOptions: {
+		maxWait: 10000,
+		timeout: 20000
+	}
 })
 
 // Init dav
