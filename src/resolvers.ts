@@ -19,6 +19,7 @@ import * as orderResolvers from "./resolvers/order.js"
 import * as orderItemResolvers from "./resolvers/orderItem.js"
 import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 import * as variationItemResolvers from "./resolvers/variationItem.js"
+import * as reservationResolvers from "./resolvers/reservation.js"
 
 export const resolvers = {
 	Query: {
@@ -39,7 +40,8 @@ export const resolvers = {
 		searchProducts: productResolvers.searchProducts,
 		retrieveTable: tableResolvers.retrieveTable,
 		retrieveOrder: orderResolvers.retrieveOrder,
-		listOrders: orderResolvers.listOrders
+		listOrders: orderResolvers.listOrders,
+		listReservations: reservationResolvers.listReservations
 	},
 	Mutation: {
 		login: sessionResolvers.login,
@@ -149,5 +151,8 @@ export const resolvers = {
 	},
 	VariationItem: {
 		id: variationItemResolvers.id
+	},
+	Reservation: {
+		date: reservationResolvers.date
 	}
 }

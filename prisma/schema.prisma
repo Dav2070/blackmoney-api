@@ -344,7 +344,7 @@ model Reservation {
   phoneNumber    String?  @db.VarChar
   email          String?  @db.VarChar
   numberOfPeople Int
-  time           DateTime
+  date           DateTime
   checkedIn      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt

@@ -32,6 +32,10 @@ export const typeDefs = `#graphql
 		retrieveTable(uuid: String!): Table
 		retrieveOrder(uuid: String!): Order
 		listOrders(completed: Boolean): OrderList!
+		listReservations(
+			restaurantUuid: String!
+			date: String!
+		): ReservationList!
 	}
 
 	type Mutation {
@@ -401,6 +405,21 @@ export const typeDefs = `#graphql
 	type OrderItemVariationList {
 		total: Int!
 		items: [OrderItemVariation!]!
+	}
+
+	type Reservation {
+		uuid: String!
+		name: String!
+		phoneNumber: String
+		email: String
+		numberOfPeople: Int!
+		date: String!
+		checkedIn: Boolean!
+	}
+
+	type ReservationList {
+		total: Int!
+		items: [Reservation!]!
 	}
 
 	enum UserRole {
