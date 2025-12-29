@@ -152,6 +152,10 @@ export const typeDefs = `#graphql
 			count: Int
 			orderItemVariations: [OrderItemVariationInput!]
 		): OrderItem!
+		updateReservation(
+			uuid: String!
+			checkedIn: Boolean
+		): Reservation!
 	}
 
 	type Company {

@@ -63,6 +63,65 @@ export async function listReservations(
 	}
 }
 
+export async function updateReservation(
+	parent: any,
+	args: {
+		uuid: string
+		checkedIn?: boolean
+	},
+	context: ResolverContext
+): Promise<Reservation> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the reservation
+	const reservation = await context.prisma.reservation.findFirst({
+		where: {
+			uuid: args.uuid
+		},
+		include: {
+			table: {
+				include: {
+					room: {
+						include: {
+							restaurant: {
+								include: {
+									company: true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	})
+
+	if (reservation == null) {
+		throwApiError(apiErrors.reservationDoesNotExist)
+	}
+
+	// Check if the user can access the reservation
+	if (reservation.table.room.restaurant.companyId !== context.user.companyId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (args.checkedIn == null) return reservation
+
+	// Update the reservation
+	const updatedReservation = await context.prisma.reservation.update({
+		where: {
+			id: reservation.id
+		},
+		data: {
+			checkedIn: args.checkedIn ?? reservation.checkedIn
+		}
+	})
+
+	return updatedReservation
+}
+
 export async function table(
 	reservation: Reservation,
 	args: {},

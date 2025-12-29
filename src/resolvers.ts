@@ -72,7 +72,8 @@ export const resolvers = {
 		addProductsToOrder: orderResolvers.addProductsToOrder,
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
 		completeOrder: orderResolvers.completeOrder,
-		updateOrderItem: orderItemResolvers.updateOrderItem
+		updateOrderItem: orderItemResolvers.updateOrderItem,
+		updateReservation: reservationResolvers.updateReservation
 	},
 	Session: {
 		user: sessionResolvers.user
