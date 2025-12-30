@@ -468,6 +468,10 @@ export const typeDefs = `#graphql
 		uuid: String!
 		count: Int!
 		discount: Int
+		notes: String
+		takeAway: Boolean
+		course: Int
+		offerUuid: String
 		variations: [AddProductVariationInput!]
 		orderItems: [AddProductOrderItemInput!]
 	}

@@ -5,6 +5,10 @@ export interface ProductInput {
 	count: number
 	type: ProductType
 	discount: number
+	notes: string | null
+	takeAway: boolean
+	course: number | null
+	offerId: bigint | null
 	variations: {
 		variationItemIds: bigint[]
 		count: number
@@ -12,6 +16,10 @@ export interface ProductInput {
 	orderItems: {
 		productUuid: string
 		count: number
+		variations?: {
+			variationItemUuids: string[]
+			count: number
+		}[]
 	}[]
 }
 
@@ -19,6 +27,10 @@ export interface ProductInputArgs {
 	uuid: string
 	count: number
 	discount?: number
+	notes?: string
+	takeAway?: boolean
+	course?: number
+	offerUuid?: string
 	variations?: {
 		variationItemUuids: string[]
 		count: number
@@ -26,5 +38,9 @@ export interface ProductInputArgs {
 	orderItems?: {
 		productUuid: string
 		count: number
+		variations?: {
+			variationItemUuids: string[]
+			count: number
+		}[]
 	}[]
 }
