@@ -134,89 +134,29 @@ export class OrderItemService {
 				}
 			})
 
-			console.log("=== ADD PRODUCTS DEBUG ===")
-			console.log("Product ID:", product.id)
-			console.log("Product type:", product.type)
-			console.log("Product notes:", product.notes)
-			console.log("Product takeAway:", product.takeAway)
-			console.log("Product course:", product.course)
-			console.log("Product offerId:", product.offerId)
-			console.log("Product discount:", product.discount)
-			console.log("Existing OrderItems count:", existingOrderItems.length)
-
 			// Find a merge target using the same logic as frontend
 			let mergeTarget = null
 			for (const existing of existingOrderItems) {
-				console.log("---")
-				console.log("Checking existing OrderItem:", existing.id)
-				console.log("  existing.type:", existing.type)
-				console.log("  existing.notes:", existing.notes)
-				console.log("  existing.takeAway:", existing.takeAway)
-				console.log("  existing.course:", existing.course)
-				console.log("  existing.discount:", existing.discount)
-				console.log("  existing.offer?.id:", existing.offer?.id)
-				console.log("  existing.product.id:", existing.product.id)
-				console.log(
-					"  existing.product.shortcut:",
-					existing.product.shortcut
-				)
-				if (existing.type === "SPECIAL" && existing.orderItems.length > 0) {
-					console.log(
-						"  existing.orderItems[0].product.id:",
-						existing.orderItems[0].product.id
-					)
-				}
-
 				// Convert ProductInput to a temporary OrderItem structure for comparison
 				const incomingAsOrderItem =
 					await this.convertProductInputToOrderItemStructure(product)
-
-				console.log("  incoming.type:", incomingAsOrderItem.type)
-				console.log("  incoming.notes:", incomingAsOrderItem.notes)
-				console.log("  incoming.takeAway:", incomingAsOrderItem.takeAway)
-				console.log("  incoming.course:", incomingAsOrderItem.course)
-				console.log("  incoming.discount:", incomingAsOrderItem.discount)
-				console.log("  incoming.offer?.id:", incomingAsOrderItem.offer?.id)
-				console.log(
-					"  incoming.product.id:",
-					incomingAsOrderItem.product.id
-				)
-				console.log(
-					"  incoming.product.shortcut:",
-					incomingAsOrderItem.product.shortcut
-				)
-				if (
-					incomingAsOrderItem.type === "SPECIAL" &&
-					incomingAsOrderItem.orderItems.length > 0
-				) {
-					console.log(
-						"  incoming.orderItems[0].product.id:",
-						incomingAsOrderItem.orderItems[0].product.id
-					)
-				}
 
 				const isEqual = isOrderItemMetaEqual(
 					existing as any,
 					incomingAsOrderItem
 				)
-				console.log("  - isOrderItemMetaEqual RESULT:", isEqual)
 
 				if (isEqual) {
 					mergeTarget = existing
-					console.log("  ✓ MATCH FOUND! Merging...")
 					break
-				} else {
-					console.log("  ✗ No match, checking next...")
 				}
 			}
 
 			if (mergeTarget) {
 				// Merge into existing order item
-				console.log("Merging into existing OrderItem:", mergeTarget.id)
 				await mergeProductIntoOrderItem(this.prisma, mergeTarget, product)
 			} else {
 				// Create new order item
-				console.log("No match found. Creating new OrderItem")
 				let type: OrderItemType = "PRODUCT"
 				if (product.type === "MENU") {
 					type = "MENU"
