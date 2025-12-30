@@ -1,10 +1,18 @@
 import {
 	Order,
 	OrderItem,
+	OrderItemVariation,
+	OrderItemVariationToVariationItem,
 	PrismaClient
 } from "../../../prisma/generated/client.js"
 import { apiErrors } from "../../errors.js"
 import { throwApiError } from "../../utils.js"
+
+type OrderItemWithVariations = OrderItem & {
+	orderItemVariations: (OrderItemVariation & {
+		orderItemVariationToVariationItems: OrderItemVariationToVariationItem[]
+	})[]
+}
 
 interface OrderItemUpdateInput {
 	count: number
@@ -71,16 +79,14 @@ export class OrderUpdateService {
 	private async processOrderItem(
 		order: Order,
 		itemInput: OrderItemUpdateInput,
-		orderItemsToDelete: (OrderItem & {
-			orderItemVariations: any[]
-		})[]
+		orderItemsToDelete: OrderItemWithVariations[]
 	): Promise<void> {
 		// Find existing order item for this product
 		const existingIndex = orderItemsToDelete.findIndex(
 			oi => oi.productId === BigInt(itemInput.productId)
 		)
 
-		let orderItem: OrderItem & { orderItemVariations: any[] } | null = null
+		let orderItem: OrderItemWithVariations | null = null
 
 		if (existingIndex >= 0) {
 			// Item exists, update it
@@ -131,7 +137,7 @@ export class OrderUpdateService {
 	 * Update variations for an order item
 	 */
 	private async updateOrderItemVariations(
-		orderItem: OrderItem & { orderItemVariations: any[] },
+		orderItem: OrderItemWithVariations,
 		variationsInput: OrderItemUpdateInput["orderItemVariations"]
 	): Promise<void> {
 		const variationsToDelete = [...orderItem.orderItemVariations]
