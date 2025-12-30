@@ -660,6 +660,53 @@ export async function mergeProductIntoOrderItem(
 		}
 	}
 
-	// For Menu: subitems are already merged via proportional count check
-	// No additional merging needed as Menu structure is strictly compared
+	// For Menu: update counts of all childOrderItems proportionally
+	if (incomingProduct.type === "MENU") {
+		for (let i = 0; i < existingOrderItem.orderItems.length; i++) {
+			const existingSubItem = existingOrderItem.orderItems[i]
+			const incomingSubItem = incomingProduct.orderItems[i]
+
+			if (existingSubItem && incomingSubItem) {
+				// Update count of the childOrderItem
+				await prisma.orderItem.update({
+					where: { id: existingSubItem.id },
+					data: {
+						count: existingSubItem.count + incomingSubItem.count
+					}
+				})
+
+				// Merge variations of the childOrderItem if provided
+				if (
+					incomingSubItem.variations &&
+					incomingSubItem.variations.length > 0
+				) {
+					// Convert variation UUIDs to IDs
+					const subItemVariations = []
+					for (const variation of incomingSubItem.variations) {
+						const variationItemIds = []
+						for (const uuid of variation.variationItemUuids) {
+							const variationItem = await prisma.variationItem.findFirst(
+								{
+									where: { uuid }
+								}
+							)
+							if (variationItem) {
+								variationItemIds.push(Number(variationItem.id))
+							}
+						}
+						subItemVariations.push({
+							variationItemIds,
+							count: variation.count
+						})
+					}
+
+					await mergeOrAddVariations(
+						prisma,
+						existingSubItem.id,
+						subItemVariations
+					)
+				}
+			}
+		}
+	}
 }

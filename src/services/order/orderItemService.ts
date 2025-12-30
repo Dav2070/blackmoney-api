@@ -264,12 +264,38 @@ export class OrderItemService {
 			})
 
 			if (subProduct) {
+				// Build orderItemVariations from subItem.variations for strict Menu matching
+				const childVariations = []
+				if (subItem.variations) {
+					for (const variation of subItem.variations) {
+						const variationItems = []
+						for (const uuid of variation.variationItemUuids) {
+							const variationItem =
+								await this.prisma.variationItem.findFirst({
+									where: { uuid }
+								})
+							if (variationItem) {
+								variationItems.push(variationItem.id)
+							}
+						}
+
+						childVariations.push({
+							count: variation.count,
+							orderItemVariationToVariationItems: variationItems.map(
+								id => ({
+									variationItemId: id
+								})
+							)
+						})
+					}
+				}
+
 				orderItems.push({
 					product: subProduct,
 					count: subItem.count,
 					type: "PRODUCT" as OrderItemType,
 					orderItems: [],
-					orderItemVariations: [],
+					orderItemVariations: childVariations,
 					notes: null,
 					takeAway: false,
 					course: null,
