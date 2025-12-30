@@ -80,7 +80,7 @@ export class OrderUpdateService {
 			oi => oi.productId === BigInt(itemInput.productId)
 		)
 
-		let orderItem: (typeof orderItemsToDelete)[0] | null = null
+		let orderItem: OrderItem & { orderItemVariations: any[] } | null = null
 
 		if (existingIndex >= 0) {
 			// Item exists, update it
