@@ -19,223 +19,238 @@ export class OrderItemService {
 	constructor(private readonly prisma: PrismaClient) {}
 
 	/**
-	 * Converts ProductInputArgs (from GraphQL) to ProductInput (with database IDs)
+	 * Converts ProductInputArgs (received from GraphQL with UUIDs) to ProductInput (with database IDs).
+	 * This resolves all UUIDs (products, offers, variations) to their corresponding database IDs.
 	 */
 	async convertProductInputArgs(
 		products: ProductInputArgs[]
 	): Promise<ProductInput[]> {
-		const result: ProductInput[] = []
+		const convertedProducts: ProductInput[] = []
 
-		for (const item of products) {
-			const product = await this.prisma.product.findFirst({
-				where: { uuid: item.uuid }
+		for (const productInput of products) {
+			const productFromDatabase = await this.prisma.product.findFirst({
+				where: { uuid: productInput.uuid }
 			})
 
-			if (product == null) {
+			if (productFromDatabase == null) {
 				throwApiError(apiErrors.productDoesNotExist)
 			}
 
-			// Get offer if offerUuid is provided
-			let offerId: bigint | null = null
-			if (item.offerUuid) {
-				const offer = await this.prisma.offer.findFirst({
-					where: { uuid: item.offerUuid }
+			// Resolve offer UUID to database ID if an offer is associated with this product
+			let resolvedOfferId: bigint | null = null
+			if (productInput.offerUuid) {
+				const offerFromDatabase = await this.prisma.offer.findFirst({
+					where: { uuid: productInput.offerUuid }
 				})
-				if (offer) {
-					offerId = offer.id
+				if (offerFromDatabase) {
+					resolvedOfferId = offerFromDatabase.id
 				}
 			}
 
-			// Convert variation UUIDs to IDs
-			const variations = []
-			if (item.variations) {
-				for (const variation of item.variations) {
-					const variationItems = []
-					for (const uuid of variation.variationItemUuids) {
-						const variationItem =
+			// Convert all variation UUIDs to database IDs for this product
+			const resolvedVariations = []
+			if (productInput.variations) {
+				for (const variationFromInput of productInput.variations) {
+					const resolvedVariationItemIds = []
+					for (const variationItemUuid of variationFromInput.variationItemUuids) {
+						const variationItemFromDatabase =
 							await this.prisma.variationItem.findFirst({
-								where: { uuid }
+								where: { uuid: variationItemUuid }
 							})
 
-						if (variationItem == null) {
+						if (variationItemFromDatabase == null) {
 							throwApiError(apiErrors.variationItemDoesNotExist)
 						}
 
-						variationItems.push(variationItem.id)
+						resolvedVariationItemIds.push(variationItemFromDatabase.id)
 					}
 
-					variations.push({
-						variationItemIds: variationItems,
-						count: variation.count
+					resolvedVariations.push({
+						variationItemIds: resolvedVariationItemIds,
+						count: variationFromInput.count
 					})
 				}
 			}
 
-			result.push({
-				id: product.id,
-				count: item.count,
-				type: product.type,
-				discount: item.discount ?? 0,
-				notes: item.notes ?? null,
-				takeAway: item.takeAway ?? false,
-				course: item.course ?? null,
-				offerId,
-				variations,
-				orderItems: item.orderItems ?? []
+			convertedProducts.push({
+				id: productFromDatabase.id,
+				count: productInput.count,
+				type: productFromDatabase.type,
+				discount: productInput.discount ?? 0,
+				notes: productInput.notes ?? null,
+				takeAway: productInput.takeAway ?? false,
+				course: productInput.course ?? null,
+				offerId: resolvedOfferId,
+				variations: resolvedVariations,
+				orderItems: productInput.orderItems ?? []
 			})
 		}
 
-		return result
+		return convertedProducts
 	}
 
 	/**
-	 * Adds products to an order using the same merging logic as the frontend
+	 * Adds products to an order using intelligent merging logic.
+	 * If an existing OrderItem matches the incoming product (same product, offer, notes, variations),
+	 * it will be merged (counts incremented). Otherwise, a new OrderItem is created.
 	 */
 	async addProducts(order: Order, products: ProductInput[]): Promise<void> {
-		for (const product of products) {
-			// Get all existing order items for this product and offer
-			// Wichtig: offerId muss beim Filtern berücksichtigt werden
-			const whereClause: any = {
+		for (const incomingProduct of products) {
+			// Build filter criteria to find existing OrderItems that could potentially be merged
+			// Important: Must filter by offerId to ensure products with different offers don't merge
+			const filterCriteria: any = {
 				orderId: order.id,
-				productId: product.id,
-				orderItemId: null
+				productId: incomingProduct.id,
+				orderItemId: null // Only top-level OrderItems, not child items
 			}
 
-			// Wenn eine offerId angegeben ist, nur OrderItems mit dieser Offer suchen
-			if (product.offerId !== null && product.offerId !== undefined) {
-				whereClause.offerId = product.offerId
+			// If product has an associated offer, only find OrderItems with that same offer
+			if (
+				incomingProduct.offerId !== null &&
+				incomingProduct.offerId !== undefined
+			) {
+				filterCriteria.offerId = incomingProduct.offerId
 			} else {
-				// Wenn keine offerId angegeben ist, nur OrderItems ohne Offer suchen
-				whereClause.offerId = null
+				// If product has no offer, only find OrderItems without an offer
+				filterCriteria.offerId = null
 			}
 
-			const existingOrderItems = await this.prisma.orderItem.findMany({
-				where: whereClause,
-				include: {
-					product: true,
-					orderItems: {
-						include: {
-							product: true,
-							orderItems: true,
-							orderItemVariations: {
-								include: {
-									orderItemVariationToVariationItems: true
-								}
-							},
-							offer: true
-						}
-					},
-					orderItemVariations: {
-						include: {
-							orderItemVariationToVariationItems: true
-						}
-					},
-					offer: true
-				}
-			})
+			const existingOrderItemsForProduct =
+				await this.prisma.orderItem.findMany({
+					where: filterCriteria,
+					include: {
+						product: true,
+						orderItems: {
+							include: {
+								product: true,
+								orderItems: true,
+								orderItemVariations: {
+									include: {
+										orderItemVariationToVariationItems: true
+									}
+								},
+								offer: true
+							}
+						},
+						orderItemVariations: {
+							include: {
+								orderItemVariationToVariationItems: true
+							}
+						},
+						offer: true
+					}
+				})
 
-			// Find a merge target using the same logic as frontend
-			let mergeTarget = null
-			for (const existing of existingOrderItems) {
-				// Convert ProductInput to a temporary OrderItem structure for comparison
-				const incomingAsOrderItem =
-					await this.convertProductInputToOrderItemStructure(product)
+			// Try to find an existing OrderItem that can be merged with the incoming product
+			let existingOrderItemToMerge = null
+			for (const candidateOrderItem of existingOrderItemsForProduct) {
+				// Convert incoming ProductInput to OrderItem structure for comparison
+				const incomingProductAsOrderItem =
+					await this.convertProductInputToOrderItemStructure(
+						incomingProduct
+					)
 
-				const isEqual = isOrderItemMetaEqual(
-					existing as any,
-					incomingAsOrderItem
+				const canBeMerged = isOrderItemMetaEqual(
+					candidateOrderItem as any,
+					incomingProductAsOrderItem
 				)
 
-				if (isEqual) {
-					mergeTarget = existing
+				if (canBeMerged) {
+					existingOrderItemToMerge = candidateOrderItem
 					break
 				}
 			}
 
-			if (mergeTarget) {
-				// Merge into existing order item
-				await mergeProductIntoOrderItem(this.prisma, mergeTarget, product)
+			if (existingOrderItemToMerge) {
+				// Merge: Increment count and add variations to existing OrderItem
+				await mergeProductIntoOrderItem(
+					this.prisma,
+					existingOrderItemToMerge,
+					incomingProduct
+				)
 			} else {
-				// Create new order item
-				let type: OrderItemType = "PRODUCT"
-				if (product.type === "MENU") {
-					type = "MENU"
-				} else if (product.type === "SPECIAL") {
-					type = "SPECIAL"
+				// Create: No matching OrderItem found, create a new one
+				let orderItemType: OrderItemType = "PRODUCT"
+				if (incomingProduct.type === "MENU") {
+					orderItemType = "MENU"
+				} else if (incomingProduct.type === "SPECIAL") {
+					orderItemType = "SPECIAL"
 				}
 
 				await createOrderItemForProductInput(
 					this.prisma,
-					product,
+					incomingProduct,
 					order,
-					type
+					orderItemType
 				)
 			}
 		}
 	}
 
 	/**
-	 * Helper to convert ProductInput to OrderItem structure for comparison
+	 * Converts a ProductInput to an OrderItem-like structure for comparison purposes.
+	 * This allows comparing incoming products with existing OrderItems using the same comparison logic.
 	 */
 	private async convertProductInputToOrderItemStructure(
-		product: ProductInput
+		incomingProduct: ProductInput
 	): Promise<any> {
-		const productData = await this.prisma.product.findUnique({
-			where: { id: product.id }
+		const productFromDatabase = await this.prisma.product.findUnique({
+			where: { id: incomingProduct.id }
 		})
 
-		if (!productData) {
+		if (!productFromDatabase) {
 			throwApiError(apiErrors.productDoesNotExist)
 		}
 
-		// Get offer if offerId is provided
-		let offer = null
-		if (product.offerId) {
-			offer = await this.prisma.offer.findUnique({
-				where: { id: product.offerId }
+		// Resolve offer from database if product has an associated offer
+		let offerFromDatabase = null
+		if (incomingProduct.offerId) {
+			offerFromDatabase = await this.prisma.offer.findUnique({
+				where: { id: incomingProduct.offerId }
 			})
 		}
 
-		// Build orderItems (subitems) from ProductInput
-		const orderItems = []
-		for (const subItem of product.orderItems) {
-			const subProduct = await this.prisma.product.findUnique({
-				where: { uuid: subItem.productUuid }
+		// Build child OrderItems structure (for Menu and Special types)
+		const childOrderItems = []
+		for (const childProductInput of incomingProduct.orderItems) {
+			const childProductFromDatabase = await this.prisma.product.findUnique({
+				where: { uuid: childProductInput.productUuid }
 			})
 
-			if (subProduct) {
-				// Build orderItemVariations from subItem.variations for strict Menu matching
-				const childVariations = []
-				if (subItem.variations) {
-					for (const variation of subItem.variations) {
-						const variationItems = []
-						for (const uuid of variation.variationItemUuids) {
-							const variationItem =
+			if (childProductFromDatabase) {
+				// Convert child product variations for strict Menu comparison
+				const childProductVariations = []
+				if (childProductInput.variations) {
+					for (const variationFromInput of childProductInput.variations) {
+						const resolvedVariationItemIds = []
+						for (const variationItemUuid of variationFromInput.variationItemUuids) {
+							const variationItemFromDatabase =
 								await this.prisma.variationItem.findFirst({
-									where: { uuid }
+									where: { uuid: variationItemUuid }
 								})
-							if (variationItem) {
-								variationItems.push(variationItem.id)
+							if (variationItemFromDatabase) {
+								resolvedVariationItemIds.push(
+									variationItemFromDatabase.id
+								)
 							}
 						}
 
-						childVariations.push({
-							count: variation.count,
-							orderItemVariationToVariationItems: variationItems.map(
-								id => ({
+						childProductVariations.push({
+							count: variationFromInput.count,
+							orderItemVariationToVariationItems:
+								resolvedVariationItemIds.map(id => ({
 									variationItemId: id
-								})
-							)
+								}))
 						})
 					}
 				}
 
-				orderItems.push({
-					product: subProduct,
-					count: subItem.count,
+				childOrderItems.push({
+					product: childProductFromDatabase,
+					count: childProductInput.count,
 					type: "PRODUCT" as OrderItemType,
 					orderItems: [],
-					orderItemVariations: childVariations,
+					orderItemVariations: childProductVariations,
 					notes: null,
 					takeAway: false,
 					course: null,
@@ -245,121 +260,136 @@ export class OrderItemService {
 			}
 		}
 
-		// Don't include variations in comparison structure - they should not affect matching
-		// Variations will be merged via mergeOrAddVariations when a match is found
+		// Note: Variations are NOT included in the comparison structure.
+		// They don't affect whether two OrderItems can be merged.
+		// When a match is found, variations will be merged via mergeOrAddVariations.
 
-		// Map ProductType to OrderItemType (same logic as when creating)
+		// Map ProductType to OrderItemType (same logic as when creating OrderItems)
 		let orderItemType: OrderItemType = "PRODUCT"
-		if (product.type === "MENU") {
+		if (incomingProduct.type === "MENU") {
 			orderItemType = "MENU"
-		} else if (product.type === "SPECIAL") {
+		} else if (incomingProduct.type === "SPECIAL") {
 			orderItemType = "SPECIAL"
 		}
 
 		return {
-			product: productData,
-			count: product.count,
+			product: productFromDatabase,
+			count: incomingProduct.count,
 			type: orderItemType,
-			discount: product.discount,
-			notes: product.notes,
-			takeAway: product.takeAway,
-			course: product.course,
-			offer: offer ? { id: offer.id } : null,
-			orderItems,
-			orderItemVariations: []
+			discount: incomingProduct.discount,
+			notes: incomingProduct.notes,
+			takeAway: incomingProduct.takeAway,
+			course: incomingProduct.course,
+			offer: offerFromDatabase ? { id: offerFromDatabase.id } : null,
+			orderItems: childOrderItems,
+			orderItemVariations: [] // Empty for comparison
 		}
 	}
 
 	/**
-	 * Removes products from an order
+	 * Removes products from an order.
+	 * If the OrderItem count is greater than the removal count, only decrements the count.
+	 * If the count matches, deletes the entire OrderItem.
 	 */
 	async removeProducts(order: Order, products: ProductInput[]): Promise<void> {
-		for (const product of products) {
-			// Get the existing order items for the order
-			// Wichtig: offerId muss beim Filtern berücksichtigt werden
-			const whereClause: any = {
+		for (const productToRemove of products) {
+			// Build filter criteria to find the OrderItem to remove
+			// Important: Must include offerId to ensure correct OrderItem is targeted
+			const filterCriteria: any = {
 				orderId: order.id,
-				productId: product.id,
-				orderItemId: null
+				productId: productToRemove.id,
+				orderItemId: null // Only top-level OrderItems
 			}
 
-			// Wenn eine offerId angegeben ist, nur OrderItems mit dieser Offer suchen
-			if (product.offerId !== null && product.offerId !== undefined) {
-				whereClause.offerId = product.offerId
+			// If product has an offer, only find OrderItems with that offer
+			if (
+				productToRemove.offerId !== null &&
+				productToRemove.offerId !== undefined
+			) {
+				filterCriteria.offerId = productToRemove.offerId
 			} else {
-				// Wenn keine offerId angegeben ist, nur OrderItems ohne Offer suchen
-				whereClause.offerId = null
+				// If product has no offer, only find OrderItems without an offer
+				filterCriteria.offerId = null
 			}
 
-			const existingOrderItems = await this.prisma.orderItem.findMany({
-				where: whereClause,
-				include: {
-					product: true,
-					orderItems: {
-						include: {
-							product: true,
-							orderItems: true,
-							orderItemVariations: {
-								include: {
-									orderItemVariationToVariationItems: true
-								}
-							},
-							offer: true
-						}
-					},
-					orderItemVariations: {
-						include: {
-							orderItemVariationToVariationItems: true
-						}
-					},
-					offer: true
-				}
-			})
+			const existingOrderItemsForProduct =
+				await this.prisma.orderItem.findMany({
+					where: filterCriteria,
+					include: {
+						product: true,
+						orderItems: {
+							include: {
+								product: true,
+								orderItems: true,
+								orderItemVariations: {
+									include: {
+										orderItemVariationToVariationItems: true
+									}
+								},
+								offer: true
+							}
+						},
+						orderItemVariations: {
+							include: {
+								orderItemVariationToVariationItems: true
+							}
+						},
+						offer: true
+					}
+				})
 
-			// Find the order item using new merging logic
-			let orderItem = null
-			for (const existing of existingOrderItems) {
-				const incomingAsOrderItem =
-					await this.convertProductInputToOrderItemStructure(product)
+			// Find the OrderItem that matches the product to remove
+			let orderItemToRemove = null
+			for (const candidateOrderItem of existingOrderItemsForProduct) {
+				const productToRemoveAsOrderItem =
+					await this.convertProductInputToOrderItemStructure(
+						productToRemove
+					)
 
-				if (isOrderItemMetaEqual(existing as any, incomingAsOrderItem)) {
-					orderItem = existing
+				if (
+					isOrderItemMetaEqual(
+						candidateOrderItem as any,
+						productToRemoveAsOrderItem
+					)
+				) {
+					orderItemToRemove = candidateOrderItem
 					break
 				}
 			}
 
-			if (orderItem == null) {
+			if (orderItemToRemove == null) {
 				throwApiError(apiErrors.productNotInOrder)
 			}
 
-			// Remove the product from the order
-			if (orderItem.count <= product.count) {
-				// Delete the OrderToProduct item
+			// Either delete the OrderItem entirely or decrement its count
+			if (orderItemToRemove.count <= productToRemove.count) {
+				// Count would be zero or negative, so delete the entire OrderItem
 				await this.prisma.orderItem.delete({
-					where: { id: orderItem.id }
+					where: { id: orderItemToRemove.id }
 				})
 			} else {
-				// Update the OrderToProduct item
+				// Decrement the count by the removal amount
 				await this.prisma.orderItem.update({
-					where: { id: orderItem.id },
-					data: { count: orderItem.count - product.count }
+					where: { id: orderItemToRemove.id },
+					data: { count: orderItemToRemove.count - productToRemove.count }
 				})
 			}
 		}
 	}
 
 	/**
-	 * Calculates the total price of an order
+	 * Calculates the total price of an order by summing up all OrderItem prices.
+	 * Price = product.price * orderItem.count for each item.
 	 */
 	async calculateTotalPrice(order: Order): Promise<number> {
-		const products = await this.prisma.orderItem.findMany({
+		const orderItemsInOrder = await this.prisma.orderItem.findMany({
 			where: { orderId: order.id },
 			include: { product: true }
 		})
 
 		let totalPrice = 0
-		for (const product of products) {
-			totalPrice += product.product.price * product.count
+		for (const orderItem of orderItemsInOrder) {
+			totalPrice += orderItem.product.price * orderItem.count
 		}
 
 		return totalPrice
