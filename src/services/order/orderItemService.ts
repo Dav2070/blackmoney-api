@@ -9,8 +9,12 @@ import { ProductInput, ProductInputArgs } from "../../types/orderTypes.js"
 import {
 	createOrderItemForProductInput,
 	isOrderItemMetaEqual,
-	mergeProductIntoOrderItem
-} from "../../utils/orderItemHelpers.js"
+	mergeProductIntoOrderItem,
+	resolveProductByUuid,
+	resolveOfferByUuid,
+	resolveVariationsFromInput,
+	resolveVariationItemsByUuids
+} from "../../utils/orderItem/index.js"
 
 /**
  * Service for handling OrderItem operations
@@ -28,49 +32,24 @@ export class OrderItemService {
 		const convertedProducts: ProductInput[] = []
 
 		for (const productInput of products) {
-			const productFromDatabase = await this.prisma.product.findFirst({
-				where: { uuid: productInput.uuid }
-			})
+			const productFromDatabase = await resolveProductByUuid(
+				this.prisma,
+				productInput.uuid
+			)
 
-			if (productFromDatabase == null) {
-				throwApiError(apiErrors.productDoesNotExist)
-			}
+			// Resolve offer UUID to database ID if present
+			const resolvedOfferId = await resolveOfferByUuid(
+				this.prisma,
+				productInput.offerUuid
+			)
 
-			// Resolve offer UUID to database ID if an offer is associated with this product
-			let resolvedOfferId: bigint | null = null
-			if (productInput.offerUuid) {
-				const offerFromDatabase = await this.prisma.offer.findFirst({
-					where: { uuid: productInput.offerUuid }
-				})
-				if (offerFromDatabase) {
-					resolvedOfferId = offerFromDatabase.id
-				}
-			}
-
-			// Convert all variation UUIDs to database IDs for this product
-			const resolvedVariations = []
-			if (productInput.variations) {
-				for (const variationFromInput of productInput.variations) {
-					const resolvedVariationItemIds = []
-					for (const variationItemUuid of variationFromInput.variationItemUuids) {
-						const variationItemFromDatabase =
-							await this.prisma.variationItem.findFirst({
-								where: { uuid: variationItemUuid }
-							})
-
-						if (variationItemFromDatabase == null) {
-							throwApiError(apiErrors.variationItemDoesNotExist)
-						}
-
-						resolvedVariationItemIds.push(variationItemFromDatabase.id)
-					}
-
-					resolvedVariations.push({
-						variationItemIds: resolvedVariationItemIds,
-						count: variationFromInput.count
-					})
-				}
-			}
+			// Resolve all variation UUIDs to database IDs
+			const resolvedVariations = productInput.variations
+				? await resolveVariationsFromInput(
+						this.prisma,
+						productInput.variations
+				  )
+				: []
 
 			convertedProducts.push({
 				id: productFromDatabase.id,
@@ -211,54 +190,9 @@ export class OrderItemService {
 		}
 
 		// Build child OrderItems structure (for Menu and Special types)
-		const childOrderItems = []
-		for (const childProductInput of incomingProduct.orderItems) {
-			const childProductFromDatabase = await this.prisma.product.findUnique({
-				where: { uuid: childProductInput.productUuid }
-			})
-
-			if (childProductFromDatabase) {
-				// Convert child product variations for strict Menu comparison
-				const childProductVariations = []
-				if (childProductInput.variations) {
-					for (const variationFromInput of childProductInput.variations) {
-						const resolvedVariationItemIds = []
-						for (const variationItemUuid of variationFromInput.variationItemUuids) {
-							const variationItemFromDatabase =
-								await this.prisma.variationItem.findFirst({
-									where: { uuid: variationItemUuid }
-								})
-							if (variationItemFromDatabase) {
-								resolvedVariationItemIds.push(
-									variationItemFromDatabase.id
-								)
-							}
-						}
-
-						childProductVariations.push({
-							count: variationFromInput.count,
-							orderItemVariationToVariationItems:
-								resolvedVariationItemIds.map(id => ({
-									variationItemId: id
-								}))
-						})
-					}
-				}
-
-				childOrderItems.push({
-					product: childProductFromDatabase,
-					count: childProductInput.count,
-					type: "PRODUCT" as OrderItemType,
-					orderItems: [],
-					orderItemVariations: childProductVariations,
-					notes: null,
-					takeAway: false,
-					course: null,
-					offer: null,
-					discount: 0
-				})
-			}
-		}
+		const childOrderItems = await this.resolveChildOrderItemsForComparison(
+			incomingProduct.orderItems
+		)
 
 		// Note: Variations are NOT included in the comparison structure.
 		// They don't affect whether two OrderItems can be merged.
@@ -393,5 +327,75 @@ export class OrderItemService {
 		}
 
 		return totalPrice
+	}
+
+	/**
+	 * Resolves child OrderItems for comparison purposes (used in Menu/Special matching).
+	 */
+	private async resolveChildOrderItemsForComparison(
+		childProductInputs: Array<{
+			productUuid: string
+			count: number
+			variations?: Array<{ variationItemUuids: string[]; count: number }>
+		}>
+	): Promise<any[]> {
+		const childOrderItems = []
+
+		for (const childProductInput of childProductInputs) {
+			const childProductFromDatabase = await this.prisma.product.findUnique({
+				where: { uuid: childProductInput.productUuid }
+			})
+
+			if (childProductFromDatabase) {
+				// Resolve variations for this child product
+				const childProductVariations = childProductInput.variations
+					? await this.resolveChildVariationsForComparison(
+							childProductInput.variations
+					  )
+					: []
+
+				childOrderItems.push({
+					product: childProductFromDatabase,
+					count: childProductInput.count,
+					type: "PRODUCT" as OrderItemType,
+					orderItems: [],
+					orderItemVariations: childProductVariations,
+					notes: null,
+					takeAway: false,
+					course: null,
+					offer: null,
+					discount: 0
+				})
+			}
+		}
+
+		return childOrderItems
+	}
+
+	/**
+	 * Resolves child variations for comparison (converts UUIDs to the comparison structure).
+	 */
+	private async resolveChildVariationsForComparison(
+		variations: Array<{ variationItemUuids: string[]; count: number }>
+	): Promise<any[]> {
+		const childProductVariations = []
+
+		for (const variationFromInput of variations) {
+			const resolvedVariationItemIds = await resolveVariationItemsByUuids(
+				this.prisma,
+				variationFromInput.variationItemUuids
+			)
+
+			childProductVariations.push({
+				count: variationFromInput.count,
+				orderItemVariationToVariationItems: resolvedVariationItemIds.map(
+					id => ({
+						variationItemId: id
+					})
+				)
+			})
+		}
+
+		return childProductVariations
 	}
 }

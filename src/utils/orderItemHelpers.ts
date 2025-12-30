@@ -11,6 +11,132 @@ import { apiErrors } from "../errors.js"
 import { throwApiError } from "../utils.js"
 import { ProductInput } from "../types/orderTypes.js"
 
+// ========== Helper Functions for UUID Resolution ==========
+
+/**
+ * Resolves a product UUID to its database ID.
+ * Throws an error if the product doesn't exist.
+ */
+export async function resolveProductByUuid(
+	prisma: PrismaClient,
+	uuid: string
+): Promise<Product> {
+	const product = await prisma.product.findFirst({ where: { uuid } })
+	if (!product) {
+		throwApiError(apiErrors.productDoesNotExist)
+	}
+	return product
+}
+
+/**
+ * Resolves an offer UUID to its database ID.
+ * Returns null if no UUID is provided or offer doesn't exist.
+ */
+export async function resolveOfferByUuid(
+	prisma: PrismaClient,
+	offerUuid: string | null | undefined
+): Promise<bigint | null> {
+	if (!offerUuid) return null
+	const offer = await prisma.offer.findFirst({ where: { uuid: offerUuid } })
+	return offer?.id ?? null
+}
+
+/**
+ * Resolves an array of variation item UUIDs to their database IDs.
+ * Throws an error if any variation item doesn't exist.
+ */
+export async function resolveVariationItemsByUuids(
+	prisma: PrismaClient,
+	uuids: string[]
+): Promise<bigint[]> {
+	const resolvedIds: bigint[] = []
+	for (const uuid of uuids) {
+		const variationItem = await prisma.variationItem.findFirst({
+			where: { uuid }
+		})
+		if (!variationItem) {
+			throwApiError(apiErrors.variationItemDoesNotExist)
+		}
+		resolvedIds.push(variationItem.id)
+	}
+	return resolvedIds
+}
+
+/**
+ * Converts variation input (with UUIDs) to resolved variations (with IDs).
+ */
+export async function resolveVariationsFromInput(
+	prisma: PrismaClient,
+	variations: Array<{ variationItemUuids: string[]; count: number }>
+): Promise<Array<{ variationItemIds: bigint[]; count: number }>> {
+	const resolved = []
+	for (const variation of variations) {
+		const variationItemIds = await resolveVariationItemsByUuids(
+			prisma,
+			variation.variationItemUuids
+		)
+		resolved.push({
+			variationItemIds,
+			count: variation.count
+		})
+	}
+	return resolved
+}
+
+/**
+ * Resolves child variations and merges them into an existing OrderItem.
+ * This is used for both SPECIAL and MENU types when merging.
+ */
+export async function resolveAndMergeChildVariations(
+	prisma: PrismaClient,
+	childOrderItemId: bigint,
+	childVariationsInput: Array<{ variationItemUuids: string[]; count: number }>
+): Promise<void> {
+	if (!childVariationsInput || childVariationsInput.length === 0) return
+
+	const resolvedVariations = await resolveVariationsFromInput(
+		prisma,
+		childVariationsInput
+	)
+
+	const variationsWithNumberIds = resolvedVariations.map(v => ({
+		variationItemIds: v.variationItemIds.map(Number),
+		count: v.count
+	}))
+
+	await mergeOrAddVariations(prisma, childOrderItemId, variationsWithNumberIds)
+}
+
+/**
+ * Creates OrderItemVariations for a given OrderItem.
+ */
+async function createVariationsForOrderItem(
+	prisma: PrismaClient,
+	orderItemId: bigint,
+	variations: Array<{ variationItemIds: bigint[]; count: number }>
+): Promise<void> {
+	for (const variation of variations) {
+		const createdOrderItemVariation = await prisma.orderItemVariation.create({
+			data: {
+				orderItem: { connect: { id: orderItemId } },
+				count: variation.count
+			}
+		})
+
+		// Link all VariationItems to this OrderItemVariation
+		for (const variationItemId of variation.variationItemIds) {
+			await prisma.orderItemVariationToVariationItem.create({
+				data: {
+					orderItemVariation: {
+						connect: { id: createdOrderItemVariation.id }
+					},
+					variationItem: { connect: { id: variationItemId } }
+				}
+			})
+		}
+	}
+}
+
 /**
  * Creates a new OrderItem in the database for a given ProductInput.
  * This includes creating all related data:
@@ -55,38 +181,11 @@ export async function createOrderItemForProductInput(
 	})
 
 	// Create all OrderItemVariations for this OrderItem
-	for (const variationFromInput of incomingProduct.variations) {
-		// Create one OrderItemVariation for each variation in the product
-		let createdOrderItemVariation = await prisma.orderItemVariation.create({
-			data: {
-				orderItem: {
-					connect: {
-						id: newOrderItem.id
-					}
-				},
-				count: variationFromInput.count
-			}
-		})
-
-		// Link all VariationItems to this OrderItemVariation
-		for (const variationItemId of variationFromInput.variationItemIds) {
-			// Create the join table entry linking OrderItemVariation to VariationItem
-			await prisma.orderItemVariationToVariationItem.create({
-				data: {
-					orderItemVariation: {
-						connect: {
-							id: createdOrderItemVariation.id
-						}
-					},
-					variationItem: {
-						connect: {
-							id: variationItemId
-						}
-					}
-				}
-			})
-		}
-	}
+	await createVariationsForOrderItem(
+		prisma,
+		newOrderItem.id,
+		incomingProduct.variations
+	)
 
 	// For Menu and Special types, create child OrderItems
 	if (orderItemType === "MENU" || orderItemType === "SPECIAL") {
@@ -127,59 +226,17 @@ export async function createOrderItemForProductInput(
 			})
 
 			// Add variations to the child OrderItem if provided
-			if (
-				childProductInput.variations &&
-				childProductInput.variations.length > 0
-			) {
-				// Process each variation for the child OrderItem
-				for (const childVariationFromInput of childProductInput.variations) {
-					const resolvedChildVariationItemIds = []
-					for (const variationItemUuid of childVariationFromInput.variationItemUuids) {
-						const variationItemFromDatabase =
-							await prisma.variationItem.findFirst({
-								where: { uuid: variationItemUuid }
-							})
-
-						if (variationItemFromDatabase == null) {
-							throwApiError(apiErrors.variationItemDoesNotExist)
-						}
-
-						resolvedChildVariationItemIds.push(
-							variationItemFromDatabase.id
-						)
-					}
-
-					// Create OrderItemVariation for the child OrderItem
-					const childOrderItemVariation =
-						await prisma.orderItemVariation.create({
-							data: {
-								orderItem: {
-									connect: {
-										id: childOrderItem.id
-									}
-								},
-								count: childVariationFromInput.count
-							}
-						})
-
-					// Link VariationItems to the child OrderItemVariation
-					for (const variationItemId of resolvedChildVariationItemIds) {
-						await prisma.orderItemVariationToVariationItem.create({
-							data: {
-								orderItemVariation: {
-									connect: {
-										id: childOrderItemVariation.id
-									}
-								},
-								variationItem: {
-									connect: {
-										id: variationItemId
-									}
-								}
-							}
-						})
-					}
-				}
+			if (childProductInput.variations?.length) {
+				// Resolve and create variations for child OrderItem
+				const resolvedChildVariations = await resolveVariationsFromInput(
+					prisma,
+					childProductInput.variations
+				)
+				await createVariationsForOrderItem(
+					prisma,
+					childOrderItem.id,
+					resolvedChildVariations
+				)
 			}
 		}
 	}
@@ -707,36 +764,12 @@ export async function mergeProductIntoOrderItem(
 				}
 			})
 
-			// Merge variations of the child OrderItem if provided
-			if (
-				incomingChildProductInput.variations &&
-				incomingChildProductInput.variations.length > 0
-			) {
-				// Convert variation UUIDs to IDs
-				const childVariationsWithResolvedIds = []
-				for (const childVariation of incomingChildProductInput.variations) {
-					const resolvedVariationItemIds = []
-					for (const variationItemUuid of childVariation.variationItemUuids) {
-						const variationItemFromDatabase =
-							await prisma.variationItem.findFirst({
-								where: { uuid: variationItemUuid }
-							})
-						if (variationItemFromDatabase) {
-							resolvedVariationItemIds.push(
-								Number(variationItemFromDatabase.id)
-							)
-						}
-					}
-					childVariationsWithResolvedIds.push({
-						variationItemIds: resolvedVariationItemIds,
-						count: childVariation.count
-					})
-				}
-
-				await mergeOrAddVariations(
+			// Merge variations using helper function
+			if (incomingChildProductInput.variations) {
+				await resolveAndMergeChildVariations(
 					prisma,
 					existingChildOrderItem.id,
-					childVariationsWithResolvedIds
+					incomingChildProductInput.variations
 				)
 			}
 		}
@@ -759,36 +792,12 @@ export async function mergeProductIntoOrderItem(
 					}
 				})
 
-				// Merge variations of the child OrderItem if provided
-				if (
-					incomingChildProductInput.variations &&
-					incomingChildProductInput.variations.length > 0
-				) {
-					// Convert variation UUIDs to IDs
-					const childVariationsWithResolvedIds = []
-					for (const childVariation of incomingChildProductInput.variations) {
-						const resolvedVariationItemIds = []
-						for (const variationItemUuid of childVariation.variationItemUuids) {
-							const variationItemFromDatabase =
-								await prisma.variationItem.findFirst({
-									where: { uuid: variationItemUuid }
-								})
-							if (variationItemFromDatabase) {
-								resolvedVariationItemIds.push(
-									Number(variationItemFromDatabase.id)
-								)
-							}
-						}
-						childVariationsWithResolvedIds.push({
-							variationItemIds: resolvedVariationItemIds,
-							count: childVariation.count
-						})
-					}
-
-					await mergeOrAddVariations(
+				// Merge variations using helper function
+				if (incomingChildProductInput.variations) {
+					await resolveAndMergeChildVariations(
 						prisma,
 						existingChildOrderItem.id,
-						childVariationsWithResolvedIds
+						incomingChildProductInput.variations
 					)
 				}
 			}
