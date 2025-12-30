@@ -155,212 +155,229 @@ export class OrderItemService {
 				console.log("  existing.course:", existing.course)
 				console.log("  existing.discount:", existing.discount)
 				console.log("  existing.offer?.id:", existing.offer?.id)
+			console.log("  existing.product.id:", existing.product.id)
+			console.log(
+				"  existing.product.shortcut:",
+				existing.product.shortcut
+			)
+			if (existing.type === "SPECIAL" && existing.orderItems.length > 0) {
 				console.log(
-					"  existing.product.shortcut:",
-					existing.product.shortcut
+					"  existing.orderItems[0].product.id:",
+					existing.orderItems[0].product.id
 				)
-
-				// Convert ProductInput to a temporary OrderItem structure for comparison
-				const incomingAsOrderItem =
-					await this.convertProductInputToOrderItemStructure(product)
-
-				console.log("  incoming.type:", incomingAsOrderItem.type)
-				console.log("  incoming.notes:", incomingAsOrderItem.notes)
-				console.log("  incoming.takeAway:", incomingAsOrderItem.takeAway)
-				console.log("  incoming.course:", incomingAsOrderItem.course)
-				console.log("  incoming.discount:", incomingAsOrderItem.discount)
-				console.log("  incoming.offer?.id:", incomingAsOrderItem.offer?.id)
-				console.log(
-					"  incoming.product.shortcut:",
-					incomingAsOrderItem.product.shortcut
-				)
-
-				const isEqual = isOrderItemMetaEqual(
-					existing as any,
-					incomingAsOrderItem
-				)
-				console.log("  - isOrderItemMetaEqual RESULT:", isEqual)
-
-				if (isEqual) {
-					mergeTarget = existing
-					console.log("  ✓ MATCH FOUND! Merging...")
-					break
-				} else {
-					console.log("  ✗ No match, checking next...")
-				}
 			}
 
-			if (mergeTarget) {
-				// Merge into existing order item
-				console.log("Merging into existing OrderItem:", mergeTarget.id)
-				await mergeProductIntoOrderItem(this.prisma, mergeTarget, product)
-			} else {
-				// Create new order item
-				console.log("No match found. Creating new OrderItem")
-				let type: OrderItemType = "PRODUCT"
-				if (product.type === "MENU") {
-					type = "MENU"
-				} else if (product.type === "SPECIAL") {
-					type = "SPECIAL"
-				}
+			// Convert ProductInput to a temporary OrderItem structure for comparison
+			const incomingAsOrderItem =
+				await this.convertProductInputToOrderItemStructure(product)
 
-				await createOrderItemForProductInput(
-					this.prisma,
-					product,
-					order,
-					type
+			console.log("  incoming.type:", incomingAsOrderItem.type)
+			console.log("  incoming.notes:", incomingAsOrderItem.notes)
+			console.log("  incoming.takeAway:", incomingAsOrderItem.takeAway)
+			console.log("  incoming.course:", incomingAsOrderItem.course)
+			console.log("  incoming.discount:", incomingAsOrderItem.discount)
+			console.log("  incoming.offer?.id:", incomingAsOrderItem.offer?.id)
+			console.log("  incoming.product.id:", incomingAsOrderItem.product.id)
+			console.log(
+				"  incoming.product.shortcut:",
+				incomingAsOrderItem.product.shortcut
+			)
+			if (
+				incomingAsOrderItem.type === "SPECIAL" &&
+				incomingAsOrderItem.orderItems.length > 0
+			) {
+				console.log(
+					"  incoming.orderItems[0].product.id:",
+					incomingAsOrderItem.orderItems[0].product.id
 				)
+			}
+
+			const isEqual = isOrderItemMetaEqual(
+				existing as any,
+				incomingAsOrderItem
+			)
+			console.log("  - isOrderItemMetaEqual RESULT:", isEqual)
+
+			if (isEqual) {
+				mergeTarget = existing
+				console.log("  ✓ MATCH FOUND! Merging...")
+				break
+			} else {
+				console.log("  ✗ No match, checking next...")
 			}
 		}
+
+		if (mergeTarget) {
+			// Merge into existing order item
+			console.log("Merging into existing OrderItem:", mergeTarget.id)
+			await mergeProductIntoOrderItem(this.prisma, mergeTarget, product)
+		} else {
+			// Create new order item
+			console.log("No match found. Creating new OrderItem")
+			let type: OrderItemType = "PRODUCT"
+			if (product.type === "MENU") {
+				type = "MENU"
+			} else if (product.type === "SPECIAL") {
+				type = "SPECIAL"
+			}
+
+			await createOrderItemForProductInput(
+				this.prisma,
+				product,
+				order,
+				type
+			)
+		}
+	}
+}
+
+/**
+ * Helper to convert ProductInput to OrderItem structure for comparison
+ */
+private async convertProductInputToOrderItemStructure(
+	product: ProductInput
+): Promise<any> {
+	const productData = await this.prisma.product.findUnique({
+		where: { id: product.id }
+	})
+
+	if (!productData) {
+		throwApiError(apiErrors.productDoesNotExist)
 	}
 
-	/**
-	 * Helper to convert ProductInput to OrderItem structure for comparison
-	 */
-	private async convertProductInputToOrderItemStructure(
-		product: ProductInput
-	): Promise<any> {
-		const productData = await this.prisma.product.findUnique({
-			where: { id: product.id }
+	// Get offer if offerId is provided
+	let offer = null
+	if (product.offerId) {
+		offer = await this.prisma.offer.findUnique({
+			where: { id: product.offerId }
+		})
+	}
+
+	// Build orderItems (subitems) from ProductInput
+	const orderItems = []
+	for (const subItem of product.orderItems) {
+		const subProduct = await this.prisma.product.findUnique({
+			where: { uuid: subItem.productUuid }
 		})
 
-		if (!productData) {
-			throwApiError(apiErrors.productDoesNotExist)
-		}
-
-		// Get offer if offerId is provided
-		let offer = null
-		if (product.offerId) {
-			offer = await this.prisma.offer.findUnique({
-				where: { id: product.offerId }
+		if (subProduct) {
+			orderItems.push({
+				product: subProduct,
+				count: subItem.count,
+				type: "PRODUCT" as OrderItemType,
+				orderItems: [],
+				orderItemVariations: [],
+				notes: null,
+				takeAway: false,
+				course: null,
+				offer: null,
+				discount: 0
 			})
-		}
-
-		// Build orderItems (subitems) from ProductInput
-		const orderItems = []
-		for (const subItem of product.orderItems) {
-			const subProduct = await this.prisma.product.findUnique({
-				where: { uuid: subItem.productUuid }
-			})
-
-			if (subProduct) {
-				orderItems.push({
-					product: subProduct,
-					count: subItem.count,
-					type: "PRODUCT" as OrderItemType,
-					orderItems: [],
-					orderItemVariations: [],
-					notes: null,
-					takeAway: false,
-					course: null,
-					offer: null,
-					discount: 0
-				})
-			}
-		}
-
-		// Don't include variations in comparison structure - they should not affect matching
-		// Variations will be merged via mergeOrAddVariations when a match is found
-
-		// Map ProductType to OrderItemType (same logic as when creating)
-		let orderItemType: OrderItemType = "PRODUCT"
-		if (product.type === "MENU") {
-			orderItemType = "MENU"
-		} else if (product.type === "SPECIAL") {
-			orderItemType = "SPECIAL"
-		}
-
-		return {
-			product: productData,
-			count: product.count,
-			type: orderItemType,
-			discount: product.discount,
-			notes: product.notes,
-			takeAway: product.takeAway,
-			course: product.course,
-			offer: offer ? { id: offer.id } : null,
-			orderItems,
-			orderItemVariations: []
 		}
 	}
 
-	/**
-	 * Removes products from an order
-	 */
-	async removeProducts(order: Order, products: ProductInput[]): Promise<void> {
-		for (const product of products) {
-			// Get the existing order items for the order
-			// Wichtig: offerId muss beim Filtern berücksichtigt werden
-			const whereClause: any = {
-				orderId: order.id,
-				productId: product.id,
-				orderItemId: null
+	// Don't include variations in comparison structure - they should not affect matching
+	// Variations will be merged via mergeOrAddVariations when a match is found
+
+	// Map ProductType to OrderItemType (same logic as when creating)
+	let orderItemType: OrderItemType = "PRODUCT"
+	if (product.type === "MENU") {
+		orderItemType = "MENU"
+	} else if (product.type === "SPECIAL") {
+		orderItemType = "SPECIAL"
+	}
+
+	return {
+		product: productData,
+		count: product.count,
+		type: orderItemType,
+		discount: product.discount,
+		notes: product.notes,
+		takeAway: product.takeAway,
+		course: product.course,
+		offer: offer ? { id: offer.id } : null,
+		orderItems,
+		orderItemVariations: []
+	}
+}
+
+/**
+ * Removes products from an order
+ */
+async removeProducts(order: Order, products: ProductInput[]): Promise<void> {
+	for (const product of products) {
+		// Get the existing order items for the order
+		// Wichtig: offerId muss beim Filtern berücksichtigt werden
+		const whereClause: any = {
+			orderId: order.id,
+			productId: product.id,
+			orderItemId: null
+		}
+
+		// Wenn eine offerId angegeben ist, nur OrderItems mit dieser Offer suchen
+		if (product.offerId !== null && product.offerId !== undefined) {
+			whereClause.offerId = product.offerId
+		} else {
+			// Wenn keine offerId angegeben ist, nur OrderItems ohne Offer suchen
+			whereClause.offerId = null
+		}
+
+		const existingOrderItems = await this.prisma.orderItem.findMany({
+			where: whereClause,
+			include: {
+				product: true,
+				orderItems: {
+					include: {
+						product: true,
+						orderItems: true,
+						orderItemVariations: {
+							include: {
+								orderItemVariationToVariationItems: true
+							}
+						},
+						offer: true
+					}
+				},
+				orderItemVariations: {
+					include: {
+						orderItemVariationToVariationItems: true
+					}
+				},
+				offer: true
 			}
+		})
 
-			// Wenn eine offerId angegeben ist, nur OrderItems mit dieser Offer suchen
-			if (product.offerId !== null && product.offerId !== undefined) {
-				whereClause.offerId = product.offerId
-			} else {
-				// Wenn keine offerId angegeben ist, nur OrderItems ohne Offer suchen
-				whereClause.offerId = null
-			}
+		// Find the order item using new merging logic
+		let orderItem = null
+		for (const existing of existingOrderItems) {
+			const incomingAsOrderItem =
+				await this.convertProductInputToOrderItemStructure(product)
 
-			const existingOrderItems = await this.prisma.orderItem.findMany({
-				where: whereClause,
-				include: {
-					product: true,
-					orderItems: {
-						include: {
-							product: true,
-							orderItems: true,
-							orderItemVariations: {
-								include: {
-									orderItemVariationToVariationItems: true
-								}
-							},
-							offer: true
-						}
-					},
-					orderItemVariations: {
-						include: {
-							orderItemVariationToVariationItems: true
-						}
-					},
-					offer: true
-				}
-			})
-
-			// Find the order item using new merging logic
-			let orderItem = null
-			for (const existing of existingOrderItems) {
-				const incomingAsOrderItem =
-					await this.convertProductInputToOrderItemStructure(product)
-
-				if (isOrderItemMetaEqual(existing as any, incomingAsOrderItem)) {
-					orderItem = existing
-					break
-				}
-			}
-
-			if (orderItem == null) {
-				throwApiError(apiErrors.productNotInOrder)
-			}
-
-			// Remove the product from the order
-			if (orderItem.count <= product.count) {
-				// Delete the OrderToProduct item
-				await this.prisma.orderItem.delete({
-					where: { id: orderItem.id }
-				})
-			} else {
-				// Update the OrderToProduct item
-				await this.prisma.orderItem.update({
-					where: { id: orderItem.id },
-					data: { count: orderItem.count - product.count }
-				})
+			if (isOrderItemMetaEqual(existing as any, incomingAsOrderItem)) {
+				orderItem = existing
+				break
 			}
 		}
+
+		if (orderItem == null) {
+			throwApiError(apiErrors.productNotInOrder)
+		}
+
+		// Remove the product from the order
+		if (orderItem.count <= product.count) {
+			// Delete the OrderToProduct item
+			await this.prisma.orderItem.delete({
+				where: { id: orderItem.id }
+			})
+		} else {
+			// Update the OrderToProduct item
+			await this.prisma.orderItem.update({
+				where: { id: orderItem.id },
+				data: { count: orderItem.count - product.count }
+			})
+		}
 	}
+}
 
 	/**
 	 * Calculates the total price of an order

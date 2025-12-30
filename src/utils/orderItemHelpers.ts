@@ -226,7 +226,7 @@ function isOrderItemBasicEqual(
 	if (a.takeAway !== b.takeAway) return false
 	if (a.course !== b.course) return false
 	if (a.offer?.id !== b.offer?.id) return false
-	if (a.product.shortcut !== b.product.shortcut) return false
+	if (a.product.id !== b.product.id) return false
 
 	return true
 }
@@ -238,6 +238,8 @@ function isDiversOrderItemMetaEqual(
 	existing: OrderItemWithRelations,
 	incoming: OrderItemWithRelations
 ): boolean {
+	// Note: product.id is already compared in isOrderItemBasicEqual
+	// This additional check is only for diverse products (shortcut 0)
 	if (existing.product.shortcut == 0 && incoming.product.shortcut == 0) {
 		if (existing.product.price !== incoming.product.price) return false
 		if (existing.product.name !== incoming.product.name) return false
@@ -375,8 +377,8 @@ export function isOrderItemMetaEqual(
 	// strict check for Specials: only product of subitem must match
 	if (existing.type === "SPECIAL" && incoming.type === "SPECIAL") {
 		if (
-			existing.orderItems[0]?.product.shortcut !==
-			incoming.orderItems[0]?.product.shortcut
+			existing.orderItems[0]?.product.id !==
+			incoming.orderItems[0]?.product.id
 		)
 			return false
 	}
