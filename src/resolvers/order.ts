@@ -2,37 +2,17 @@ import {
 	Bill,
 	Order,
 	OrderItem,
-	OrderItemType,
-	OrderItemVariation,
-	OrderItemVariationToVariationItem,
 	Prisma,
-	PrismaClient,
-	Product,
-	ProductType,
 	Table
 } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { ResolverContext, List, PaymentMethod } from "../types.js"
 import { throwApiError } from "../utils.js"
-import {
-	startTransaction,
-	finishTransaction
-} from "../services/fiskalyApiService.js"
-
-interface ProductInput {
-	id: bigint
-	count: number
-	type: ProductType
-	discount: number
-	variations: {
-		variationItemIds: bigint[]
-		count: number
-	}[]
-	orderItems: {
-		productUuid: string
-		count: number
-	}[]
-}
+import { OrderService } from "../services/order/orderService.js"
+import { OrderCompletionService } from "../services/order/orderCompletionService.js"
+import { OrderItemService } from "../services/order/orderItemService.js"
+import { OrderUpdateService } from "../services/order/orderUpdateService.js"
+import { ProductInputArgs } from "../types/orderTypes.js"
 
 export async function retrieveOrder(
 	parent: any,
@@ -41,17 +21,12 @@ export async function retrieveOrder(
 	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the order
-	return await context.prisma.order.findFirst({
-		where: {
-			uuid: args.uuid
-		}
-	})
+	const orderService = new OrderService(context.prisma)
+	return await orderService.getOrder(args.uuid)
 }
 
 export async function listOrders(
@@ -61,28 +36,12 @@ export async function listOrders(
 	},
 	context: ResolverContext
 ): Promise<List<Order>> {
-	const completed = args.completed ?? false
-
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the orders
-	const where = {
-		// TODO: Get only the orders of the company of the user
-		paidAt: completed ? { not: null } : null
-	}
-
-	const [total, items] = await context.prisma.$transaction([
-		context.prisma.order.count({ where }),
-		context.prisma.order.findMany({ where })
-	])
-
-	return {
-		total,
-		items
-	}
+	const orderService = new OrderService(context.prisma)
+	return await orderService.listOrders(args.completed ?? false)
 }
 
 export async function createOrder(
@@ -92,44 +51,12 @@ export async function createOrder(
 	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Check if the table exists
-	const table = await context.prisma.table.findFirst({
-		where: {
-			uuid: args.tableUuid
-		},
-		include: {
-			room: {
-				include: {
-					restaurant: true
-				}
-			}
-		}
-	})
-
-	if (table == null) {
-		throwApiError(apiErrors.tableDoesNotExist)
-	}
-
-	// Check if the table belongs to the same company as the user
-	if (table.room.restaurant.companyId !== context.user.companyId) {
-		throwApiError(apiErrors.actionNotAllowed)
-	}
-
-	// Create the order
-	return await context.prisma.order.create({
-		data: {
-			table: {
-				connect: {
-					id: table.id
-				}
-			}
-		}
-	})
+	const orderService = new OrderService(context.prisma)
+	return await orderService.createOrder(args.tableUuid)
 }
 
 export async function updateOrder(
@@ -149,468 +76,44 @@ export async function updateOrder(
 	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the order
-	let order = await context.prisma.order.findFirst({
-		where: {
-			uuid: args.uuid
-		}
-	})
-
-	let orderItems = await context.prisma.orderItem.findMany({
-		where: {
-			orderId: order.id
-		},
-		include: {
-			orderItemVariations: {
-				include: {
-					orderItemVariationToVariationItems: true
-				}
-			}
-		}
-	})
-
-	const orderItemsToDelete: (OrderItem & {
-		orderItemVariations: ({
-			orderItemVariationToVariationItems: {
-				id: bigint
-				orderItemVariationId: bigint
-				variationItemId: bigint
-			}[]
-		} & {
-			id: bigint
-			uuid: string
-			count: number
-			orderItemId: bigint
-		})[]
-	})[] = []
-
-	//Erstelle Liste mit den OrderItems, die gelöscht werden könnten
-	for (let orderItem of orderItems) {
-		orderItemsToDelete.push(orderItem)
-	}
-
-	for (let item of args.orderItems) {
-		//Finde das OrderItem, das geupdatet werden soll
-		let orderItem = orderItemsToDelete.find(
-			oi => oi.productId == BigInt(item.productId)
-		)
-
-		// Check ob das OrderItem existiert und entfern es aus der potentiellen Liste der zu löschenden Items
-		if (orderItem != null && orderItem.count > 0) {
-			let i = orderItemsToDelete.indexOf(orderItem)
-			orderItemsToDelete.splice(i, 1)
-
-			if (item.count != orderItem.count) {
-				// Update the order item
-				orderItem = await context.prisma.orderItem.update({
-					where: {
-						id: orderItem.id
-					},
-					data: {
-						count: item.count
-					},
-					include: {
-						orderItemVariations: {
-							include: {
-								orderItemVariationToVariationItems: true
-							}
-						}
-					}
-				})
-			}
-		}
-		//Füge das OrderItem in der Datenbank hinzu
-		else if (orderItem == null || orderItem.count > 0) {
-			// Create the order item
-			orderItem = await context.prisma.orderItem.create({
-				data: {
-					order: {
-						connect: {
-							id: order.id
-						}
-					},
-					product: {
-						connect: {
-							id: BigInt(item.productId)
-						}
-					},
-					count: item.count
-				},
-				include: {
-					orderItemVariations: {
-						include: {
-							orderItemVariationToVariationItems: true
-						}
-					}
-				}
-			})
-		}
-
-		// Falls Variationen vorhanden sind, diese ebenfalls aktualisieren
-		if (item.orderItemVariations) {
-			const orderItemVariationsToDelete: {
-				id: bigint
-				uuid: string
-				count: number
-				orderItemId: bigint
-			}[] = orderItem.orderItemVariations
-
-			for (const variation of item.orderItemVariations) {
-				// Try to find the existing variation
-				let existingVariation = orderItem.orderItemVariations.find(
-					oiv =>
-						oiv.orderItemVariationToVariationItems.length ===
-							variation.variationItems.length &&
-						oiv.orderItemVariationToVariationItems.every(
-							(item, index) =>
-								item.id === BigInt(variation.variationItems[index].id)
-						)
-				)
-
-				if (existingVariation != null) {
-					let i = orderItemVariationsToDelete.indexOf(existingVariation)
-					if (i != -1) orderItemVariationsToDelete.splice(i, 1)
-
-					if (existingVariation.count != variation.count) {
-						// Existierende Variation aktualisieren
-						await context.prisma.orderItemVariation.update({
-							where: {
-								id: existingVariation.id
-							},
-							data: {
-								count: variation.count
-							}
-						})
-					}
-				} else {
-					// Neue Variation hinzufügen
-					const newOrderItemVariation =
-						await context.prisma.orderItemVariation.create({
-							data: {
-								orderItem: {
-									connect: {
-										id: orderItem.id
-									}
-								},
-								count: variation.count
-							}
-						})
-
-					for (const variationItem of variation.variationItems) {
-						await context.prisma.orderItemVariationToVariationItem.create(
-							{
-								data: {
-									orderItemVariation: {
-										connect: {
-											id: newOrderItemVariation.id
-										}
-									},
-									variationItem: {
-										connect: {
-											id: variationItem.id
-										}
-									}
-								}
-							}
-						)
-					}
-				}
-			}
-
-			// Delete the order item variations
-			const deleteOrderItemVariationsCommands = []
-
-			for (let orderItemVariation of orderItemVariationsToDelete) {
-				deleteOrderItemVariationsCommands.push(
-					context.prisma.orderItemVariation.delete({
-						where: {
-							id: orderItemVariation.id
-						}
-					})
-				)
-			}
-
-			await context.prisma.$transaction(deleteOrderItemVariationsCommands)
-		}
-	}
-
-	// Delete the order items
-	const deleteCommands = []
-
-	for (let orderItem of orderItemsToDelete) {
-		deleteCommands.push(
-			context.prisma.orderItem.delete({
-				where: {
-					uuid: orderItem.uuid
-				}
-			})
-		)
-	}
-
-	await context.prisma.$transaction(deleteCommands)
-
-	return order
+	const orderUpdateService = new OrderUpdateService(context.prisma)
+	return await orderUpdateService.updateOrder(args.uuid, args.orderItems)
 }
 
 export async function addProductsToOrder(
 	parent: any,
 	args: {
 		uuid: string
-		products: {
-			uuid: string
-			count: number
-			discount?: number
-			variations?: {
-				variationItemUuids: string[]
-				count: number
-			}[]
-			orderItems?: {
-				productUuid: string
-				count: number
-			}[]
-		}[]
+		products: ProductInputArgs[]
 	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the order
-	const order = await context.prisma.order.findFirst({
-		where: {
-			uuid: args.uuid
-		}
-	})
-
-	// Check if the order exists
-	if (order == null) {
-		throwApiError(apiErrors.orderDoesNotExist)
-	}
-
-	// Get the products from the database
-	const products: ProductInput[] = []
-
-	for (const item of args.products) {
-		const product = await context.prisma.product.findFirst({
-			where: {
-				uuid: item.uuid
-			}
-		})
-
-		if (product == null) {
-			throwApiError(apiErrors.productDoesNotExist)
-		}
-
-		// TODO: Get the offer of the product & add it to the menues and specials order items
-
-		const variations: {
-			variationItemIds: bigint[]
-			count: number
-		}[] = []
-
-		if (item.variations != null) {
-			for (const variationItem of item.variations) {
-				const variationItemIds: bigint[] = []
-
-				for (const variationItemUuid of variationItem.variationItemUuids) {
-					const variationItem =
-						await context.prisma.variationItem.findFirst({
-							where: {
-								uuid: variationItemUuid
-							}
-						})
-
-					if (variationItem == null) {
-						throwApiError(apiErrors.variationItemDoesNotExist)
-					}
-
-					// TODO: Check if the variation item belongs to the product
-
-					variationItemIds.push(variationItem.id)
-				}
-
-				variations.push({
-					variationItemIds,
-					count: variationItem.count
-				})
-			}
-		}
-
-		products.push({
-			id: product.id,
-			count: item.count,
-			type: product.type,
-			discount: item.discount,
-			variations,
-			orderItems: item.orderItems ?? []
-		})
-	}
-
-	// Add the products to the order
-	for (const product of products) {
-		let type: OrderItemType = "PRODUCT"
-
-		if (product.type === "MENU") {
-			type = "MENU"
-		} else if (product.type === "SPECIAL") {
-			type = "SPECIAL"
-		}
-
-		// Check if there is already a OrderItem
-		let orderItems = await context.prisma.orderItem.findMany({
-			where: {
-				orderId: order.id,
-				productId: product.id,
-				orderItemId: null,
-				discount: product.discount
-			},
-			include: {
-				orderItems: {
-					include: {
-						product: true
-					}
-				},
-				orderItemVariations: {
-					include: {
-						orderItemVariationToVariationItems: true
-					}
-				}
-			}
-		})
-
-		if (orderItems.length == 0) {
-			// Create a new OrderItem
-			await createOrderItemForProductInput(
-				context.prisma,
-				product,
-				order,
-				type
-			)
-		} else if (type === "MENU") {
-			let foundOrderItem = false
-
-			for (const orderItem of orderItems) {
-				// Check if the existing OrderItem has exactly the same properties and sub order items
-				const equal = await productInputAndOrderItemEqual(
-					context.prisma,
-					product,
-					orderItem
-				)
-
-				if (equal) {
-					// Update the count of the existing OrderItem
-					await context.prisma.orderItem.update({
-						where: {
-							id: orderItem.id
-						},
-						data: {
-							count: orderItem.count + product.count
-						}
-					})
-
-					foundOrderItem = true
-				}
-			}
-
-			if (!foundOrderItem) {
-				// Create a new OrderItem
-				await createOrderItemForProductInput(
-					context.prisma,
-					product,
-					order,
-					type
-				)
-			}
-		}
-	}
-
-	return order
+	const orderService = new OrderService(context.prisma)
+	return await orderService.addProductsToOrder(args.uuid, args.products)
 }
 
 export async function removeProductsFromOrder(
 	parent: any,
-	args: { uuid: string; products: { uuid: string; count: number }[] },
+	args: {
+		uuid: string
+		products: ProductInputArgs[]
+	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the order
-	let order = await context.prisma.order.findFirst({
-		where: {
-			uuid: args.uuid
-		}
-	})
-
-	// Check if the order exists
-	if (order == null) {
-		throwApiError(apiErrors.orderDoesNotExist)
-	}
-
-	// Get the products from the database
-	let products: { id: bigint; count: number }[] = []
-
-	for (let item of args.products) {
-		const product = await context.prisma.product.findFirst({
-			where: {
-				uuid: item.uuid
-			}
-		})
-
-		if (product == null) {
-			throwApiError(apiErrors.productDoesNotExist)
-		}
-
-		products.push({
-			id: product.id,
-			count: item.count
-		})
-	}
-
-	// Remove the products from the order
-	for (let product of products) {
-		// Check if there is already a OrderToProduct item
-		let orderItem = await context.prisma.orderItem.findFirst({
-			where: {
-				orderId: order.id,
-				productId: product.id
-			}
-		})
-
-		if (orderItem == null) {
-			throwApiError(apiErrors.productNotInOrder)
-		}
-
-		if (orderItem.count <= product.count) {
-			// Delete the OrderToProduct item
-			await context.prisma.orderItem.delete({
-				where: {
-					id: orderItem.id
-				}
-			})
-		} else {
-			// Update the OrderToProduct item
-			await context.prisma.orderItem.update({
-				where: {
-					id: orderItem.id
-				},
-				data: {
-					count: orderItem.count - product.count
-				}
-			})
-		}
-	}
-
-	return order
+	const orderService = new OrderService(context.prisma)
+	return await orderService.removeProductsFromOrder(args.uuid, args.products)
 }
 
 export async function completeOrder(
@@ -622,110 +125,25 @@ export async function completeOrder(
 	},
 	context: ResolverContext
 ): Promise<Order> {
-	// Check if the user is logged in
 	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	// Get the order
-	let order = await context.prisma.order.findFirst({
-		where: {
-			uuid: args.uuid
-		}
+	const order = await context.prisma.order.findFirst({
+		where: { uuid: args.uuid }
 	})
 
-	// Check if the order exists
 	if (order == null) {
 		throwApiError(apiErrors.orderDoesNotExist)
 	}
 
-	// Check if the order is already completed
-	if (order.paidAt != null) {
-		throwApiError(apiErrors.orderAlreadyCompleted)
-	}
-
-	// Get the bill
-	const bill = await context.prisma.bill.findFirst({
-		where: {
-			uuid: args.billUuid
-		},
-		include: {
-			registerClient: {
-				include: {
-					register: true
-				}
-			}
-		}
-	})
-
-	// Check if the bill exists
-	if (bill == null) {
-		throwApiError(apiErrors.billDoesNotExist)
-	}
-
-	// If the order has a billId, check if it matches the bill
-	if (order.billId != null && order.billId !== bill.id) {
-		throwApiError(apiErrors.billNotMatchingExistingBillOfOrder)
-	}
-
-	// Start the transaction with the ordered items
-	const orderItems = await context.prisma.orderItem.findMany({
-		where: {
-			orderId: order.id
-		},
-		include: {
-			product: true
-		}
-	})
-
-	const startTransactionResponse = await startTransaction(
-		bill.registerClient.register.uuid,
-		bill.registerClient.uuid,
-		order.uuid,
-		orderItems.map(item => ({
-			quantity: item.count,
-			text: item.product.name,
-			pricePerUnit: item.product.price
-		}))
+	const orderCompletionService = new OrderCompletionService(context.prisma)
+	return await orderCompletionService.completeOrder(
+		order,
+		args.billUuid,
+		args.paymentMethod,
+		context.user.id
 	)
-
-	if (startTransactionResponse == null) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Finish the transaction
-	const finishTransactionResponse = await finishTransaction(
-		bill.registerClient.register.uuid,
-		bill.registerClient.uuid,
-		order.uuid,
-		startTransactionResponse.schema.raw.process_type,
-		startTransactionResponse.schema.raw.process_data
-	)
-
-	if (finishTransactionResponse == null) {
-		throwApiError(apiErrors.unexpectedError)
-	}
-
-	// Update the order
-	return await context.prisma.order.update({
-		where: {
-			id: order.id
-		},
-		data: {
-			paidAt: new Date(),
-			paymentMethod: args.paymentMethod,
-			bill: {
-				connect: {
-					id: bill.id
-				}
-			},
-			user: {
-				connect: {
-					id: context.user.id
-				}
-			}
-		}
-	})
 }
 
 export async function totalPrice(
@@ -733,24 +151,8 @@ export async function totalPrice(
 	args: {},
 	context: ResolverContext
 ): Promise<number> {
-	// Get the products from the database
-	let products = await context.prisma.orderItem.findMany({
-		where: {
-			orderId: order.id
-		},
-		include: {
-			product: true
-		}
-	})
-
-	// Calculate the total price
-	let totalPrice = 0
-
-	for (let product of products) {
-		totalPrice += product.product.price * product.count
-	}
-
-	return totalPrice
+	const orderItemService = new OrderItemService(context.prisma)
+	return await orderItemService.calculateTotalPrice(order)
 }
 
 export function paidAt(order: Order): string {
@@ -809,158 +211,3 @@ export async function orderItems(
 		items
 	}
 }
-
-//#region Helper Functions
-async function createOrderItemForProductInput(
-	prisma: PrismaClient,
-	product: ProductInput,
-	order: Order,
-	type: OrderItemType
-) {
-	const newOrderItem = await prisma.orderItem.create({
-		data: {
-			order: {
-				connect: {
-					id: order.id
-				}
-			},
-			product: {
-				connect: {
-					id: product.id
-				}
-			},
-			count: product.count,
-			discount: product.discount,
-			type
-		}
-	})
-
-	// Add the variations to the OrderItem
-	for (const variation of product.variations) {
-		// For each variation in product, create an OrderItemVariation
-		let orderItemVariation = await prisma.orderItemVariation.create({
-			data: {
-				orderItem: {
-					connect: {
-						id: newOrderItem.id
-					}
-				},
-				count: variation.count
-			}
-		})
-
-		for (const variationItemId of variation.variationItemIds) {
-			// For each variationItemId in variation, create an OrderItemVariationToVariationItem
-			await prisma.orderItemVariationToVariationItem.create({
-				data: {
-					orderItemVariation: {
-						connect: {
-							id: orderItemVariation.id
-						}
-					},
-					variationItem: {
-						connect: {
-							id: variationItemId
-						}
-					}
-				}
-			})
-		}
-	}
-
-	if (type === "MENU" || type === "SPECIAL") {
-		// Add the order items to the OrderItem
-		for (const item of product.orderItems) {
-			// Get the product of the order item
-			const subProduct = await prisma.product.findFirst({
-				where: {
-					uuid: item.productUuid
-				}
-			})
-
-			if (subProduct == null) {
-				throwApiError(apiErrors.productDoesNotExist)
-			}
-
-			// Create a new OrderItem for each order item
-			await prisma.orderItem.create({
-				data: {
-					order: {
-						connect: {
-							id: order.id
-						}
-					},
-					product: {
-						connect: {
-							id: subProduct.id
-						}
-					},
-					count: item.count,
-					type: "PRODUCT",
-					orderItem: {
-						connect: {
-							id: newOrderItem.id
-						}
-					}
-				}
-			})
-		}
-	}
-}
-
-async function productInputAndOrderItemEqual(
-	prisma: PrismaClient,
-	product: ProductInput,
-	orderItem: OrderItem & {
-		orderItems: (OrderItem & { product: Product })[]
-		orderItemVariations: (OrderItemVariation & {
-			orderItemVariationToVariationItems: OrderItemVariationToVariationItem[]
-		})[]
-	}
-): Promise<boolean> {
-	// Compare basic properties
-	if (product.type !== orderItem.type) {
-		return false
-	}
-
-	if (product.discount !== orderItem.discount) {
-		return false
-	}
-
-	// Compare the variations
-	if (product.variations.length !== orderItem.orderItemVariations.length) {
-		return false
-	}
-
-	for (const variation of product.variations) {
-		for (const variationItemId of variation.variationItemIds) {
-			const match = orderItem.orderItemVariations.find(oiv =>
-				oiv.orderItemVariationToVariationItems.some(
-					oii => oii.variationItemId === variationItemId
-				)
-			)
-
-			if (match == null) {
-				return false
-			}
-		}
-	}
-
-	// Compare the sub order items
-	if (product.orderItems.length !== orderItem.orderItems.length) {
-		return false
-	}
-
-	for (const subOrderItem of product.orderItems) {
-		const match = orderItem.orderItems.find(
-			oi => oi.product.uuid === subOrderItem.productUuid
-		)
-
-		if (match == null) {
-			return false
-		}
-	}
-
-	return true
-}
-//#endregion
