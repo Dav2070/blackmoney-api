@@ -32,9 +32,9 @@ export async function createBill(
 	}
 
 	// Check if the user belongs to the same restaurant as the register client
-	if (
-		context.user.companyId !== registerClient.register.restaurant.companyId
-	) {
+	const restaurant = registerClient.register.restaurant
+
+	if (context.user.companyId !== restaurant.companyId) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
@@ -44,6 +44,11 @@ export async function createBill(
 			registerClient: {
 				connect: {
 					id: registerClient.id
+				}
+			},
+			restaurant: {
+				connect: {
+					id: restaurant.id
 				}
 			}
 		}
