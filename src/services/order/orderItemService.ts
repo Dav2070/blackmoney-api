@@ -1,7 +1,8 @@
 import {
 	Order,
 	PrismaClient,
-	OrderItemType
+	OrderItemType,
+	ProductType
 } from "../../../prisma/generated/client.js"
 import { apiErrors } from "../../errors.js"
 import { throwApiError } from "../../utils.js"
@@ -21,6 +22,26 @@ import {
  */
 export class OrderItemService {
 	constructor(private readonly prisma: PrismaClient) {}
+
+	/**
+	 * Converts ProductType from database to OrderItemType
+	 */
+	private convertProductTypeToOrderItemType(
+		productType: ProductType
+	): OrderItemType {
+		switch (productType) {
+			case "MENU":
+				return "MENU"
+			case "SPECIAL":
+				return "SPECIAL"
+			case "DRINK":
+				return "PRODUCT"
+			case "FOOD":
+				return "PRODUCT"
+			default:
+				return "PRODUCT"
+		}
+	}
 
 	/**
 	 * Checks if a ProductInput represents a diverse item
@@ -90,7 +111,9 @@ export class OrderItemService {
 			convertedProducts.push({
 				id: productFromDatabase.id,
 				count: productInput.count,
-				type: productFromDatabase.type as any, // ProductType from database, will be mapped to OrderItemType later
+				type: this.convertProductTypeToOrderItemType(
+					productFromDatabase.type
+				),
 				discount: productInput.discount ?? 0,
 				diversePrice: undefined,
 				notes: productInput.notes ?? null,
