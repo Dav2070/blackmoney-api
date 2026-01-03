@@ -61,6 +61,7 @@ function isVariationItemEqual(
  * - discount (summed when merging, not used for comparison)
  *
  * This checks: type, notes, takeAway, course, offer, and product.
+ * For diverse items (DIVERSE_FOOD, DIVERSE_DRINK, DIVERSE_OTHER), also checks diversePrice.
  */
 function isOrderItemBasicEqual(
 	firstOrderItem: OrderItemWithRelations,
@@ -70,7 +71,7 @@ function isOrderItemBasicEqual(
 	if (firstOrderItem === secondOrderItem) return true
 	if (!firstOrderItem || !secondOrderItem) return false
 
-	// Type must match (PRODUCT, MENU, or SPECIAL)
+	// Type must match (PRODUCT, MENU, SPECIAL, or DIVERSE_*)
 	if (firstOrderItem.type !== secondOrderItem.type) return false
 
 	// Notes must match (optional customer notes)
@@ -85,34 +86,37 @@ function isOrderItemBasicEqual(
 	// Offer ID must match (both null or both same offer)
 	if (firstOrderItem.offer?.id !== secondOrderItem.offer?.id) return false
 
-	// Product ID must match (the actual product being ordered)
-	if (firstOrderItem.product.id !== secondOrderItem.product.id) return false
+	// For diverse items, check diversePrice instead of product
+	const isDiverseType =
+		firstOrderItem.type === "DIVERSE_FOOD" ||
+		firstOrderItem.type === "DIVERSE_DRINK" ||
+		firstOrderItem.type === "DIVERSE_OTHER"
+
+	if (isDiverseType) {
+		// For diverse items, diversePrice must match
+		if (firstOrderItem.diversePrice !== secondOrderItem.diversePrice)
+			return false
+	} else {
+		// For regular items, product ID must match (the actual product being ordered)
+		if (firstOrderItem.product?.id !== secondOrderItem.product?.id)
+			return false
+	}
 
 	return true
 }
 
 /**
- * Special comparison for miscellaneous/diverse products (shortcut 0).
- * These products can have dynamic prices and names, so they must match exactly.
- * Note: product.id is already checked in isOrderItemBasicEqual.
- * This adds an extra check for diverse products to ensure price and name also match.
+ * Special comparison for diverse products.
+ * Diverse products use the diversePrice field and are identified by null productId.
+ * This function is kept for backward compatibility but diverse items are now
+ * handled via diversePrice comparison in the main service logic.
  */
 function isDiversOrderItemMetaEqual(
 	existingOrderItem: OrderItemWithRelations,
 	incomingOrderItem: OrderItemWithRelations
 ): boolean {
-	// Only perform this check for diverse products (shortcut == 0)
-	if (
-		existingOrderItem.product.shortcut == 0 &&
-		incomingOrderItem.product.shortcut == 0
-	) {
-		// Price must be identical
-		if (existingOrderItem.product.price !== incomingOrderItem.product.price)
-			return false
-		// Name must be identical
-		if (existingOrderItem.product.name !== incomingOrderItem.product.name)
-			return false
-	}
+	// Diverse items are now handled via diversePrice in orderItemService
+	// This function is kept for compatibility with regular products
 	return true
 }
 
@@ -273,7 +277,7 @@ function areOrderItemsArrayEqualForMerge(
  * 1. Basic comparison (product, type, notes, offer, etc.)
  * 2. Special handling for SPECIAL type (only first child product must match)
  * 3. Strict deep comparison for MENU type (all children with variations must match)
- * 4. Additional check for miscellaneous/diverse products
+ * 4. Additional check for diverse products
  *
  * Returns true if the OrderItems are compatible for merging.
  */
@@ -313,7 +317,7 @@ export function isOrderItemMetaEqual(
 		)
 	}
 
-	// Step 4: Additional check for miscellaneous/diverse products
+	// Step 4: Additional check for diverse products
 	if (!isDiversOrderItemMetaEqual(existingOrderItem, incomingOrderItem)) {
 		return false
 	}

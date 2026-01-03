@@ -1,10 +1,11 @@
-import { ProductType } from "../../prisma/generated/client.js"
+import { OrderItemType } from "../../prisma/generated/client.js"
 
 export interface ProductInput {
-	id: bigint
+	id?: bigint
 	count: number
-	type: ProductType
+	type?: OrderItemType
 	discount: number
+	diversePrice?: number
 	notes: string | null
 	takeAway: boolean
 	course: number | null
@@ -24,9 +25,11 @@ export interface ProductInput {
 }
 
 export interface ProductInputArgs {
-	uuid: string
+	uuid?: string
 	count: number
 	discount?: number
+	diversePrice?: number
+	type?: OrderItemType
 	notes?: string
 	takeAway?: boolean
 	course?: number

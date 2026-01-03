@@ -58,8 +58,9 @@ export class OrderCompletionService {
 			order.uuid,
 			orderItems.map(item => ({
 				quantity: item.count,
-				text: item.product.name,
-				pricePerUnit: item.product.price
+				text: item.product?.name || "Diverses Produkt",
+				// For diverse items use diversePrice, for regular products use product.price
+				pricePerUnit: item.diversePrice ?? item.product.price
 			}))
 		)
 

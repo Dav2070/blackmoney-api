@@ -125,6 +125,9 @@ export async function product(
 	args: {},
 	context: ResolverContext
 ): Promise<Product> {
+	// For diverse items without productId, return null
+	if (orderItem.productId == null) return null
+
 	return await context.prisma.product.findFirst({
 		where: {
 			id: orderItem.productId

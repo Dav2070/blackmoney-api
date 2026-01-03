@@ -385,11 +385,12 @@ export const typeDefs = `#graphql
 		count: Int!
 		type: OrderItemType!
 		discount: Int
+		diversePrice: Int
 		notes: String
 		takeAway: Boolean!
 		course: Int
 		order: Order!
-		product: Product!
+		product: Product
 		orderItems: OrderItemList!
 		offer: Offer
 		orderItemVariations: OrderItemVariationList!
@@ -451,6 +452,9 @@ export const typeDefs = `#graphql
 		PRODUCT
 		MENU
 		SPECIAL
+		DIVERSE_FOOD
+		DIVERSE_DRINK
+		DIVERSE_OTHER
 	}
 
 	enum OfferType {
@@ -472,6 +476,15 @@ export const typeDefs = `#graphql
 		DE
 	}
 
+	enum OrderItemType {
+		PRODUCT
+		MENU
+		SPECIAL
+		DIVERSE_FOOD
+		DIVERSE_DRINK
+		DIVERSE_OTHER
+	}
+
 	enum Weekday {
 		MONDAY
 		TUESDAY
@@ -489,9 +502,11 @@ export const typeDefs = `#graphql
 	}
 
 	input AddProductsInput {
-		uuid: String!
+		uuid: String
 		count: Int!
 		discount: Int
+		diversePrice: Int
+		type: OrderItemType
 		notes: String
 		takeAway: Boolean
 		course: Int
