@@ -58,6 +58,12 @@ export async function createOrderItemForProductInput(
 	order: Order,
 	orderItemType: OrderItemType
 ) {
+	// Check if this is a diverse item (no product needed)
+	const isDiverseItem =
+		orderItemType === "DIVERSE_FOOD" ||
+		orderItemType === "DIVERSE_DRINK" ||
+		orderItemType === "DIVERSE_OTHER"
+
 	const newOrderItem = await prisma.orderItem.create({
 		data: {
 			order: {
@@ -65,13 +71,18 @@ export async function createOrderItemForProductInput(
 					id: order.id
 				}
 			},
-			product: {
-				connect: {
-					id: incomingProduct.id
-				}
-			},
+			...(isDiverseItem
+				? {}
+				: {
+						product: {
+							connect: {
+								id: incomingProduct.id
+							}
+						}
+				  }),
 			count: incomingProduct.count,
 			discount: incomingProduct.discount,
+			diversePrice: isDiverseItem ? incomingProduct.diversePrice : null,
 			notes: incomingProduct.notes,
 			takeAway: incomingProduct.takeAway,
 			course: incomingProduct.course,

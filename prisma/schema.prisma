@@ -205,14 +205,15 @@ model OrderItem {
   orderItemId         BigInt?
   orderItem           OrderItem?           @relation("OrderItemToOrderItem", fields: [orderItemId], references: [id])
   orderId             BigInt
-  productId           BigInt
+  productId           BigInt?
   offerId             BigInt?
   discount            Int                  @default(0)
+  diversePrice        Int?
   notes               String?              @db.VarChar
   takeAway            Boolean              @default(false)
   course              Int?
   order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product             Product?             @relation(fields: [productId], references: [id], onDelete: Cascade)
   offer               Offer?               @relation(fields: [offerId], references: [id])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
@@ -377,6 +378,9 @@ enum OrderItemType {
   PRODUCT
   MENU
   SPECIAL
+  DIVERSE_FOOD
+  DIVERSE_DRINK
+  DIVERSE_OTHER
 }
 
 enum OfferType {

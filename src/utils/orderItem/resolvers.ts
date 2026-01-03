@@ -15,8 +15,12 @@ import { throwApiError } from "../../utils.js"
  */
 export async function resolveProductByUuid(
 	prisma: PrismaClient,
-	uuid: string
+	uuid: string | null | undefined
 ): Promise<Product> {
+	if (!uuid) {
+		throwApiError(apiErrors.productDoesNotExist)
+	}
+
 	const product = await prisma.product.findFirst({ where: { uuid } })
 	if (!product) {
 		throwApiError(apiErrors.productDoesNotExist)

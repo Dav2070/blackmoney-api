@@ -23,6 +23,36 @@ export class OrderItemService {
 	constructor(private readonly prisma: PrismaClient) {}
 
 	/**
+	 * Checks if a ProductInput represents a diverse item
+	 */
+	private isDiverseProductInput(
+		productInput: ProductInputArgs | ProductInput
+	): boolean {
+		return productInput.diversePrice != null
+	}
+
+	/**
+	 * Creates a ProductInput object for a diverse item (without product resolution)
+	 */
+	private createDiverseProductInput(
+		productInput: ProductInputArgs
+	): ProductInput {
+		return {
+			id: undefined,
+			count: productInput.count,
+			type: productInput.type,
+			discount: productInput.discount ?? 0,
+			diversePrice: productInput.diversePrice,
+			notes: productInput.notes ?? null,
+			takeAway: productInput.takeAway ?? false,
+			course: productInput.course ?? null,
+			offerId: null,
+			variations: [],
+			orderItems: []
+		}
+	}
+
+	/**
 	 * Converts ProductInputArgs (received from GraphQL with UUIDs) to ProductInput (with database IDs).
 	 * This resolves all UUIDs (products, offers, variations) to their corresponding database IDs.
 	 */
@@ -32,6 +62,12 @@ export class OrderItemService {
 		const convertedProducts: ProductInput[] = []
 
 		for (const productInput of products) {
+			// For diverse items (with diversePrice or without uuid), skip product resolution
+			if (this.isDiverseProductInput(productInput)) {
+				convertedProducts.push(this.createDiverseProductInput(productInput))
+				continue
+			}
+
 			const productFromDatabase = await resolveProductByUuid(
 				this.prisma,
 				productInput.uuid
@@ -54,8 +90,9 @@ export class OrderItemService {
 			convertedProducts.push({
 				id: productFromDatabase.id,
 				count: productInput.count,
-				type: productFromDatabase.type,
+				type: productFromDatabase.type as any, // ProductType from database, will be mapped to OrderItemType later
 				discount: productInput.discount ?? 0,
+				diversePrice: undefined,
 				notes: productInput.notes ?? null,
 				takeAway: productInput.takeAway ?? false,
 				course: productInput.course ?? null,
@@ -75,12 +112,20 @@ export class OrderItemService {
 	 */
 	async addProducts(order: Order, products: ProductInput[]): Promise<void> {
 		for (const incomingProduct of products) {
-			// Build filter criteria to find existing OrderItems that could potentially be merged
-			// Important: Must filter by offerId to ensure products with different offers don't merge
+			const isDiverseItem = this.isDiverseProductInput(incomingProduct)
+
+			// Build filter criteria for finding existing OrderItems
 			const filterCriteria: any = {
 				orderId: order.id,
-				productId: incomingProduct.id,
 				orderItemId: null // Only top-level OrderItems, not child items
+			}
+
+			if (isDiverseItem) {
+				// For diverse items: productId must be null
+				filterCriteria.productId = null
+			} else {
+				// For regular items: productId must match
+				filterCriteria.productId = incomingProduct.id
 			}
 
 			// If product has an associated offer, only find OrderItems with that same offer
@@ -141,7 +186,7 @@ export class OrderItemService {
 			}
 
 			if (existingOrderItemToMerge) {
-				// Merge: Increment count and add variations to existing OrderItem
+				// Merge: Increment count (and add variations for regular products)
 				await mergeProductIntoOrderItem(
 					this.prisma,
 					existingOrderItemToMerge,
@@ -149,12 +194,7 @@ export class OrderItemService {
 				)
 			} else {
 				// Create: No matching OrderItem found, create a new one
-				let orderItemType: OrderItemType = "PRODUCT"
-				if (incomingProduct.type === "MENU") {
-					orderItemType = "MENU"
-				} else if (incomingProduct.type === "SPECIAL") {
-					orderItemType = "SPECIAL"
-				}
+				const orderItemType = this.determineOrderItemType(incomingProduct)
 
 				await createOrderItemForProductInput(
 					this.prisma,
@@ -167,12 +207,46 @@ export class OrderItemService {
 	}
 
 	/**
+	 * Determines the OrderItemType based on ProductInput
+	 */
+	private determineOrderItemType(
+		incomingProduct: ProductInput
+	): OrderItemType {
+		// For diverse items, use the provided type (DIVERSE_FOOD, DIVERSE_DRINK, DIVERSE_OTHER)
+		if (this.isDiverseProductInput(incomingProduct)) {
+			return incomingProduct.type || "DIVERSE_OTHER" // Fallback to DIVERSE_OTHER if not specified
+		}
+
+		// For regular products, use the product type
+		if (incomingProduct.type === "MENU") return "MENU"
+		if (incomingProduct.type === "SPECIAL") return "SPECIAL"
+		return "PRODUCT"
+	}
+
+	/**
 	 * Converts a ProductInput to an OrderItem-like structure for comparison purposes.
 	 * This allows comparing incoming products with existing OrderItems using the same comparison logic.
 	 */
 	private async convertProductInputToOrderItemStructure(
 		incomingProduct: ProductInput
 	): Promise<any> {
+		// For diverse items without productId, return minimal structure
+		if (this.isDiverseProductInput(incomingProduct)) {
+			return {
+				product: null,
+				count: incomingProduct.count,
+				type: this.determineOrderItemType(incomingProduct),
+				discount: incomingProduct.discount,
+				diversePrice: incomingProduct.diversePrice,
+				notes: incomingProduct.notes,
+				takeAway: incomingProduct.takeAway,
+				course: incomingProduct.course,
+				offer: null,
+				orderItems: [],
+				orderItemVariations: []
+			}
+		}
+
 		const productFromDatabase = await this.prisma.product.findUnique({
 			where: { id: incomingProduct.id }
 		})
@@ -198,18 +272,10 @@ export class OrderItemService {
 		// They don't affect whether two OrderItems can be merged.
 		// When a match is found, variations will be merged via mergeOrAddVariations.
 
-		// Map ProductType to OrderItemType (same logic as when creating OrderItems)
-		let orderItemType: OrderItemType = "PRODUCT"
-		if (incomingProduct.type === "MENU") {
-			orderItemType = "MENU"
-		} else if (incomingProduct.type === "SPECIAL") {
-			orderItemType = "SPECIAL"
-		}
-
 		return {
 			product: productFromDatabase,
 			count: incomingProduct.count,
-			type: orderItemType,
+			type: this.determineOrderItemType(incomingProduct),
 			discount: incomingProduct.discount,
 			notes: incomingProduct.notes,
 			takeAway: incomingProduct.takeAway,
@@ -313,7 +379,7 @@ export class OrderItemService {
 
 	/**
 	 * Calculates the total price of an order by summing up all OrderItem prices.
-	 * Price = product.price * orderItem.count for each item.
+	 * For diverse items, uses diversePrice instead of product.price.
 	 */
 	async calculateTotalPrice(order: Order): Promise<number> {
 		const orderItemsInOrder = await this.prisma.orderItem.findMany({
@@ -323,7 +389,10 @@ export class OrderItemService {
 
 		let totalPrice = 0
 		for (const orderItem of orderItemsInOrder) {
-			totalPrice += orderItem.product.price * orderItem.count
+			// For diverse items, use diversePrice; otherwise use product.price
+			const itemPrice =
+				orderItem.diversePrice ?? orderItem.product?.price ?? 0
+			totalPrice += itemPrice * orderItem.count
 		}
 
 		return totalPrice
