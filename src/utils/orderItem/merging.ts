@@ -99,13 +99,15 @@ export async function mergeOrAddVariations(
 				}
 			})
 
-			// Link all VariationItems to the new variation
-			for (const variationItemId of incomingVariation.variationItemIds) {
-				await prisma.orderItemVariationToVariationItem.create({
-					data: {
-						orderItemVariationId: newVariation.id,
-						variationItemId
-					}
+			// OPTIMIZATION: Batch insert all VariationItems at once instead of loop
+			if (incomingVariation.variationItemIds.length > 0) {
+				await prisma.orderItemVariationToVariationItem.createMany({
+					data: incomingVariation.variationItemIds.map(
+						variationItemId => ({
+							orderItemVariationId: newVariation.id,
+							variationItemId
+						})
+					)
 				})
 			}
 		}

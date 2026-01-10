@@ -132,61 +132,90 @@ export class OrderItemService {
 	 * Adds products to an order using intelligent merging logic.
 	 * If an existing OrderItem matches the incoming product (same product, offer, notes, variations),
 	 * it will be merged (counts incremented). Otherwise, a new OrderItem is created.
+	 * OPTIMIZED: Pre-load relevant OrderItems with one query instead of N queries
 	 */
 	async addProducts(order: Order, products: ProductInput[]): Promise<void> {
+		// OPTIMIZATION: Collect all productIds upfront to load relevant OrderItems in one query
+		const productIds = [
+			...new Set(
+				products
+					.filter(p => !this.isDiverseProductInput(p) && p.id)
+					.map(p => p.id)
+					.filter((id): id is bigint => id !== undefined)
+			)
+		]
+		const hasDiverseItems = products.some(p => this.isDiverseProductInput(p))
+
+		// Build WHERE conditions to load only relevant OrderItems
+		const whereConditions: any[] = []
+		if (productIds.length > 0) {
+			whereConditions.push({ productId: { in: productIds } })
+		}
+		if (hasDiverseItems) {
+			whereConditions.push({ productId: null })
+		}
+
+		// Pre-load ALL relevant OrderItems in ONE query
+		const allRelevantOrderItems =
+			whereConditions.length > 0
+				? await this.prisma.orderItem.findMany({
+						where: {
+							orderId: order.id,
+							orderItemId: null,
+							OR: whereConditions
+						},
+						include: {
+							product: true,
+							orderItems: {
+								include: {
+									product: true,
+									orderItems: true,
+									orderItemVariations: {
+										include: {
+											orderItemVariationToVariationItems: true
+										}
+									},
+									offer: true
+								}
+							},
+							orderItemVariations: {
+								include: {
+									orderItemVariationToVariationItems: true
+								}
+							},
+							offer: true
+						}
+				  })
+				: []
+
+		// Process each product (keeping sequential to avoid race conditions)
 		for (const incomingProduct of products) {
 			const isDiverseItem = this.isDiverseProductInput(incomingProduct)
 
-			// Build filter criteria for finding existing OrderItems
-			const filterCriteria: any = {
-				orderId: order.id,
-				orderItemId: null // Only top-level OrderItems, not child items
-			}
-
-			if (isDiverseItem) {
-				// For diverse items: productId must be null
-				filterCriteria.productId = null
-			} else {
-				// For regular items: productId must match
-				filterCriteria.productId = incomingProduct.id
-			}
-
-			// If product has an associated offer, only find OrderItems with that same offer
-			if (
-				incomingProduct.offerId !== null &&
-				incomingProduct.offerId !== undefined
-			) {
-				filterCriteria.offerId = incomingProduct.offerId
-			} else {
-				// If product has no offer, only find OrderItems without an offer
-				filterCriteria.offerId = null
-			}
-
-			const existingOrderItemsForProduct =
-				await this.prisma.orderItem.findMany({
-					where: filterCriteria,
-					include: {
-						product: true,
-						orderItems: {
-							include: {
-								product: true,
-								orderItems: true,
-								orderItemVariations: {
-									include: {
-										orderItemVariationToVariationItems: true
-									}
-								},
-								offer: true
-							}
-						},
-						orderItemVariations: {
-							include: {
-								orderItemVariationToVariationItems: true
-							}
-						},
-						offer: true
+			// Filter the pre-loaded OrderItems for this specific product
+			const existingOrderItemsForProduct = allRelevantOrderItems.filter(
+				orderItem => {
+					// Check productId match
+					if (isDiverseItem) {
+						if (orderItem.productId !== null) return false
+					} else if (orderItem.productId !== incomingProduct.id) {
+						return false
 					}
-				})
+
+					// Check offerId match
+					if (
+						incomingProduct.offerId !== null &&
+						incomingProduct.offerId !== undefined
+					) {
+						if (orderItem.offerId !== incomingProduct.offerId)
+							return false
+					} else {
+						if (orderItem.offerId !== null) return false
+					}
+
+					return true
+				}
+			)
 
 			// Try to find an existing OrderItem that can be merged with the incoming product
 			let existingOrderItemToMerge = null

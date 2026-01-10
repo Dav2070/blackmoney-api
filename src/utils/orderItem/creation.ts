@@ -31,15 +31,13 @@ async function createVariationsForOrderItem(
 			}
 		})
 
-		// Link all VariationItems to this OrderItemVariation
-		for (const variationItemId of variation.variationItemIds) {
-			await prisma.orderItemVariationToVariationItem.create({
-				data: {
-					orderItemVariation: {
-						connect: { id: createdOrderItemVariation.id }
-					},
-					variationItem: { connect: { id: variationItemId } }
-				}
+		// OPTIMIZATION: Batch insert all VariationItems at once instead of loop
+		if (variation.variationItemIds.length > 0) {
+			await prisma.orderItemVariationToVariationItem.createMany({
+				data: variation.variationItemIds.map(variationItemId => ({
+					orderItemVariationId: createdOrderItemVariation.id,
+					variationItemId
+				}))
 			})
 		}
 	}
