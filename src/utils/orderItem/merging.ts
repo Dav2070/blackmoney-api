@@ -143,22 +143,78 @@ export async function mergeOrAddVariations(
  * 3. Merging all variations (increment matching, create new ones)
  * 4. For SPECIAL: Merge the single child OrderItem and its variations
  * 5. For MENU: Update all child OrderItem counts and merge their variations
+ * OPTIMIZED: Batch all OrderItem updates in parallel
  */
 export async function mergeProductIntoOrderItem(
 	prisma: PrismaClient,
 	existingOrderItem: OrderItemWithRelations,
 	incomingProduct: ProductInput
 ): Promise<void> {
-	// Step 1: Update the main OrderItem's count and discount
-	await prisma.orderItem.update({
-		where: { id: existingOrderItem.id },
-		data: {
-			count: existingOrderItem.count + incomingProduct.count,
-			discount: (existingOrderItem.discount ?? 0) + incomingProduct.discount
-		}
-	})
+	// Collect all updates to batch them
+	const updates: Promise<any>[] = []
 
-	// Step 2: Merge all variations from the incoming product
+	// Step 1: Update the main OrderItem's count and discount
+	updates.push(
+		prisma.orderItem.update({
+			where: { id: existingOrderItem.id },
+			data: {
+				count: existingOrderItem.count + incomingProduct.count,
+				discount:
+					(existingOrderItem.discount ?? 0) + incomingProduct.discount
+			}
+		})
+	)
+
+	// Step 2: Handle child OrderItems based on product type
+	// For SPECIAL: Merge the single child OrderItem and its variations
+	if (incomingProduct.type === "SPECIAL") {
+		if (
+			existingOrderItem.orderItems.length > 0 &&
+			incomingProduct.orderItems.length > 0
+		) {
+			const existingChildOrderItem = existingOrderItem.orderItems[0]
+			const incomingChildProductInput = incomingProduct.orderItems[0]
+
+			// Add child update to batch
+			updates.push(
+				prisma.orderItem.update({
+					where: { id: existingChildOrderItem.id },
+					data: {
+						count:
+							existingChildOrderItem.count +
+							incomingChildProductInput.count
+					}
+				})
+			)
+		}
+	}
+
+	// For MENU: Update counts of all child OrderItems proportionally
+	if (incomingProduct.type === "MENU") {
+		for (let i = 0; i < existingOrderItem.orderItems.length; i++) {
+			const existingChildOrderItem = existingOrderItem.orderItems[i]
+			const incomingChildProductInput = incomingProduct.orderItems[i]
+
+			if (existingChildOrderItem && incomingChildProductInput) {
+				// Add child update to batch
+				updates.push(
+					prisma.orderItem.update({
+						where: { id: existingChildOrderItem.id },
+						data: {
+							count:
+								existingChildOrderItem.count +
+								incomingChildProductInput.count
+						}
+					})
+				)
+			}
+		}
+	}
+
+	// OPTIMIZATION: Execute all updates in parallel
+	await Promise.all(updates)
+
+	// Step 3: Merge all variations from the incoming product
 	const variationsWithResolvedIds = incomingProduct.variations.map(
 		variation => ({
 			variationItemIds: variation.variationItemIds.map(Number),
@@ -172,8 +228,8 @@ export async function mergeProductIntoOrderItem(
 		variationsWithResolvedIds
 	)
 
-	// Step 3: Handle child OrderItems based on product type
-	// For SPECIAL: Merge the single child OrderItem and its variations
+	// Step 4: Handle child variations
+	// For SPECIAL: Merge the single child OrderItem's variations
 	if (incomingProduct.type === "SPECIAL") {
 		if (
 			existingOrderItem.orderItems.length > 0 &&
@@ -181,15 +237,6 @@ export async function mergeProductIntoOrderItem(
 		) {
 			const existingChildOrderItem = existingOrderItem.orderItems[0]
 			const incomingChildProductInput = incomingProduct.orderItems[0]
-
-			// Update the count of the child OrderItem
-			await prisma.orderItem.update({
-				where: { id: existingChildOrderItem.id },
-				data: {
-					count:
-						existingChildOrderItem.count + incomingChildProductInput.count
-				}
-			})
 
 			// Merge variations using helper function
 			if (incomingChildProductInput.variations) {
@@ -202,23 +249,13 @@ export async function mergeProductIntoOrderItem(
 		}
 	}
 
-	// For MENU: Update counts of all child OrderItems proportionally
+	// For MENU: Merge variations of all child OrderItems
 	if (incomingProduct.type === "MENU") {
 		for (let i = 0; i < existingOrderItem.orderItems.length; i++) {
 			const existingChildOrderItem = existingOrderItem.orderItems[i]
 			const incomingChildProductInput = incomingProduct.orderItems[i]
 
 			if (existingChildOrderItem && incomingChildProductInput) {
-				// Update count of the child OrderItem
-				await prisma.orderItem.update({
-					where: { id: existingChildOrderItem.id },
-					data: {
-						count:
-							existingChildOrderItem.count +
-							incomingChildProductInput.count
-					}
-				})
-
 				// Merge variations using helper function
 				if (incomingChildProductInput.variations) {
 					await resolveAndMergeChildVariations(

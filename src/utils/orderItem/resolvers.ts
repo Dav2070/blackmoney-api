@@ -44,20 +44,33 @@ export async function resolveOfferByUuid(
 /**
  * Resolves an array of variation item UUIDs to their database IDs.
  * Throws an error if any variation item doesn't exist.
+ * OPTIMIZED: Batch load all variation items at once
  */
 export async function resolveVariationItemsByUuids(
 	prisma: PrismaClient,
 	uuids: string[]
 ): Promise<bigint[]> {
+	if (uuids.length === 0) return []
+
+	// OPTIMIZATION: Load all variation items in one query
+	const variationItems = await prisma.variationItem.findMany({
+		where: { uuid: { in: uuids } }
+	})
+
+	// Create a map for O(1) lookups
+	const variationItemMap = new Map<string, bigint>()
+	for (const vi of variationItems) {
+		variationItemMap.set(vi.uuid, vi.id)
+	}
+
+	// Preserve order and validate all UUIDs exist
 	const resolvedIds: bigint[] = []
 	for (const uuid of uuids) {
-		const variationItem = await prisma.variationItem.findFirst({
-			where: { uuid }
-		})
-		if (!variationItem) {
+		const id = variationItemMap.get(uuid)
+		if (!id) {
 			throwApiError(apiErrors.variationItemDoesNotExist)
 		}
-		resolvedIds.push(variationItem.id)
+		resolvedIds.push(id)
 	}
 	return resolvedIds
 }

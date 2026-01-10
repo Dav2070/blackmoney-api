@@ -106,14 +106,25 @@ export async function createOrderItemForProductInput(
 
 	// For Menu and Special types, create child OrderItems
 	if (orderItemType === "MENU" || orderItemType === "SPECIAL") {
+		// OPTIMIZATION: Batch load all child products at once
+		const childProductUuids = incomingProduct.orderItems.map(
+			cp => cp.productUuid
+		)
+		const childProducts = await prisma.product.findMany({
+			where: { uuid: { in: childProductUuids } }
+		})
+
+		// Create a map for O(1) lookups
+		const childProductMap = new Map<string, any>()
+		for (const p of childProducts) {
+			childProductMap.set(p.uuid, p)
+		}
+
 		// Create child OrderItems for each product in the Menu/Special
 		for (const childProductInput of incomingProduct.orderItems) {
-			// Resolve the product from the database using its UUID
-			const childProductFromDatabase = await prisma.product.findFirst({
-				where: {
-					uuid: childProductInput.productUuid
-				}
-			})
+			const childProductFromDatabase = childProductMap.get(
+				childProductInput.productUuid
+			)
 
 			if (childProductFromDatabase == null) {
 				throwApiError(apiErrors.productDoesNotExist)
