@@ -58,6 +58,13 @@ export async function mergeOrAddVariations(
 		}
 	})
 
+	// OPTIMIZATION: Separate updates and creates to batch them
+	const variationsToUpdate: { id: bigint; newCount: number }[] = []
+	const variationsToCreate: {
+		variationItemIds: number[]
+		count: number
+	}[] = []
+
 	// Process each incoming variation
 	for (const incomingVariation of incomingVariations) {
 		// Try to find an existing variation with the same VariationItems
@@ -83,33 +90,46 @@ export async function mergeOrAddVariations(
 		})
 
 		if (matchingVariation) {
-			// Matching variation found - increment its count
-			await prisma.orderItemVariation.update({
-				where: { id: matchingVariation.id },
-				data: {
-					count: matchingVariation.count + incomingVariation.count
-				}
+			// Matching variation found - add to update batch
+			variationsToUpdate.push({
+				id: matchingVariation.id,
+				newCount: matchingVariation.count + incomingVariation.count
 			})
 		} else {
-			// No match - create a new variation
-			const newVariation = await prisma.orderItemVariation.create({
-				data: {
-					orderItemId: existingOrderItemId,
-					count: incomingVariation.count
-				}
-			})
+			// No match - add to create batch
+			variationsToCreate.push(incomingVariation)
+		}
+	}
 
-			// OPTIMIZATION: Batch insert all VariationItems at once instead of loop
-			if (incomingVariation.variationItemIds.length > 0) {
-				await prisma.orderItemVariationToVariationItem.createMany({
-					data: incomingVariation.variationItemIds.map(
-						variationItemId => ({
-							orderItemVariationId: newVariation.id,
-							variationItemId
-						})
-					)
+	// OPTIMIZATION: Execute all updates in parallel
+	if (variationsToUpdate.length > 0) {
+		await Promise.all(
+			variationsToUpdate.map(({ id, newCount }) =>
+				prisma.orderItemVariation.update({
+					where: { id },
+					data: { count: newCount }
 				})
+			)
+		)
+	}
+
+	// Execute all creates sequentially (need IDs for relation inserts)
+	for (const variationToCreate of variationsToCreate) {
+		const newVariation = await prisma.orderItemVariation.create({
+			data: {
+				orderItemId: existingOrderItemId,
+				count: variationToCreate.count
 			}
+		})
+
+		// Batch insert all VariationItems at once
+		if (variationToCreate.variationItemIds.length > 0) {
+			await prisma.orderItemVariationToVariationItem.createMany({
+				data: variationToCreate.variationItemIds.map(variationItemId => ({
+					orderItemVariationId: newVariation.id,
+					variationItemId
+				}))
+			})
 		}
 	}
 }

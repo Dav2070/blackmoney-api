@@ -209,9 +209,7 @@ export class OrderItemService {
 					) {
 						if (orderItem.offerId !== incomingProduct.offerId)
 							return false
-					} else {
-						if (orderItem.offerId !== null) return false
-					}
+					} else if (orderItem.offerId !== null) return false
 
 					return true
 				}
@@ -219,13 +217,12 @@ export class OrderItemService {
 
 			// Try to find an existing OrderItem that can be merged with the incoming product
 			let existingOrderItemToMerge = null
-			for (const candidateOrderItem of existingOrderItemsForProduct) {
-				// Convert incoming ProductInput to OrderItem structure for comparison
-				const incomingProductAsOrderItem =
-					await this.convertProductInputToOrderItemStructure(
-						incomingProduct
-					)
 
+			// OPTIMIZATION: Build comparison structure once before loop
+			const incomingProductAsOrderItem =
+				await this.convertProductInputToOrderItemStructure(incomingProduct)
+
+			for (const candidateOrderItem of existingOrderItemsForProduct) {
 				const canBeMerged = isOrderItemMetaEqual(
 					candidateOrderItem as any,
 					incomingProductAsOrderItem
@@ -452,6 +449,7 @@ export class OrderItemService {
 
 	/**
 	 * Resolves child OrderItems for comparison purposes (used in Menu/Special matching).
+	 * OPTIMIZED: Batch loads all child products at once
 	 */
 	private async resolveChildOrderItemsForComparison(
 		childProductInputs: Array<{
@@ -460,20 +458,59 @@ export class OrderItemService {
 			variations?: Array<{ variationItemUuids: string[]; count: number }>
 		}>
 	): Promise<any[]> {
-		const childOrderItems = []
+		if (!childProductInputs || childProductInputs.length === 0) return []
 
+		// OPTIMIZATION: Collect all UUIDs upfront
+		const childProductUuids = childProductInputs.map(
+			input => input.productUuid
+		)
+		const allVariationUuids = [
+			...new Set(
+				childProductInputs.flatMap(
+					input =>
+						input.variations?.flatMap(v => v.variationItemUuids) || []
+				)
+			)
+		]
+
+		// OPTIMIZATION: Batch load all data in parallel
+		const [childProducts, variationItems] = await Promise.all([
+			this.prisma.product.findMany({
+				where: { uuid: { in: childProductUuids } }
+			}),
+			allVariationUuids.length > 0
+				? this.prisma.variationItem.findMany({
+						where: { uuid: { in: allVariationUuids } }
+				  })
+				: []
+		])
+
+		// Create lookup maps
+		const productMap = new Map<string, any>(
+			childProducts.map(p => [p.uuid, p])
+		)
+		const variationItemMap = new Map<string, bigint>(
+			variationItems.map(vi => [vi.uuid, vi.id])
+		)
+
+		// Build child OrderItems using lookup maps (no more DB queries!)
+		const childOrderItems = []
 		for (const childProductInput of childProductInputs) {
-			const childProductFromDatabase = await this.prisma.product.findUnique({
-				where: { uuid: childProductInput.productUuid }
-			})
+			const childProductFromDatabase = productMap.get(
+				childProductInput.productUuid
+			)
 
 			if (childProductFromDatabase) {
-				// Resolve variations for this child product
-				const childProductVariations = childProductInput.variations
-					? await this.resolveChildVariationsForComparison(
-							childProductInput.variations
-					  )
-					: []
+				// Build variations structure using lookup map
+				const childProductVariations =
+					childProductInput.variations?.map(v => ({
+						count: v.count,
+						orderItemVariationToVariationItems: v.variationItemUuids.map(
+							uuid => ({
+								variationItemId: variationItemMap.get(uuid) || BigInt(0)
+							})
+						)
+					})) || []
 
 				childOrderItems.push({
 					product: childProductFromDatabase,
