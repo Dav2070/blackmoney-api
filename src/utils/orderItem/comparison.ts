@@ -17,9 +17,9 @@ import { OrderItemWithRelations } from "./types.js"
 
 /**
  * Checks if two OrderItemVariations contain the same VariationItems.
- * The order of VariationItems doesn't matter - they are sorted before comparison.
+ * The order of VariationItems doesn't matter - they are compared as sets.
  * Returns true if both variations have exactly the same set of VariationItems.
- * OPTIMIZED: Early exit on length mismatch before extracting/sorting IDs
+ * OPTIMIZED: Set-based comparison O(n) instead of sort O(n log n)
  */
 function isVariationItemEqual(
 	firstVariation: OrderItemVariation & {
@@ -29,30 +29,32 @@ function isVariationItemEqual(
 		orderItemVariationToVariationItems: OrderItemVariationToVariationItem[]
 	}
 ): boolean {
-	// OPTIMIZATION: Quick length check first (before expensive operations)
-	if (
-		firstVariation.orderItemVariationToVariationItems.length !==
+	// OPTIMIZATION: Quick length check first
+	const firstLength = firstVariation.orderItemVariationToVariationItems.length
+	const secondLength =
 		secondVariation.orderItemVariationToVariationItems.length
-	) {
+
+	if (firstLength !== secondLength) {
 		return false
 	}
 
-	// Extract and sort all VariationItem IDs from the first variation
-	const firstVariationItemIds =
-		firstVariation.orderItemVariationToVariationItems
-			.map(vi => Number(vi.variationItemId))
-			.sort((a, b) => a - b)
+	// OPTIMIZATION: Empty check
+	if (firstLength === 0) return true
 
-	// Extract and sort all VariationItem IDs from the second variation
-	const secondVariationItemIds =
-		secondVariation.orderItemVariationToVariationItems
-			.map(vi => Number(vi.variationItemId))
-			.sort((a, b) => a - b)
+	// OPTIMIZATION: Set-based comparison for O(n) instead of sorting O(n log n)
+	const firstIds = new Set(
+		firstVariation.orderItemVariationToVariationItems.map(vi =>
+			vi.variationItemId.toString()
+		)
+	)
 
-	// Compare each VariationItem ID
-	for (let i = 0; i < firstVariationItemIds.length; i++) {
-		if (firstVariationItemIds[i] !== secondVariationItemIds[i]) return false
+	// Check if all IDs from second variation exist in first
+	for (const vi of secondVariation.orderItemVariationToVariationItems) {
+		if (!firstIds.has(vi.variationItemId.toString())) {
+			return false
+		}
 	}
+
 	return true
 }
 

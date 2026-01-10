@@ -316,43 +316,51 @@ export class OrderItemService {
 				  })
 				: []
 
+		// OPTIMIZATION: Build lookup map for O(1) access by productId+offerId
+		const orderItemsMap = new Map<string, typeof allRelevantOrderItems>()
+		for (const orderItem of allRelevantOrderItems) {
+			const key = `${orderItem.productId ?? "diverse"}_${
+				orderItem.offerId ?? "null"
+			}`
+			if (!orderItemsMap.has(key)) {
+				orderItemsMap.set(key, [])
+			}
+			orderItemsMap.get(key)!.push(orderItem)
+		}
+
+		// OPTIMIZATION: Cache comparison structures to avoid rebuilding for duplicate products
+		const comparisonCache = new Map<string, any>()
+
 		// Process each product (keeping sequential to avoid race conditions)
 		for (const incomingProduct of products) {
 			const isDiverseItem = this.isDiverseProductInput(incomingProduct)
 
-			// Filter the pre-loaded OrderItems for this specific product
-			const existingOrderItemsForProduct = allRelevantOrderItems.filter(
-				orderItem => {
-					// Check productId match
-					if (isDiverseItem) {
-						if (orderItem.productId !== null) return false
-					} else if (orderItem.productId !== incomingProduct.id) {
-						return false
-					}
-
-					// Check offerId match
-					if (
-						incomingProduct.offerId !== null &&
-						incomingProduct.offerId !== undefined
-					) {
-						if (orderItem.offerId !== incomingProduct.offerId)
-							return false
-					} else if (orderItem.offerId !== null) return false
-
-					return true
-				}
-			)
+			// OPTIMIZATION: Direct lookup instead of filtering entire array
+			const lookupKey = isDiverseItem
+				? `diverse_${incomingProduct.offerId ?? "null"}`
+				: `${incomingProduct.id}_${incomingProduct.offerId ?? "null"}`
+			const existingOrderItemsForProduct = orderItemsMap.get(lookupKey) ?? []
 
 			// Try to find an existing OrderItem that can be merged with the incoming product
 			let existingOrderItemToMerge = null
 
-			// OPTIMIZATION: Build comparison structure once before loop, using pre-loaded maps
-			const incomingProductAsOrderItem =
-				await this.convertProductInputToOrderItemStructure(
-					incomingProduct,
-					productMap,
-					offerMap
-				)
+			// OPTIMIZATION: Cache key for comparison structure (includes notes, takeAway, course for uniqueness)
+			const cacheKey = `${lookupKey}_${incomingProduct.notes ?? ""}_${
+				incomingProduct.takeAway ?? false
+			}_${incomingProduct.course ?? ""}`
+
+			// Check cache first
+			let incomingProductAsOrderItem = comparisonCache.get(cacheKey)
+			if (!incomingProductAsOrderItem) {
+				// Build comparison structure and cache it
+				incomingProductAsOrderItem =
+					await this.convertProductInputToOrderItemStructure(
+						incomingProduct,
+						productMap,
+						offerMap
+					)
+				comparisonCache.set(cacheKey, incomingProductAsOrderItem)
+			}
 
 			for (const candidateOrderItem of existingOrderItemsForProduct) {
 				const canBeMerged = isOrderItemMetaEqual(
@@ -639,25 +647,23 @@ export class OrderItemService {
 				  })
 				: []
 
+		// OPTIMIZATION: Build lookup map for O(1) access
+		const orderItemsMap = new Map<string, typeof allRelevantOrderItems>()
+		for (const orderItem of allRelevantOrderItems) {
+			const key = `${orderItem.productId}_${orderItem.offerId ?? "null"}`
+			if (!orderItemsMap.has(key)) {
+				orderItemsMap.set(key, [])
+			}
+			orderItemsMap.get(key)!.push(orderItem)
+		}
+
 		// Process each product removal
 		for (const productToRemove of products) {
-			// Filter pre-loaded OrderItems for this specific product
-			const existingOrderItemsForProduct = allRelevantOrderItems.filter(
-				orderItem => {
-					if (orderItem.productId !== productToRemove.id) return false
-
-					// Check offerId match
-					if (
-						productToRemove.offerId !== null &&
-						productToRemove.offerId !== undefined
-					) {
-						if (orderItem.offerId !== productToRemove.offerId)
-							return false
-					} else if (orderItem.offerId !== null) return false
-
-					return true
-				}
-			)
+			// OPTIMIZATION: Direct lookup instead of filtering
+			const lookupKey = `${productToRemove.id}_${
+				productToRemove.offerId ?? "null"
+			}`
+			const existingOrderItemsForProduct = orderItemsMap.get(lookupKey) ?? []
 
 			// Build comparison structure once, using pre-loaded maps
 			const productToRemoveAsOrderItem =
