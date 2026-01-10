@@ -227,6 +227,7 @@ export class OrderItemService {
 		)
 
 		// Pre-load ALL relevant OrderItems in ONE query
+		// OPTIMIZATION: Only load what's needed for comparison, no deep nesting
 		const allRelevantOrderItems =
 			whereConditions.length > 0
 				? await this.prisma.orderItem.findMany({
@@ -235,26 +236,82 @@ export class OrderItemService {
 							orderItemId: null,
 							OR: whereConditions
 						},
-						include: {
-							product: true,
+						select: {
+							id: true,
+							uuid: true,
+							count: true,
+							type: true,
+							notes: true,
+							takeAway: true,
+							course: true,
+							diversePrice: true,
+							productId: true,
+							offerId: true,
+							orderId: true,
+							orderItemId: true,
+							product: {
+								select: {
+									id: true,
+									uuid: true,
+									name: true,
+									type: true
+								}
+							},
+							offer: {
+								select: {
+									id: true,
+									uuid: true
+								}
+							},
 							orderItems: {
-								include: {
-									product: true,
-									orderItems: true,
-									orderItemVariations: {
-										include: {
-											orderItemVariationToVariationItems: true
+								select: {
+									id: true,
+									uuid: true,
+									count: true,
+									type: true,
+									notes: true,
+									takeAway: true,
+									course: true,
+									productId: true,
+									offerId: true,
+									product: {
+										select: {
+											id: true,
+											uuid: true,
+											name: true,
+											type: true
 										}
 									},
-									offer: true
+									offer: {
+										select: {
+											id: true,
+											uuid: true
+										}
+									},
+									orderItemVariations: {
+										select: {
+											id: true,
+											count: true,
+											orderItemVariationToVariationItems: {
+												select: {
+													variationItemId: true
+												}
+											}
+										}
+									}
 								}
 							},
 							orderItemVariations: {
-								include: {
-									orderItemVariationToVariationItems: true
+								select: {
+									id: true,
+									count: true,
+									orderItemVariationToVariationItems: {
+										select: {
+											variationItemId: true
+										}
+									}
 								}
-							},
-							offer: true
+							}
 						}
 				  })
 				: []
@@ -493,6 +550,7 @@ export class OrderItemService {
 		)
 
 		// Pre-load ALL relevant OrderItems in ONE query
+		// OPTIMIZATION: Only load what's needed, no deep nesting
 		const allRelevantOrderItems =
 			productIds.length > 0
 				? await this.prisma.orderItem.findMany({
@@ -501,26 +559,82 @@ export class OrderItemService {
 							orderItemId: null,
 							productId: { in: productIds }
 						},
-						include: {
-							product: true,
+						select: {
+							id: true,
+							uuid: true,
+							count: true,
+							type: true,
+							notes: true,
+							takeAway: true,
+							course: true,
+							diversePrice: true,
+							productId: true,
+							offerId: true,
+							orderId: true,
+							orderItemId: true,
+							product: {
+								select: {
+									id: true,
+									uuid: true,
+									name: true,
+									type: true
+								}
+							},
+							offer: {
+								select: {
+									id: true,
+									uuid: true
+								}
+							},
 							orderItems: {
-								include: {
-									product: true,
-									orderItems: true,
-									orderItemVariations: {
-										include: {
-											orderItemVariationToVariationItems: true
+								select: {
+									id: true,
+									uuid: true,
+									count: true,
+									type: true,
+									notes: true,
+									takeAway: true,
+									course: true,
+									productId: true,
+									offerId: true,
+									product: {
+										select: {
+											id: true,
+											uuid: true,
+											name: true,
+											type: true
 										}
 									},
-									offer: true
+									offer: {
+										select: {
+											id: true,
+											uuid: true
+										}
+									},
+									orderItemVariations: {
+										select: {
+											id: true,
+											count: true,
+											orderItemVariationToVariationItems: {
+												select: {
+													variationItemId: true
+												}
+											}
+										}
+									}
 								}
 							},
 							orderItemVariations: {
-								include: {
-									orderItemVariationToVariationItems: true
+								select: {
+									id: true,
+									count: true,
+									orderItemVariationToVariationItems: {
+										select: {
+											variationItemId: true
+										}
+									}
 								}
-							},
-							offer: true
+							}
 						}
 				  })
 				: []

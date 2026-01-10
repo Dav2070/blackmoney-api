@@ -222,11 +222,19 @@ export async function mergeProductIntoOrderItem(
 		})
 	)
 
-	await mergeOrAddVariations(
-		prisma,
-		existingOrderItem.id,
-		variationsWithResolvedIds
-	)
+	// Collect all variation merges to execute in parallel
+	const variationMerges: Promise<void>[] = []
+
+	// Add main item variation merge
+	if (variationsWithResolvedIds.length > 0) {
+		variationMerges.push(
+			mergeOrAddVariations(
+				prisma,
+				existingOrderItem.id,
+				variationsWithResolvedIds
+			)
+		)
+	}
 
 	// Step 4: Handle child variations
 	// For SPECIAL: Merge the single child OrderItem's variations
@@ -238,12 +246,14 @@ export async function mergeProductIntoOrderItem(
 			const existingChildOrderItem = existingOrderItem.orderItems[0]
 			const incomingChildProductInput = incomingProduct.orderItems[0]
 
-			// Merge variations using helper function
+			// Add child variation merge to batch
 			if (incomingChildProductInput.variations) {
-				await resolveAndMergeChildVariations(
-					prisma,
-					existingChildOrderItem.id,
-					incomingChildProductInput.variations
+				variationMerges.push(
+					resolveAndMergeChildVariations(
+						prisma,
+						existingChildOrderItem.id,
+						incomingChildProductInput.variations
+					)
 				)
 			}
 		}
@@ -256,15 +266,22 @@ export async function mergeProductIntoOrderItem(
 			const incomingChildProductInput = incomingProduct.orderItems[i]
 
 			if (existingChildOrderItem && incomingChildProductInput) {
-				// Merge variations using helper function
+				// Add child variation merge to batch
 				if (incomingChildProductInput.variations) {
-					await resolveAndMergeChildVariations(
-						prisma,
-						existingChildOrderItem.id,
-						incomingChildProductInput.variations
+					variationMerges.push(
+						resolveAndMergeChildVariations(
+							prisma,
+							existingChildOrderItem.id,
+							incomingChildProductInput.variations
+						)
 					)
 				}
 			}
 		}
+	}
+
+	// OPTIMIZATION: Execute all variation merges in parallel
+	if (variationMerges.length > 0) {
+		await Promise.all(variationMerges)
 	}
 }

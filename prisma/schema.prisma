@@ -195,6 +195,11 @@ model Order {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
   orderItems    OrderItem[]
+
+  @@index([tableId])
+  @@index([billId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -219,6 +224,13 @@ model OrderItem {
   updatedAt           DateTime             @default(now()) @updatedAt
   orderItems          OrderItem[]          @relation("OrderItemToOrderItem")
   orderItemVariations OrderItemVariation[]
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([offerId])
+  @@index([orderItemId])
+  @@index([orderId, orderItemId])
+  @@index([orderId, productId])
 }
 
 model OrderItemVariation {
@@ -230,6 +242,8 @@ model OrderItemVariation {
   createdAt                          DateTime                            @default(now())
   updatedAt                          DateTime                            @default(now()) @updatedAt
   orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
+
+  @@index([orderItemId])
 }
 
 model OrderItemVariationToVariationItem {
@@ -240,6 +254,9 @@ model OrderItemVariationToVariationItem {
   variationItem        VariationItem      @relation(fields: [variationItemId], references: [id], onDelete: Cascade)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @default(now()) @updatedAt
+
+  @@index([orderItemVariationId])
+  @@index([variationItemId])
 }
 
 model Offer {
@@ -288,6 +305,9 @@ model Product {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
   productToVariations ProductToVariation[]
+
+  @@index([categoryId])
+  @@index([type])
   orderItems          OrderItem[]
   offerItems          OfferItem[]
   printRules          PrintRule[]
@@ -320,6 +340,8 @@ model VariationItem {
   uuid                               String                              @unique @default(uuid())
   name                               String
   additionalCost                     Int
+
+  @@index([variationId])
   variationId                        BigInt
   variation                          Variation                           @relation(fields: [variationId], references: [id])
   createdAt                          DateTime                            @default(now())

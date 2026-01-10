@@ -19,6 +19,7 @@ import { OrderItemWithRelations } from "./types.js"
  * Checks if two OrderItemVariations contain the same VariationItems.
  * The order of VariationItems doesn't matter - they are sorted before comparison.
  * Returns true if both variations have exactly the same set of VariationItems.
+ * OPTIMIZED: Early exit on length mismatch before extracting/sorting IDs
  */
 function isVariationItemEqual(
 	firstVariation: OrderItemVariation & {
@@ -28,6 +29,14 @@ function isVariationItemEqual(
 		orderItemVariationToVariationItems: OrderItemVariationToVariationItem[]
 	}
 ): boolean {
+	// OPTIMIZATION: Quick length check first (before expensive operations)
+	if (
+		firstVariation.orderItemVariationToVariationItems.length !==
+		secondVariation.orderItemVariationToVariationItems.length
+	) {
+		return false
+	}
+
 	// Extract and sort all VariationItem IDs from the first variation
 	const firstVariationItemIds =
 		firstVariation.orderItemVariationToVariationItems
@@ -39,10 +48,6 @@ function isVariationItemEqual(
 		secondVariation.orderItemVariationToVariationItems
 			.map(vi => Number(vi.variationItemId))
 			.sort((a, b) => a - b)
-
-	// Different number of items means they can't be equal
-	if (firstVariationItemIds.length !== secondVariationItemIds.length)
-		return false
 
 	// Compare each VariationItem ID
 	for (let i = 0; i < firstVariationItemIds.length; i++) {
@@ -62,6 +67,7 @@ function isVariationItemEqual(
  *
  * This checks: type, notes, takeAway, course, offer, and product.
  * For diverse items (DIVERSE_FOOD, DIVERSE_DRINK, DIVERSE_OTHER), also checks diversePrice.
+ * OPTIMIZED: Fastest checks first (type, product) before slower string/flag checks
  */
 function isOrderItemBasicEqual(
 	firstOrderItem: OrderItemWithRelations,
@@ -71,20 +77,8 @@ function isOrderItemBasicEqual(
 	if (firstOrderItem === secondOrderItem) return true
 	if (!firstOrderItem || !secondOrderItem) return false
 
-	// Type must match (PRODUCT, MENU, SPECIAL, or DIVERSE_*)
+	// OPTIMIZATION: Type check first (most likely to differ, cheap comparison)
 	if (firstOrderItem.type !== secondOrderItem.type) return false
-
-	// Notes must match (optional customer notes)
-	if (firstOrderItem.notes !== secondOrderItem.notes) return false
-
-	// TakeAway flag must match
-	if (firstOrderItem.takeAway !== secondOrderItem.takeAway) return false
-
-	// Course must match (optional course number for serving order)
-	if (firstOrderItem.course !== secondOrderItem.course) return false
-
-	// Offer ID must match (both null or both same offer)
-	if (firstOrderItem.offer?.id !== secondOrderItem.offer?.id) return false
 
 	// For diverse items, check diversePrice instead of product
 	const isDiverseType =
@@ -97,10 +91,22 @@ function isOrderItemBasicEqual(
 		if (firstOrderItem.diversePrice !== secondOrderItem.diversePrice)
 			return false
 	} else {
-		// For regular items, product ID must match (the actual product being ordered)
+		// OPTIMIZATION: Product ID check second (very likely to differ, cheap comparison)
 		if (firstOrderItem.product?.id !== secondOrderItem.product?.id)
 			return false
 	}
+
+	// Offer ID must match (both null or both same offer)
+	if (firstOrderItem.offer?.id !== secondOrderItem.offer?.id) return false
+
+	// TakeAway flag must match
+	if (firstOrderItem.takeAway !== secondOrderItem.takeAway) return false
+
+	// Course must match (optional course number for serving order)
+	if (firstOrderItem.course !== secondOrderItem.course) return false
+
+	// Notes must match (optional customer notes) - checked last as string comparison is slower
+	if (firstOrderItem.notes !== secondOrderItem.notes) return false
 
 	return true
 }
@@ -142,40 +148,50 @@ function isOrderItemVariationsStrictEqual(
 	const existingVariations = existingChildItem.orderItemVariations ?? []
 	const incomingVariations = incomingChildItem.orderItemVariations ?? []
 
-	// Must have the same number of variations
+	// OPTIMIZATION: Early exit on length mismatch
 	if (existingVariations.length !== incomingVariations.length) return false
 
-	// Create a copy of incoming variations to mark matches
-	const incomingVariationsCopy = [...incomingVariations]
+	// OPTIMIZATION: If no variations, they match
+	if (existingVariations.length === 0) return true
+
+	// Track matched incoming variations using boolean array (faster than splice)
+	const matched = new Array(incomingVariations.length).fill(false)
 
 	for (const existingVariation of existingVariations) {
 		const existingVariationCount = existingVariation.count
 		if (!existingVariationCount) return false
 
 		// Find a matching variation in the incoming set
-		const matchIndex = incomingVariationsCopy.findIndex(incomingVariation => {
+		let foundMatch = false
+		for (let i = 0; i < incomingVariations.length; i++) {
+			if (matched[i]) continue // Already matched
+
+			const incomingVariation = incomingVariations[i]
 			const incomingVariationCount = incomingVariation.count
-			if (!incomingVariationCount) return false
+			if (!incomingVariationCount) continue
+
+			// Check if counts are proportional first (cheaper than structure check)
+			if (
+				existingVariationCount * parentIncomingCount !==
+				incomingVariationCount * parentExistingCount
+			) {
+				continue
+			}
 
 			// Check if variation items are structurally equal
 			if (!isVariationItemEqual(existingVariation, incomingVariation))
-				return false
+				continue
 
-			// Check if counts are proportional:
-			// existingVariation.count / parentExisting === incomingVariation.count / parentIncoming
-			// Rearranged: existingVariation.count * parentIncoming === incomingVariation.count * parentExisting
-			return (
-				existingVariationCount * parentIncomingCount ===
-				incomingVariationCount * parentExistingCount
-			)
-		})
+			// Match found
+			matched[i] = true
+			foundMatch = true
+			break
+		}
 
-		if (matchIndex === -1) return false
-		incomingVariationsCopy.splice(matchIndex, 1) // Remove matched variation
+		if (!foundMatch) return false
 	}
 
-	// All variations must have been matched
-	return incomingVariationsCopy.length === 0
+	return true
 }
 
 /**
@@ -188,6 +204,7 @@ function isOrderItemVariationsStrictEqual(
  * - Proportional counts
  * - Variations with proportional counts
  * - Nested child OrderItems (recursive)
+ * OPTIMIZED: Early exits, reordered checks (cheapest first)
  */
 function areOrderItemsArrayEqualForMerge(
 	existingChildOrderItems: OrderItemWithRelations[],
@@ -199,9 +216,12 @@ function areOrderItemsArrayEqualForMerge(
 		throw new Error("Parent counts must be > 0 for strict menu matching")
 	}
 
-	// Must have same number of child items
+	// OPTIMIZATION: Early exit on length mismatch
 	if (existingChildOrderItems.length !== incomingChildOrderItems.length)
 		return false
+
+	// OPTIMIZATION: If both empty, they match
+	if (existingChildOrderItems.length === 0) return true
 
 	// Track which existing items have been matched
 	const matchedExistingItems = new Array<boolean>(
@@ -215,21 +235,27 @@ function areOrderItemsArrayEqualForMerge(
 			if (matchedExistingItems[i]) continue // Already matched
 			const existingChild = existingChildOrderItems[i]
 
-			// Check if basic properties match
-			if (!isOrderItemBasicEqual(existingChild, incomingChild)) continue
-
+			// OPTIMIZATION: Check counts first (cheapest check, fails fast)
 			const existingChildCount = existingChild.count
 			const incomingChildCount = incomingChild.count
 			if (!existingChildCount || !incomingChildCount) continue
 
 			// Check if counts are proportional
-			// existingChild.count / parentExisting === incomingChild.count / parentIncoming
 			if (
 				existingChildCount * parentIncomingCount !==
 				incomingChildCount * parentExistingCount
 			) {
 				continue
 			}
+
+			// Check if basic properties match (type, product, etc.)
+			if (!isOrderItemBasicEqual(existingChild, incomingChild)) continue
+
+			// Check nested children length early (before expensive variations check)
+			const existingNestedChildren = existingChild.orderItems ?? []
+			const incomingNestedChildren = incomingChild.orderItems ?? []
+			if (existingNestedChildren.length !== incomingNestedChildren.length)
+				continue
 
 			// Check if variations match with proportional counts
 			if (
@@ -242,11 +268,7 @@ function areOrderItemsArrayEqualForMerge(
 			)
 				continue
 
-			// Recursively check nested child items
-			const existingNestedChildren = existingChild.orderItems ?? []
-			const incomingNestedChildren = incomingChild.orderItems ?? []
-			if (existingNestedChildren.length !== incomingNestedChildren.length)
-				continue
+			// Recursively check nested child items only if they exist
 			if (
 				existingNestedChildren.length > 0 &&
 				!areOrderItemsArrayEqualForMerge(
