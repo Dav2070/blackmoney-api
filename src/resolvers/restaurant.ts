@@ -4,7 +4,8 @@ import {
 	Register,
 	Restaurant,
 	Room,
-	User
+	User,
+	Address
 } from "../../prisma/generated/client.js"
 import { Country, List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
@@ -56,8 +57,13 @@ export async function updateRestaurant(
 		city?: string
 		country?: Country
 		line1?: string
+		housenumber?: string
 		line2?: string
 		postalCode?: string
+		owner?: string
+		taxNumber?: string
+		mail?: string
+		phoneNumber?: string
 	},
 	context: ResolverContext
 ): Promise<Restaurant> {
@@ -99,8 +105,13 @@ export async function updateRestaurant(
 		args.city == null &&
 		args.country == null &&
 		args.line1 == null &&
+		args.housenumber == null &&
 		args.line2 == null &&
-		args.postalCode == null
+		args.postalCode == null &&
+		args.owner == null &&
+		args.taxNumber == null &&
+		args.mail == null &&
+		args.phoneNumber == null
 	) {
 		return restaurant
 	}
@@ -130,36 +141,71 @@ export async function updateRestaurant(
 
 	throwValidationError(...errors)
 
-	// Update the restaurant
-	let data: any = {}
-
+	// Update the restaurant name if provided
+	let restaurantData: any = {}
 	if (args.name != null) {
-		data.name = args.name
+		restaurantData.name = args.name
+	}
+	if (args.owner != null) {
+		restaurantData.owner = args.owner
+	}
+	if (args.taxNumber != null) {
+		restaurantData.taxNumber = args.taxNumber
+	}
+	if (args.mail != null) {
+		restaurantData.mail = args.mail
+	}
+	if (args.phoneNumber != null) {
+		restaurantData.phoneNumber = args.phoneNumber
 	}
 
-	if (args.city != null) {
-		data.city = args.city
+	if (Object.keys(restaurantData).length > 0) {
+		await context.prisma.restaurant.update({
+			where: { id: restaurant.id },
+			data: restaurantData
+		})
 	}
 
-	if (args.country != null) {
-		data.country = args.country
+	// Update or create address if address fields are provided
+	if (
+		args.city != null ||
+		args.country != null ||
+		args.line1 != null ||
+		args.housenumber != null ||
+		args.line2 != null ||
+		args.postalCode != null
+	) {
+		const existingAddress = await context.prisma.address.findFirst({
+			where: { restaurantId: restaurant.id }
+		})
+
+		let addressData: any = {
+			city: args.city ?? "",
+			country: args.country ?? "DE",
+			addressLine1: args.line1 ?? "",
+			housenumber: args.housenumber ?? "",
+			addressLine2: args.line2 ?? "",
+			postalCode: args.postalCode ?? ""
+		}
+
+		if (existingAddress) {
+			await context.prisma.address.update({
+				where: { id: existingAddress.id },
+				data: addressData
+			})
+		} else {
+			await context.prisma.address.create({
+				data: {
+					restaurantId: restaurant.id,
+					...addressData
+				}
+			})
+		}
 	}
 
-	if (args.line1 != null) {
-		data.line1 = args.line1
-	}
-
-	if (args.line2 != null) {
-		data.line2 = args.line2
-	}
-
-	if (args.postalCode != null) {
-		data.postalCode = args.postalCode
-	}
-
-	return await context.prisma.restaurant.update({
-		where: { id: restaurant.id },
-		data
+	// Fetch and return the updated restaurant
+	return await context.prisma.restaurant.findFirst({
+		where: { id: restaurant.id }
 	})
 }
 
@@ -169,6 +215,16 @@ export async function menu(
 	context: ResolverContext
 ): Promise<Menu> {
 	return await context.prisma.menu.findFirst({
+		where: { restaurantId: restaurant.id }
+	})
+}
+
+export async function address(
+	restaurant: Restaurant,
+	args: {},
+	context: ResolverContext
+): Promise<Address> {
+	return await context.prisma.address.findFirst({
 		where: { restaurantId: restaurant.id }
 	})
 }
