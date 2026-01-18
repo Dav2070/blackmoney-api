@@ -37,7 +37,7 @@ model Restaurant {
   printers          Printer[]
   menus             Menu[]
   bills             Bill[]
-  addresses         Address[]
+  address           Address?
 }
 
 model Register {
@@ -184,7 +184,7 @@ model Bill {
 model Address {
   id           BigInt     @id @default(autoincrement())
   uuid         String     @unique @default(uuid())
-  restaurantId BigInt
+  restaurantId BigInt     @unique
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   city         String?    @db.VarChar
   country      Country?
