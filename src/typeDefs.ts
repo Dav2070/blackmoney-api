@@ -69,7 +69,7 @@ export const typeDefs = `#graphql
 			city: String
 			country: Country
 			line1: String
-			housenumber: String
+			houseNumber: String
 			line2: String
 			postalCode: String
 			owner: String
@@ -196,7 +196,7 @@ export const typeDefs = `#graphql
 		country: Country
 		addressLine1: String
 		addressLine2: String
-		housenumber: String
+		houseNumber: String
 		postalCode: String
 	}
 

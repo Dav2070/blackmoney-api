@@ -78,7 +78,7 @@ export async function updateRestaurant(
 	}
 
 	// Get the restaurant
-	const restaurant = await context.prisma.restaurant.findFirst({
+	let restaurant = await context.prisma.restaurant.findFirst({
 		where: { uuid: args.uuid }
 	})
 
@@ -160,7 +160,7 @@ export async function updateRestaurant(
 	}
 
 	if (Object.keys(restaurantData).length > 0) {
-		await context.prisma.restaurant.update({
+		restaurant = await context.prisma.restaurant.update({
 			where: { id: restaurant.id },
 			data: restaurantData
 		})
@@ -179,34 +179,44 @@ export async function updateRestaurant(
 			where: { restaurantId: restaurant.id }
 		})
 
-		let addressData: any = {
-			city: args.city ?? "",
-			country: args.country ?? "DE",
-			line1: args.line1 ?? "",
-			houseNumber: args.houseNumber ?? "",
-			line2: args.line2 ?? "",
-			postalCode: args.postalCode ?? ""
+		let addressData: any = {}
+		if (args.city != null) {
+			addressData.city = args.city
+		}
+		if (args.country != null) {
+			addressData.country = args.country
+		}
+		if (args.line1 != null) {
+			addressData.line1 = args.line1
+		}
+		if (args.houseNumber != null) {
+			addressData.houseNumber = args.houseNumber
+		}
+		if (args.line2 != null) {
+			addressData.line2 = args.line2
+		}
+		if (args.postalCode != null) {
+			addressData.postalCode = args.postalCode
 		}
 
-		if (existingAddress) {
-			await context.prisma.address.update({
-				where: { id: existingAddress.id },
-				data: addressData
-			})
-		} else {
-			await context.prisma.address.create({
-				data: {
-					restaurantId: restaurant.id,
-					...addressData
-				}
-			})
+		if (Object.keys(addressData).length > 0) {
+			if (existingAddress) {
+				await context.prisma.address.update({
+					where: { id: existingAddress.id },
+					data: addressData
+				})
+			} else {
+				await context.prisma.address.create({
+					data: {
+						restaurantId: restaurant.id,
+						...addressData
+					}
+				})
+			}
 		}
 	}
 
-	// Fetch and return the updated restaurant
-	return await context.prisma.restaurant.findFirst({
-		where: { id: restaurant.id }
-	})
+	return restaurant
 }
 
 export async function menu(
