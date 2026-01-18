@@ -3,7 +3,6 @@ import { apiErrors } from "../errors.js"
 import { ResolverContext, List, Category } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
-import { randomUUID } from "crypto"
 
 export async function retrieveCategory(
 	parent: any,
@@ -200,7 +199,6 @@ export async function createCategory(
 	// Create the category
 	return await context.prisma.category.create({
 		data: {
-			uuid: randomUUID(),
 			name: args.name,
 			menuId: menu.id
 		}
