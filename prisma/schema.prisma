@@ -188,10 +188,10 @@ model Address {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   city         String?    @db.VarChar
   country      Country?
-  addressLine1  String?    @db.VarChar
-  addressLine2  String?    @db.VarChar
+  line1  String?    @db.VarChar
+  line2  String?    @db.VarChar
   postalCode   String?    @db.VarChar
-  housenumber  String?    @db.VarChar 
+  houseNumber  String?    @db.VarChar 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @default(now()) @updatedAt
 }

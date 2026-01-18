@@ -57,7 +57,7 @@ export async function updateRestaurant(
 		city?: string
 		country?: Country
 		line1?: string
-		housenumber?: string
+		houseNumber?: string
 		line2?: string
 		postalCode?: string
 		owner?: string
@@ -105,7 +105,7 @@ export async function updateRestaurant(
 		args.city == null &&
 		args.country == null &&
 		args.line1 == null &&
-		args.housenumber == null &&
+		args.houseNumber == null &&
 		args.line2 == null &&
 		args.postalCode == null &&
 		args.owner == null &&
@@ -171,7 +171,7 @@ export async function updateRestaurant(
 		args.city != null ||
 		args.country != null ||
 		args.line1 != null ||
-		args.housenumber != null ||
+		args.houseNumber != null ||
 		args.line2 != null ||
 		args.postalCode != null
 	) {
@@ -182,9 +182,9 @@ export async function updateRestaurant(
 		let addressData: any = {
 			city: args.city ?? "",
 			country: args.country ?? "DE",
-			addressLine1: args.line1 ?? "",
-			housenumber: args.housenumber ?? "",
-			addressLine2: args.line2 ?? "",
+			line1: args.line1 ?? "",
+			houseNumber: args.houseNumber ?? "",
+			line2: args.line2 ?? "",
 			postalCode: args.postalCode ?? ""
 		}
 
