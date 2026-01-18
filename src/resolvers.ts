@@ -64,6 +64,7 @@ export const resolvers = {
 		createTable: tableResolvers.createTable,
 		updateTable: tableResolvers.updateTable,
 		deleteTable: tableResolvers.deleteTable,
+		createCategory: categoryResolvers.createCategory,
 		updateCategory: categoryResolvers.updateCategory,
 		deleteCategory: categoryResolvers.deleteCategory,
 		createBill: billResolvers.createBill,
