@@ -123,6 +123,11 @@ export const apiErrors = {
 		message: "Table with this name already exists",
 		status: 400
 	},
+	categoryNameAlreadyInUse: {
+		code: "CATEGORY_NAME_ALREADY_IN_USE",
+		message: "A category with this name already exists in this restaurant",
+		status: 400
+	},
 	restaurantAlreadyHasOwner: {
 		code: "RESTAURANT_ALREADY_HAS_OWNER",
 		message: "The restaurant already has an owner",
