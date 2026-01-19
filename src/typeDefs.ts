@@ -69,8 +69,13 @@ export const typeDefs = `#graphql
 			city: String
 			country: Country
 			line1: String
+			houseNumber: String
 			line2: String
 			postalCode: String
+			owner: String
+			taxNumber: String
+			mail: String
+			phoneNumber: String
 		): Restaurant!
 		createRegister(
 			restaurantUuid: String!
@@ -213,21 +218,31 @@ export const typeDefs = `#graphql
 	type Restaurant {
 		uuid: String!
 		name: String!
-		city: String
-		country: Country
-		line1: String
-		line2: String
-		postalCode: String
+		owner: String
+		taxNumber: String
+		mail: String
+		phoneNumber: String
 		users: UserList!
 		rooms: RoomList!
 		registers: RegisterList!
 		printers: PrinterList!
 		menu: Menu
+		address: Address
 	}
 
 	type RestaurantList {
 		total: Int!
 		items: [Restaurant!]!
+	}
+
+	type Address {
+		uuid: String!
+		city: String
+		country: Country
+		addressLine1: String
+		addressLine2: String
+		houseNumber: String
+		postalCode: String
 	}
 
 	type Register {

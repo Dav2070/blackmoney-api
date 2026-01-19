@@ -94,6 +94,7 @@ export const resolvers = {
 	},
 	Restaurant: {
 		menu: restaurantResolvers.menu,
+		address: restaurantResolvers.address,
 		users: restaurantResolvers.users,
 		rooms: restaurantResolvers.rooms,
 		registers: restaurantResolvers.registers,
