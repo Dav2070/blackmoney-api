@@ -198,8 +198,8 @@ export const typeDefs = `#graphql
 		uuid: String!
 		city: String
 		country: Country
-		addressLine1: String
-		addressLine2: String
+		line1: String
+		line2: String
 		houseNumber: String
 		postalCode: String
 	}
