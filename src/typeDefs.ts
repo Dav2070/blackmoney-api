@@ -132,6 +132,47 @@ export const typeDefs = `#graphql
 			name: String
 		): Category!
 		deleteCategory(uuid: String!): Category!
+		createProduct(
+			categoryUuid: String!
+			name: String!
+			price: Int!
+			type: ProductType!
+			shortcut: Int
+			variationUuids: [String!]
+		): Product!
+		updateProduct(
+			uuid: String!
+			name: String
+			price: Int
+			shortcut: Int
+			variationUuids: [String!]
+		): Product!
+		deleteProduct(uuid: String!): Product!
+		createOffer(
+			productUuid: String!
+			offerType: OfferType!
+			discountType: DiscountType
+			offerValue: Int!
+			startDate: String
+			endDate: String
+			startTime: String
+			endTime: String
+			weekdays: [Weekday!]!
+			offerItems: [OfferItemInput!]!
+		): Offer!
+		updateOffer(
+			uuid: String!
+			offerType: OfferType
+			discountType: DiscountType
+			offerValue: Int
+			startDate: String
+			endDate: String
+			startTime: String
+			endTime: String
+			weekdays: [Weekday!]
+			offerItems: [OfferItemInput!]
+		): Offer!
+		deleteOffer(uuid: String!): Offer!
 		createBill(registerClientUuid: String!): Bill!
 		createOrder(tableUuid: String!): Order!
 		updateOrder(
@@ -538,5 +579,11 @@ export const typeDefs = `#graphql
 
 	input VariationItemInput {
 		id: Int!
+	}
+
+	input OfferItemInput {
+		name: String!
+		maxSelections: Int!
+		productUuids: [String!]!
 	}
 `
