@@ -2,6 +2,7 @@ import { ApolloServer } from "@apollo/server"
 import { expressMiddleware } from "@as-integrations/express5"
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
 import { PrismaPg } from "@prisma/adapter-pg"
+import Stripe from "stripe"
 import { makeExecutableSchema } from "@graphql-tools/schema"
 import express from "express"
 import http from "http"
@@ -35,6 +36,8 @@ export const prisma = new PrismaClient({
 		timeout: 20000
 	}
 })
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Init dav
 let environment = Environment.Staging
@@ -113,6 +116,7 @@ app.use(
 
 			return {
 				prisma,
+				stripe,
 				davUser,
 				user
 			}
