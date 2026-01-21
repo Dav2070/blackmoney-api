@@ -1,7 +1,7 @@
 import { Order, PrismaClient } from "../../../prisma/generated/client.js"
 import { apiErrors } from "../../errors.js"
 import { throwApiError } from "../../utils.js"
-import {  AddOrderItemInput } from "../../types/orderTypes.js"
+import { AddOrderItemInput } from "../../types/orderTypes.js"
 import { OrderItemService } from "./orderItemService.js"
 
 /**
@@ -80,7 +80,12 @@ export class OrderService {
 
 		await this.orderItemService.addOrderItems(order, orderItems)
 
-		return order
+		// Reload order to include newly created items with UUIDs
+		const updatedOrder = await this.getOrder(orderUuid)
+		if (updatedOrder == null) {
+			throwApiError(apiErrors.orderDoesNotExist)
+		}
+		return updatedOrder
 	}
 
 	/**
@@ -99,6 +104,11 @@ export class OrderService {
 
 		await this.orderItemService.removeOrderItems(order, orderItems)
 
-		return order
+		// Reload order to reflect removed items
+		const updatedOrder = await this.getOrder(orderUuid)
+		if (updatedOrder == null) {
+			throwApiError(apiErrors.orderDoesNotExist)
+		}
+		return updatedOrder
 	}
 }
