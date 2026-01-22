@@ -72,20 +72,22 @@ export class OrderService {
 		orderUuid: string,
 		orderItems: AddOrderItemInput[]
 	): Promise<Order> {
+		console.time("⏱️ addProductsToOrder - total")
+		console.time("⏱️ addProductsToOrder - getOrder")
 		const order = await this.getOrder(orderUuid)
+		console.timeEnd("⏱️ addProductsToOrder - getOrder")
 
 		if (order == null) {
 			throwApiError(apiErrors.orderDoesNotExist)
 		}
 
+		console.time("⏱️ addProductsToOrder - addOrderItems")
 		await this.orderItemService.addOrderItems(order, orderItems)
+		console.timeEnd("⏱️ addProductsToOrder - addOrderItems")
 
-		// Reload order to include newly created items with UUIDs
-		const updatedOrder = await this.getOrder(orderUuid)
-		if (updatedOrder == null) {
-			throwApiError(apiErrors.orderDoesNotExist)
-		}
-		return updatedOrder
+		console.timeEnd("⏱️ addProductsToOrder - total")
+		// Return the order - orderItems will be fetched by GraphQL resolver
+		return order
 	}
 
 	/**
@@ -104,11 +106,7 @@ export class OrderService {
 
 		await this.orderItemService.removeOrderItems(order, orderItems)
 
-		// Reload order to reflect removed items
-		const updatedOrder = await this.getOrder(orderUuid)
-		if (updatedOrder == null) {
-			throwApiError(apiErrors.orderDoesNotExist)
-		}
-		return updatedOrder
+		// Return the order - orderItems will be fetched by GraphQL resolver
+		return order
 	}
 }
