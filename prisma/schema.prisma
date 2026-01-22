@@ -24,11 +24,10 @@ model Restaurant {
   companyId         BigInt
   company           Company            @relation(fields: [companyId], references: [id])
   name              String             @db.VarChar
-  city              String?            @db.VarChar
-  country           Country?
-  line1             String?            @db.VarChar
-  line2             String?            @db.VarChar
-  postalCode        String?            @db.VarChar
+  owner             String?            @db.VarChar
+  taxNumber         String?            @db.VarChar
+  mail              String?            @db.VarChar
+  phoneNumber       String?            @db.VarChar
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @default(now()) @updatedAt
   userToRestaurants UserToRestaurant[]
@@ -38,6 +37,7 @@ model Restaurant {
   printers          Printer[]
   menus             Menu[]
   bills             Bill[]
+  address           Address?
 }
 
 model Register {
@@ -179,6 +179,21 @@ model Bill {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @default(now()) @updatedAt
   orders           Order[]
+}
+
+model Address {
+  id           BigInt     @id @default(autoincrement())
+  uuid         String     @unique @default(uuid())
+  restaurantId BigInt     @unique
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  city         String?    @db.VarChar
+  country      Country?
+  line1  String?    @db.VarChar
+  line2  String?    @db.VarChar
+  postalCode   String?    @db.VarChar
+  houseNumber  String?    @db.VarChar 
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
 }
 
 model Order {

@@ -65,6 +65,7 @@ export const resolvers = {
 		createTable: tableResolvers.createTable,
 		updateTable: tableResolvers.updateTable,
 		deleteTable: tableResolvers.deleteTable,
+		createCategory: categoryResolvers.createCategory,
 		updateCategory: categoryResolvers.updateCategory,
 		deleteCategory: categoryResolvers.deleteCategory,
 		createBill: billResolvers.createBill,
@@ -90,6 +91,7 @@ export const resolvers = {
 	},
 	Restaurant: {
 		menu: restaurantResolvers.menu,
+		address: restaurantResolvers.address,
 		users: restaurantResolvers.users,
 		rooms: restaurantResolvers.rooms,
 		registers: restaurantResolvers.registers,

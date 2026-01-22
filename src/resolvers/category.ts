@@ -139,6 +139,72 @@ export async function listCategories(
 	}
 }
 
+export async function createCategory(
+	parent: any,
+	args: {
+		restaurantUuid: string
+		name: string
+	},
+	context: ResolverContext
+): Promise<Category> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the restaurant
+	const restaurant = await context.prisma.restaurant.findFirst({
+		where: { uuid: args.restaurantUuid }
+	})
+
+	if (restaurant == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if the user belongs to the same company as the restaurant and has the correct role
+	if (
+		context.user.companyId !== restaurant.companyId ||
+		!["ADMIN", "OWNER"].includes(context.user.role)
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Validate the name
+	throwValidationError(validateNameLength(args.name))
+
+	// Get the menu for this restaurant
+	const menu = await context.prisma.menu.findFirst({
+		where: { restaurantId: restaurant.id }
+	})
+
+	if (menu == null) {
+		throwApiError(apiErrors.restaurantDoesNotExist)
+	}
+
+	// Check if a category with the same name already exists in this restaurant's menu
+	const existingCategory = await context.prisma.category.findFirst({
+		where: {
+			menuId: menu.id,
+			name: {
+				equals: args.name,
+				mode: "insensitive"
+			}
+		}
+	})
+
+	if (existingCategory != null) {
+		throwApiError(apiErrors.categoryNameAlreadyInUse)
+	}
+
+	// Create the category
+	return await context.prisma.category.create({
+		data: {
+			name: args.name,
+			menuId: menu.id
+		}
+	})
+}
+
 export async function updateCategory(
 	parent: any,
 	args: {
@@ -176,6 +242,24 @@ export async function updateCategory(
 
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
+
+	// Check if a category with the same name already exists in this restaurant's menu (excluding current category)
+	const existingCategory = await context.prisma.category.findFirst({
+		where: {
+			menuId: category.menuId,
+			name: {
+				equals: args.name,
+				mode: "insensitive"
+			},
+			id: {
+				not: category.id
+			}
+		}
+	})
+
+	if (existingCategory != null) {
+		throwApiError(apiErrors.categoryNameAlreadyInUse)
+	}
 
 	// Update the category
 	return await context.prisma.category.update({
