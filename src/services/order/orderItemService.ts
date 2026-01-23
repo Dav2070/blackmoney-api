@@ -393,9 +393,12 @@ export class OrderItemService {
 			// Batch update all child counts in ONE query
 			if (childUpdates.length > 0) {
 				const caseStatements = childUpdates
-					.map(({ id, increment }) => `WHEN ${id} THEN "count" + ${increment}`)
-					.join(' ')
-				const ids = childUpdates.map(({ id }) => id).join(',')
+					.map(
+						({ id, increment }) =>
+							`WHEN ${id} THEN "count" + ${increment}`
+					)
+					.join(" ")
+				const ids = childUpdates.map(({ id }) => id).join(",")
 
 				updates.push(
 					this.prisma.$executeRawUnsafe(`
@@ -405,26 +408,68 @@ export class OrderItemService {
 				)
 			}
 
-			// Create new child items
+			// SUPER OPTIMIZATION: Use createMany for batch insert of child items
 			if (childCreates.length > 0) {
-				updates.push(
-					...childCreates.map(childInput =>
-						this.createChildOrderItem(
-							existingOrderItem.id,
-							existingOrderItem.orderId,
-							childInput,
-							productMap,
-							variationItemMap
-						)
-					)
-				)
+				// Resolve all product IDs first
+				const childDataWithIds = childCreates.map(childInput => {
+					const product = productMap.get(childInput.productUuid)
+					if (!product) {
+						throwApiError(apiErrors.productDoesNotExist)
+					}
+					return {
+						childInput,
+						productId: product.id
+					}
+				})
+
+				// Use createMany for batch insert (single query!)
+				await this.prisma.orderItem.createMany({
+					data: childDataWithIds.map(({ childInput, productId }) => ({
+						uuid: childInput.uuid,
+						orderId: existingOrderItem.orderId,
+						productId: productId,
+						orderItemId: existingOrderItem.id,
+						count: childInput.count,
+						discount: 0,
+						takeAway: false,
+						type: "PRODUCT"
+					}))
+				})
+
+				// Fetch created items to get their IDs (only if variations exist)
+				if (childCreates.some(c => c.variations)) {
+					const childUuids = childCreates.map(c => c.uuid)
+					const createdChildren = await this.prisma.orderItem.findMany({
+						where: { uuid: { in: childUuids } },
+						select: { id: true, uuid: true }
+					})
+					const childMap = new Map(createdChildren.map(c => [c.uuid, c]))
+
+					// Handle all child variations in parallel
+					for (const childInput of childCreates) {
+						if (childInput.variations) {
+							const childItem = childMap.get(childInput.uuid)
+							if (childItem) {
+								updates.push(
+									this.handleVariations(
+										childItem.id,
+										childInput.variations,
+										variationItemMap
+									)
+								)
+							}
+						}
+					}
+				}
 			}
 		}
 
 		await Promise.all(updates)
 		const elapsed = Date.now() - t1
 		if (elapsed > 50) {
-			console.log(`  🔧 handleMergeExtras (${orderItemInput.variations?.length || 0}v + ${orderItemInput.orderItems?.length || 0}c) took ${elapsed}ms`)
+			console.log(
+				`  🔧 handleMergeExtras (${orderItemInput.variations?.length || 0}v + ${orderItemInput.orderItems?.length || 0}c) took ${elapsed}ms`
+			)
 		}
 	}
 
@@ -480,11 +525,53 @@ export class OrderItemService {
 		})
 		console.log(`    ✓ Created orderItem in ${Date.now() - createStart}ms`)
 
-		// OPTIMIZATION: Handle variations and child items in parallel
-		const postCreateTasks: Promise<any>[] = []
+		// SUPER OPTIMIZATION: Use createMany for batch insert (much faster!)
+		const postStart = Date.now()
+		let childOrderItems: any[] = []
 
+		if (orderItemInput.orderItems && orderItemInput.orderItems.length > 0) {
+			// Resolve all product IDs first
+			const childDataWithIds = orderItemInput.orderItems.map(childInput => {
+				const product = productMap.get(childInput.productUuid)
+				if (!product) {
+					throwApiError(apiErrors.productDoesNotExist)
+				}
+				return {
+					childInput,
+					productId: product.id
+				}
+			})
+
+			// Use createMany for batch insert (single query!)
+			await this.prisma.orderItem.createMany({
+				data: childDataWithIds.map(({ childInput, productId }) => ({
+					uuid: childInput.uuid,
+					orderId: order.id,
+					productId: productId,
+					orderItemId: newOrderItem.id,
+					count: childInput.count,
+					discount: 0,
+					takeAway: false,
+					type: "PRODUCT"
+				}))
+			})
+
+			// Now fetch the created items to get their IDs (for variations)
+			if (orderItemInput.orderItems.some(c => c.variations)) {
+				const childUuids = orderItemInput.orderItems.map(c => c.uuid)
+				childOrderItems = await this.prisma.orderItem.findMany({
+					where: { uuid: { in: childUuids } },
+					select: { id: true, uuid: true }
+				})
+			}
+		}
+
+		// Now handle ALL variations (parent + children) in parallel
+		const variationTasks: Promise<any>[] = []
+
+		// Parent variations
 		if (orderItemInput.variations) {
-			postCreateTasks.push(
+			variationTasks.push(
 				this.handleVariations(
 					newOrderItem.id,
 					orderItemInput.variations,
@@ -493,26 +580,35 @@ export class OrderItemService {
 			)
 		}
 
-		if (orderItemInput.orderItems) {
-			for (const childInput of orderItemInput.orderItems) {
-				postCreateTasks.push(
-					this.createChildOrderItem(
-						newOrderItem.id,
-						order.id,
-						childInput,
-						productMap,
-						variationItemMap
-					)
-				)
-			}
+		// Child variations
+		if (orderItemInput.orderItems && childOrderItems.length > 0) {
+			const childOrderItemMap = new Map(childOrderItems.map(c => [c.uuid, c]))
+			orderItemInput.orderItems.forEach(childInput => {
+				if (childInput.variations) {
+					const childItem = childOrderItemMap.get(childInput.uuid)
+					if (childItem) {
+						variationTasks.push(
+							this.handleVariations(
+								childItem.id,
+								childInput.variations,
+								variationItemMap
+							)
+						)
+					}
+				}
+			})
 		}
 
-		// Execute all post-create tasks in parallel
-		const postStart = Date.now()
-		await Promise.all(postCreateTasks)
+		// Execute all variation tasks in parallel
+		if (variationTasks.length > 0) {
+			await Promise.all(variationTasks)
+		}
+
 		const postElapsed = Date.now() - postStart
 		if (postElapsed > 50) {
-			console.log(`    ✓ Post-create tasks (${orderItemInput.variations?.length || 0}v + ${orderItemInput.orderItems?.length || 0}c) in ${postElapsed}ms`)
+			console.log(
+				`    ✓ Post-create tasks (${orderItemInput.variations?.length || 0}v + ${orderItemInput.orderItems?.length || 0}c) in ${postElapsed}ms`
+			)
 		}
 
 		const elapsed = Date.now() - t1
@@ -549,7 +645,9 @@ export class OrderItemService {
 
 		for (const variationInput of variations) {
 			if (variationInput.uuid) {
-				const existingVariation = existingVariationMap.get(variationInput.uuid)
+				const existingVariation = existingVariationMap.get(
+					variationInput.uuid
+				)
 				if (existingVariation) {
 					toUpdate.push({
 						id: existingVariation.id,
@@ -567,9 +665,11 @@ export class OrderItemService {
 		if (toUpdate.length > 0) {
 			// Use raw SQL for bulk increment - much faster than individual updates
 			const caseStatements = toUpdate
-				.map(({ id, increment }) => `WHEN ${id} THEN "count" + ${increment}`)
-				.join(' ')
-			const ids = toUpdate.map(({ id }) => id).join(',')
+				.map(
+					({ id, increment }) => `WHEN ${id} THEN "count" + ${increment}`
+				)
+				.join(" ")
+			const ids = toUpdate.map(({ id }) => id).join(",")
 
 			operations.push(
 				this.prisma.$executeRawUnsafe(`
@@ -579,11 +679,36 @@ export class OrderItemService {
 			)
 		}
 
-		// Create all new variations in parallel (already optimized with inline links)
+		// SUPER OPTIMIZATION: Batch-create all variations at once
 		if (toCreate.length > 0) {
 			operations.push(
-				...toCreate.map(variationInput =>
-					this.createVariation(orderItemId, variationInput, variationItemMap)
+				Promise.all(
+					toCreate.map(variationInput => {
+						// Resolve variationItems from map
+						const variationItemIds: bigint[] = []
+						for (const variationItemUuid of variationInput.variationItemUuids) {
+							const variationItem = variationItemMap.get(variationItemUuid)
+							if (variationItem) {
+								variationItemIds.push(variationItem.id)
+							}
+						}
+
+						return this.prisma.orderItemVariation.create({
+							data: {
+								uuid: variationInput.uuid,
+								orderItem: { connect: { id: orderItemId } },
+								count: variationInput.count,
+								// Inline create the links to avoid extra query
+								orderItemVariationToVariationItems: {
+									createMany: {
+										data: variationItemIds.map(variationItemId => ({
+											variationItemId: variationItemId
+										}))
+									}
+								}
+							}
+						})
+					})
 				)
 			)
 		}
