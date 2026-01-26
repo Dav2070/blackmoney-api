@@ -72,20 +72,14 @@ export class OrderService {
 		orderUuid: string,
 		orderItems: AddOrderItemInput[]
 	): Promise<Order> {
-		console.time("⏱️ addProductsToOrder - total")
-		console.time("⏱️ addProductsToOrder - getOrder")
 		const order = await this.getOrder(orderUuid)
-		console.timeEnd("⏱️ addProductsToOrder - getOrder")
 
 		if (order == null) {
 			throwApiError(apiErrors.orderDoesNotExist)
 		}
 
-		console.time("⏱️ addProductsToOrder - addOrderItems")
 		await this.orderItemService.addOrderItems(order, orderItems)
-		console.timeEnd("⏱️ addProductsToOrder - addOrderItems")
 
-		console.timeEnd("⏱️ addProductsToOrder - total")
 		// Return the order - orderItems will be fetched by GraphQL resolver
 		return order
 	}
