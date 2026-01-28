@@ -12,7 +12,7 @@ import { OrderService } from "../services/order/orderService.js"
 import { OrderCompletionService } from "../services/order/orderCompletionService.js"
 import { OrderItemService } from "../services/order/orderItemService.js"
 import { OrderUpdateService } from "../services/order/orderUpdateService.js"
-import { ProductInputArgs } from "../types/orderTypes.js"
+import { AddOrderItemInput } from "../types/orderTypes.js"
 
 export async function retrieveOrder(
 	parent: any,
@@ -88,7 +88,7 @@ export async function addProductsToOrder(
 	parent: any,
 	args: {
 		uuid: string
-		products: ProductInputArgs[]
+		products: AddOrderItemInput[]
 	},
 	context: ResolverContext
 ): Promise<Order> {
@@ -104,7 +104,7 @@ export async function removeProductsFromOrder(
 	parent: any,
 	args: {
 		uuid: string
-		products: ProductInputArgs[]
+		products: AddOrderItemInput[]
 	},
 	context: ResolverContext
 ): Promise<Order> {

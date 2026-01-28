@@ -1,7 +1,7 @@
 import { Order, PrismaClient } from "../../../prisma/generated/client.js"
 import { apiErrors } from "../../errors.js"
 import { throwApiError } from "../../utils.js"
-import { ProductInputArgs } from "../../types/orderTypes.js"
+import { AddOrderItemInput } from "../../types/orderTypes.js"
 import { OrderItemService } from "./orderItemService.js"
 
 /**
@@ -63,11 +63,14 @@ export class OrderService {
 	}
 
 	/**
-	 * Adds products to an order
+	 * Adds products to an order using UUID-based merge logic
+	 * - If orderItem.uuid exists → merge (increment count)
+	 * - If orderItem.uuid is null → create new
+	 * - Same logic applies to variations and child orderItems
 	 */
 	async addProductsToOrder(
 		orderUuid: string,
-		productsArgs: ProductInputArgs[]
+		orderItems: AddOrderItemInput[]
 	): Promise<Order> {
 		const order = await this.getOrder(orderUuid)
 
@@ -75,20 +78,19 @@ export class OrderService {
 			throwApiError(apiErrors.orderDoesNotExist)
 		}
 
-		const products = await this.orderItemService.convertProductInputArgs(
-			productsArgs
-		)
-		await this.orderItemService.addProducts(order, products)
+		await this.orderItemService.addOrderItems(order, orderItems)
 
+		// Return the order - orderItems will be fetched by GraphQL resolver
 		return order
 	}
 
 	/**
-	 * Removes products from an order
+	 * Removes products from an order using UUID-based deletion
+	 * - Requires orderItem.uuid to identify which items to remove
 	 */
 	async removeProductsFromOrder(
 		orderUuid: string,
-		productsArgs: ProductInputArgs[]
+		orderItems: AddOrderItemInput[]
 	): Promise<Order> {
 		const order = await this.getOrder(orderUuid)
 
@@ -96,11 +98,9 @@ export class OrderService {
 			throwApiError(apiErrors.orderDoesNotExist)
 		}
 
-		const products = await this.orderItemService.convertProductInputArgs(
-			productsArgs
-		)
-		await this.orderItemService.removeProducts(order, products)
+		await this.orderItemService.removeOrderItems(order, orderItems)
 
+		// Return the order - orderItems will be fetched by GraphQL resolver
 		return order
 	}
 }

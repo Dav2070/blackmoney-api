@@ -1,31 +1,8 @@
 import { OrderItemType } from "../../prisma/generated/client.js"
 
-export interface ProductInput {
-	id?: bigint
-	count: number
-	type?: OrderItemType
-	discount: number
-	diversePrice?: number
-	notes: string | null
-	takeAway: boolean
-	course: number | null
-	offerId: bigint | null
-	variations: {
-		variationItemIds: bigint[]
-		count: number
-	}[]
-	orderItems: {
-		productUuid: string
-		count: number
-		variations?: {
-			variationItemUuids: string[]
-			count: number
-		}[]
-	}[]
-}
-
-export interface ProductInputArgs {
+export interface AddOrderItemInput {
 	uuid?: string
+	productUuid?: string
 	count: number
 	discount?: number
 	diversePrice?: number
@@ -34,16 +11,19 @@ export interface ProductInputArgs {
 	takeAway?: boolean
 	course?: number
 	offerUuid?: string
-	variations?: {
-		variationItemUuids: string[]
-		count: number
-	}[]
-	orderItems?: {
-		productUuid: string
-		count: number
-		variations?: {
-			variationItemUuids: string[]
-			count: number
-		}[]
-	}[]
+	variations?: AddOrderItemVariationInput[]
+	orderItems?: AddChildOrderItemInput[]
+}
+
+export interface AddOrderItemVariationInput {
+	uuid?: string
+	variationItemUuids: string[]
+	count: number
+}
+
+export interface AddChildOrderItemInput {
+	uuid?: string
+	productUuid: string
+	count: number
+	variations?: AddOrderItemVariationInput[]
 }
