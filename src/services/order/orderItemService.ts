@@ -6,6 +6,7 @@ import {
 import { apiErrors } from "../../errors.js"
 import { throwApiError } from "../../utils.js"
 import {
+	AddChildOrderItemInput,
 	AddOrderItemInput,
 	AddOrderItemVariationInput
 } from "../../types/orderTypes.js"
@@ -15,7 +16,6 @@ import {
  */
 export class OrderItemService {
 	constructor(private readonly prisma: PrismaClient) {}
-
 
 	/**
 	 * Calculates the total price of an order by summing up all OrderItem prices.
@@ -47,7 +47,6 @@ export class OrderItemService {
 		order: Order,
 		orderItems: AddOrderItemInput[]
 	): Promise<void> {
-
 		// Batch-load all required data
 		const productUuids = orderItems
 			.filter(item => item.productUuid)
@@ -74,7 +73,6 @@ export class OrderItemService {
 		})
 		const existingUuids = new Set(existingOrderItems.map(item => item.uuid))
 
-
 		const allProductUuids = [...productUuids, ...childProductUuids]
 		const allVariationItemUuids = [
 			...variationItemUuids,
@@ -98,7 +96,6 @@ export class OrderItemService {
 					})
 				: Promise.resolve([])
 		])
-		
 
 		// Create lookup maps
 		const productMap = new Map(products.map(p => [p.uuid, p]))
@@ -108,8 +105,6 @@ export class OrderItemService {
 		// Separate items into merge and create groups
 		const toMerge = orderItems.filter(item => existingUuids.has(item.uuid))
 		const toCreate = orderItems.filter(item => !existingUuids.has(item.uuid))
-
-		
 
 		//Batch-load all existing OrderItems for merge operations
 		const existingOrderItemsForMerge =
@@ -138,7 +133,7 @@ export class OrderItemService {
 		)
 
 		// Execute operations in parallel, but with concurrency limit
-		const CONCURRENCY_LIMIT = 10 
+		const CONCURRENCY_LIMIT = 10
 
 		// Do all count updates in one go!
 		const mergeUpdates = toMerge.map(item => {
@@ -256,7 +251,7 @@ export class OrderItemService {
 		if (orderItemInput.orderItems) {
 			// Split child items into updates and creates
 			const childUpdates: { id: bigint; increment: number }[] = []
-			const childCreates: any[] = []
+			const childCreates: AddChildOrderItemInput[] = []
 
 			for (const childInput of orderItemInput.orderItems) {
 				const existingChild = childOrderItemMap.get(childInput.uuid)
@@ -355,7 +350,6 @@ export class OrderItemService {
 		}
 
 		await Promise.all(updates)
-		
 	}
 
 	/**
@@ -463,7 +457,9 @@ export class OrderItemService {
 
 		// Child variations
 		if (orderItemInput.orderItems && childOrderItems.length > 0) {
-			const childOrderItemMap = new Map(childOrderItems.map(c => [c.uuid, c]))
+			const childOrderItemMap = new Map(
+				childOrderItems.map(c => [c.uuid, c])
+			)
 			orderItemInput.orderItems.forEach(childInput => {
 				if (childInput.variations) {
 					const childItem = childOrderItemMap.get(childInput.uuid)
@@ -556,7 +552,8 @@ export class OrderItemService {
 						// Resolve variationItems from map
 						const variationItemIds: bigint[] = []
 						for (const variationItemUuid of variationInput.variationItemUuids) {
-							const variationItem = variationItemMap.get(variationItemUuid)
+							const variationItem =
+								variationItemMap.get(variationItemUuid)
 							if (variationItem) {
 								variationItemIds.push(variationItem.id)
 							}
