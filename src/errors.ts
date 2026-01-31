@@ -164,6 +164,11 @@ export const apiErrors = {
 		message: "Order already completed",
 		status: 400
 	},
+	orderItemVariationDoesNotExist: {
+		code: "ORDER_ITEM_VARIATION_DOES_NOT_EXIST",
+		message: "OrderItemVariation does not exist",
+		status: 404
+	},
 	userHasNoPassword: {
 		code: "USER_HAS_NO_PASSWORD",
 		message: "Please set a password for the user to log in",

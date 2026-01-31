@@ -145,11 +145,11 @@ export const typeDefs = `#graphql
 		): Order!
 		addProductsToOrder(
 			uuid: String!
-			products: [AddProductsInput!]!
+			products: [AddOrderItemInput!]!
 		): Order!
 		removeProductsFromOrder(
 			uuid: String!
-			products: [AddProductsInput!]!
+			products: [AddOrderItemInput!]!
 		): Order!
 		completeOrder(
 			uuid: String!
@@ -532,31 +532,6 @@ export const typeDefs = `#graphql
 		orderItemVariations: [OrderItemVariationInput!]
 	}
 
-	input AddProductsInput {
-		uuid: String
-		count: Int!
-		discount: Int
-		diversePrice: Int
-		type: OrderItemType
-		notes: String
-		takeAway: Boolean
-		course: Int
-		offerUuid: String
-		variations: [AddProductVariationInput!]
-		orderItems: [AddProductOrderItemInput!]
-	}
-
-	input AddProductVariationInput {
-		variationItemUuids: [String!]!
-		count: Int!
-	}
-
-	input AddProductOrderItemInput {
-		productUuid: String!
-		count: Int!
-		variations: [AddProductVariationInput!]
-	}
-
 	input OrderItemVariationInput {
 		uuid: String
 		count: Int!
@@ -565,5 +540,33 @@ export const typeDefs = `#graphql
 
 	input VariationItemInput {
 		id: Int!
+	}
+
+	input AddOrderItemInput {
+		uuid: String
+		productUuid: String
+		count: Int!
+		discount: Int
+		diversePrice: Int
+		type: OrderItemType
+		notes: String
+		takeAway: Boolean
+		course: Int
+		offerUuid: String
+		variations: [AddOrderItemVariationInput!]
+		orderItems: [AddChildOrderItemInput!]
+	}
+
+	input AddOrderItemVariationInput {
+		uuid: String
+		variationItemUuids: [String!]!
+		count: Int!
+	}
+
+	input AddChildOrderItemInput {
+		uuid: String
+		productUuid: String!
+		count: Int!
+		variations: [AddOrderItemVariationInput!]
 	}
 `
