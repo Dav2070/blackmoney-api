@@ -126,6 +126,11 @@ export async function activateRegister(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
+	// Check if the register is already active
+	if (register.adminPin != null) {
+		throwApiError(apiErrors.registerAlreadyActive)
+	}
+
 	// Create the TSS
 	let tss = await createTss(register.uuid)
 
