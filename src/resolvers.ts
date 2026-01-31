@@ -103,6 +103,7 @@ export const resolvers = {
 		registerClients: registerResolvers.registerClients
 	},
 	RegisterClient: {
+		register: registerClientResolvers.register,
 		printRules: registerClientResolvers.printRules
 	},
 	PrintRule: {

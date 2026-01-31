@@ -225,6 +225,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String
 		serialNumber: String!
+		register: Register!
 		printRules: PrintRuleList!
 	}
 
