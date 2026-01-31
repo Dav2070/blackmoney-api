@@ -165,6 +165,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		createStripeConnectionToken: StripeConnectionToken!
+		captureStripePaymentIntent(
+			id: String!
+		): StripePaymentIntent!
 	}
 
 	type Company {
@@ -445,6 +449,14 @@ export const typeDefs = `#graphql
 	type ReservationList {
 		total: Int!
 		items: [Reservation!]!
+	}
+
+	type StripeConnectionToken {
+		secret: String!
+	}
+
+	type StripePaymentIntent {
+		id: String!
 	}
 
 	enum UserRole {
