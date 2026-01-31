@@ -53,6 +53,7 @@ export const resolvers = {
 		createCompany: companyResolvers.createCompany,
 		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,
+		activateRegister: registerResolvers.activateRegister,
 		updateRegisterClient: registerClientResolvers.updateRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
@@ -98,9 +99,11 @@ export const resolvers = {
 		printers: restaurantResolvers.printers
 	},
 	Register: {
+		status: registerResolvers.status,
 		registerClients: registerResolvers.registerClients
 	},
 	RegisterClient: {
+		register: registerClientResolvers.register,
 		printRules: registerClientResolvers.printRules
 	},
 	PrintRule: {

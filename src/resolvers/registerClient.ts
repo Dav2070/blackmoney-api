@@ -1,4 +1,4 @@
-import { PrintRule, RegisterClient } from "../../prisma/generated/client.js"
+import { PrintRule, Register, RegisterClient } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
 import { validateNameLength } from "../services/validationService.js"
 import { List, ResolverContext } from "../types.js"
@@ -138,6 +138,18 @@ export async function updateRegisterClient(
 		where: { id: registerClient.id },
 		data: {
 			name: args.name
+		}
+	})
+}
+
+export async function register(
+	registerClient: RegisterClient,
+	args: {},
+	context: ResolverContext
+): Promise<Register> {
+	return await context.prisma.register.findFirst({
+		where: {
+			id: registerClient.registerId
 		}
 	})
 }

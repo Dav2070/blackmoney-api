@@ -81,6 +81,7 @@ export const typeDefs = `#graphql
 			restaurantUuid: String!
 			name: String!
 		): Register!
+		activateRegister(uuid: String!): Register!
 		updateRegisterClient(
 			uuid: String!
 			name: String
@@ -211,6 +212,7 @@ export const typeDefs = `#graphql
 	type Register {
 		uuid: String!
 		name: String!
+		status: RegisterStatus!
 		registerClients: RegisterClientList!
 	}
 
@@ -223,6 +225,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String
 		serialNumber: String!
+		register: Register!
 		printRules: PrintRuleList!
 	}
 
@@ -463,6 +466,11 @@ export const typeDefs = `#graphql
 		OWNER
 		ADMIN
 		USER
+	}
+
+	enum RegisterStatus {
+		ACTIVE
+		INACTIVE
 	}
 
 	enum ProductType {
