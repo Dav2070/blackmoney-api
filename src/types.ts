@@ -38,6 +38,8 @@ export interface Category {
 	name: string
 }
 
+export type RegisterStatus = "ACTIVE" | "INACTIVE"
+
 //#region Fiskaly types
 export type TssState = "CREATED" | "UNINITIALIZED" | "INITIALIZED"
 
