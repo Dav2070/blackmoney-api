@@ -46,11 +46,39 @@ export async function createCompany(
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
+	// Create the Stripe connected account for the company
+	const account = await context.stripe.v2.core.accounts.create({
+		dashboard: "full",
+		defaults: {
+			currency: "eur",
+			locales: ["de-DE"],
+			responsibilities: {
+				fees_collector: "stripe",
+				losses_collector: "stripe"
+			}
+		},
+		display_name: args.name,
+		contact_email: context.davUser.Email,
+		identity: {
+			country: "DE"
+		},
+		configuration: {
+			merchant: {
+				capabilities: {
+					card_payments: {
+						requested: true
+					}
+				}
+			}
+		}
+	})
+
 	// Create the company and the first restaurant for the company
 	const company = await context.prisma.company.create({
 		data: {
 			name: args.name,
 			userId: BigInt(context.davUser.Id),
+			stripeAccountId: account.id,
 			restaurants: {
 				create: {
 					name: args.name
