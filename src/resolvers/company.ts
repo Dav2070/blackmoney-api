@@ -69,7 +69,8 @@ export async function createCompany(
 						requested: true
 					}
 				}
-			}
+			},
+			customer: {}
 		}
 	})
 

@@ -166,6 +166,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		createStripeSubscriptionCheckoutSession(
+			successUrl: String!
+			cancelUrl: String!
+		): StripeCheckoutSession!
 		createStripeConnectionToken: StripeConnectionToken!
 		captureStripePaymentIntent(
 			id: String!
@@ -452,6 +456,10 @@ export const typeDefs = `#graphql
 	type ReservationList {
 		total: Int!
 		items: [Reservation!]!
+	}
+
+	type StripeCheckoutSession {
+		url: String!
 	}
 
 	type StripeConnectionToken {

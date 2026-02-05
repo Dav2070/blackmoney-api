@@ -77,6 +77,7 @@ export const resolvers = {
 		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem,
 		updateReservation: reservationResolvers.updateReservation,
+		createStripeSubscriptionCheckoutSession: stripeResolvers.createStripeSubscriptionCheckoutSession,
 		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
 		captureStripePaymentIntent: stripeResolvers.captureStripePaymentIntent
 	},
