@@ -81,6 +81,7 @@ export const typeDefs = `#graphql
 			restaurantUuid: String!
 			name: String!
 		): Register!
+		activateRegister(uuid: String!): Register!
 		updateRegisterClient(
 			uuid: String!
 			name: String
@@ -186,11 +187,11 @@ export const typeDefs = `#graphql
 		): Order!
 		addProductsToOrder(
 			uuid: String!
-			products: [AddProductsInput!]!
+			products: [AddOrderItemInput!]!
 		): Order!
 		removeProductsFromOrder(
 			uuid: String!
-			products: [AddProductsInput!]!
+			products: [AddOrderItemInput!]!
 		): Order!
 		completeOrder(
 			uuid: String!
@@ -206,6 +207,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		createStripeConnectionToken: StripeConnectionToken!
+		captureStripePaymentIntent(
+			id: String!
+		): StripePaymentIntent!
 	}
 
 	type Company {
@@ -239,8 +244,8 @@ export const typeDefs = `#graphql
 		uuid: String!
 		city: String
 		country: Country
-		addressLine1: String
-		addressLine2: String
+		line1: String
+		line2: String
 		houseNumber: String
 		postalCode: String
 	}
@@ -248,6 +253,7 @@ export const typeDefs = `#graphql
 	type Register {
 		uuid: String!
 		name: String!
+		status: RegisterStatus!
 		registerClients: RegisterClientList!
 	}
 
@@ -260,6 +266,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String
 		serialNumber: String!
+		register: Register!
 		printRules: PrintRuleList!
 	}
 
@@ -488,10 +495,23 @@ export const typeDefs = `#graphql
 		items: [Reservation!]!
 	}
 
+	type StripeConnectionToken {
+		secret: String!
+	}
+
+	type StripePaymentIntent {
+		id: String!
+	}
+
 	enum UserRole {
 		OWNER
 		ADMIN
 		USER
+	}
+
+	enum RegisterStatus {
+		ACTIVE
+		INACTIVE
 	}
 
 	enum ProductType {
@@ -561,8 +581,21 @@ export const typeDefs = `#graphql
 		orderItemVariations: [OrderItemVariationInput!]
 	}
 
-	input AddProductsInput {
+	input OrderItemVariationInput {
 		uuid: String
+		count: Int!
+		variationItems: [VariationItemInput!]
+	}
+
+	input VariationItemInput {
+		id: Int!
+	}
+
+>>>>>>> master
+=======
+	input AddOrderItemInput {
+		uuid: String
+		productUuid: String
 		count: Int!
 		discount: Int
 		diversePrice: Int
@@ -571,16 +604,18 @@ export const typeDefs = `#graphql
 		takeAway: Boolean
 		course: Int
 		offerUuid: String
-		variations: [AddProductVariationInput!]
-		orderItems: [AddProductOrderItemInput!]
+		variations: [AddOrderItemVariationInput!]
+		orderItems: [AddChildOrderItemInput!]
 	}
 
-	input AddProductVariationInput {
+	input AddOrderItemVariationInput {
+		uuid: String
 		variationItemUuids: [String!]!
 		count: Int!
 	}
 
-	input AddProductOrderItemInput {
+	input AddChildOrderItemInput {
+		uuid: String
 		productUuid: String!
 		count: Int!
 		variations: [AddProductVariationInput!]

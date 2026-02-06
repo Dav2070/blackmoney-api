@@ -153,6 +153,11 @@ export const apiErrors = {
 		message: "The restaurant already has an owner",
 		status: 400
 	},
+	registerAlreadyActive: {
+		code: "REGISTER_ALREADY_ACTIVE",
+		message: "The register is already active",
+		status: 400
+	},
 	noPrintersSpecified: {
 		code: "NO_PRINTERS_SPECIFIED",
 		message: "Please specify at least one printer uuid for the PrintRule",
@@ -183,6 +188,11 @@ export const apiErrors = {
 		code: "ORDER_ALREADY_COMPLETED",
 		message: "Order already completed",
 		status: 400
+	},
+	orderItemVariationDoesNotExist: {
+		code: "ORDER_ITEM_VARIATION_DOES_NOT_EXIST",
+		message: "OrderItemVariation does not exist",
+		status: 404
 	},
 	userHasNoPassword: {
 		code: "USER_HAS_NO_PASSWORD",

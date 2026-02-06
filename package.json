@@ -24,7 +24,8 @@
     "dav-js": "git+https://github.com/dav-apps/dav-js.git#v3.0.1",
     "express": "^5.2.1",
     "luxon": "^3.7.2",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "stripe": "^20.1.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

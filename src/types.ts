@@ -1,4 +1,5 @@
 import { PrismaClient, User } from "../prisma/generated/client.js"
+import Stripe from "stripe"
 import { User as DavUser } from "dav-js"
 
 export type PaymentMethod = "CASH" | "CARD"
@@ -6,6 +7,7 @@ export type Country = "DE"
 
 export interface ResolverContext {
 	prisma: PrismaClient
+	stripe: Stripe
 	davUser?: DavUser
 	user?: User
 }
@@ -35,6 +37,8 @@ export interface Category {
 	id: bigint
 	name: string
 }
+
+export type RegisterStatus = "ACTIVE" | "INACTIVE"
 
 //#region Fiskaly types
 export type TssState = "CREATED" | "UNINITIALIZED" | "INITIALIZED"

@@ -20,6 +20,7 @@ import * as orderItemResolvers from "./resolvers/orderItem.js"
 import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 import * as variationItemResolvers from "./resolvers/variationItem.js"
 import * as reservationResolvers from "./resolvers/reservation.js"
+import * as stripeResolvers from "./resolvers/stripe.js"
 
 export const resolvers = {
 	Query: {
@@ -52,6 +53,7 @@ export const resolvers = {
 		createCompany: companyResolvers.createCompany,
 		updateRestaurant: restaurantResolvers.updateRestaurant,
 		createRegister: registerResolvers.createRegister,
+		activateRegister: registerResolvers.activateRegister,
 		updateRegisterClient: registerClientResolvers.updateRegisterClient,
 		createPrinter: printerResolvers.createPrinter,
 		updatePrinter: printerResolvers.updatePrinter,
@@ -80,7 +82,9 @@ export const resolvers = {
 		removeProductsFromOrder: orderResolvers.removeProductsFromOrder,
 		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem,
-		updateReservation: reservationResolvers.updateReservation
+		updateReservation: reservationResolvers.updateReservation,
+		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
+		captureStripePaymentIntent: stripeResolvers.captureStripePaymentIntent
 	},
 	Session: {
 		user: sessionResolvers.user
@@ -101,9 +105,11 @@ export const resolvers = {
 		printers: restaurantResolvers.printers
 	},
 	Register: {
+		status: registerResolvers.status,
 		registerClients: registerResolvers.registerClients
 	},
 	RegisterClient: {
+		register: registerClientResolvers.register,
 		printRules: registerClientResolvers.printRules
 	},
 	PrintRule: {
