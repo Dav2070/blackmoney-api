@@ -310,6 +310,16 @@ export async function deleteProduct(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
+	// Delete product-to-variation relationships first
+	await context.prisma.productToVariation.deleteMany({
+		where: { productId: product.id }
+	})
+
+	// Delete the offer if it exists
+	await context.prisma.offer.deleteMany({
+		where: { productId: product.id }
+	})
+
 	// Delete the product (cascade will handle related records)
 	return await context.prisma.product.delete({
 		where: { id: product.id }
