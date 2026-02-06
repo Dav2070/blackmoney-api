@@ -138,16 +138,6 @@ export const apiErrors = {
 		message: "Product already has an offer",
 		status: 400
 	},
-	priceMustBePositive: {
-		code: "PRICE_MUST_BE_POSITIVE",
-		message: "Price must be a positive number",
-		status: 400
-	},
-	offerValueMustBePositive: {
-		code: "OFFER_VALUE_MUST_BE_POSITIVE",
-		message: "Offer value must be a positive number",
-		status: 400
-	},
 	restaurantAlreadyHasOwner: {
 		code: "RESTAURANT_ALREADY_HAS_OWNER",
 		message: "The restaurant already has an owner",
@@ -219,5 +209,7 @@ export const validationErrors = {
 	postalCodeInvalid: "POSTAL_CODE_INVALID",
 	ipAddressInvalid: "IP_ADDRESS_INVALID",
 	tableNameInvalid: "TABLE_NAME_INVALID",
-	seatsInvalid: "SEATS_INVALID"
+	seatsInvalid: "SEATS_INVALID",
+	offerValueInvalid: "OFFER_VALUE_INVALID",
+	priceInvalid: "PRICE_INVALID"
 }

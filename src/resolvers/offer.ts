@@ -8,7 +8,7 @@ import {
 import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
-import { validateNameLength } from "../services/validationService.js"
+import { validateNameLength, validateOfferValue } from "../services/validationService.js"
 
 export function id(offer: Offer): number {
 	return Number(offer.id)
@@ -44,11 +44,11 @@ export async function createOffer(
 		startTime?: string
 		endTime?: string
 		weekdays: Weekday[]
-		offerItems: Array<{
+		offerItems: {
 			name: string
 			maxSelections: number
 			productUuids: string[]
-		}>
+		}[]
 	},
 	context: ResolverContext
 ): Promise<Offer> {
@@ -85,9 +85,7 @@ export async function createOffer(
 	}
 
 	// Validate offer value
-	if (args.offerValue <= 0) {
-		throwApiError(apiErrors.offerValueMustBePositive)
-	}
+	throwValidationError(validateOfferValue(args.offerValue))
 
 	// Create the offer
 	const offer = await context.prisma.offer.create({
@@ -110,31 +108,28 @@ export async function createOffer(
 		// Validate name
 		throwValidationError(validateNameLength(offerItemInput.name))
 
-		const offerItem = await context.prisma.offerItem.create({
-			data: {
-				name: offerItemInput.name,
-				maxSelections: offerItemInput.maxSelections,
-				offerId: offer.id
-			}
-		})
-
-		// Connect products to offer item
+		// Collect product connections
+		const productConnections = []
 		for (const productUuid of offerItemInput.productUuids) {
 			const offerProduct = await context.prisma.product.findFirst({
 				where: { uuid: productUuid }
 			})
 
 			if (offerProduct != null) {
-				await context.prisma.offerItem.update({
-					where: { id: offerItem.id },
-					data: {
-						products: {
-							connect: { id: offerProduct.id }
-						}
-					}
-				})
+				productConnections.push({ id: offerProduct.id })
 			}
 		}
+
+		await context.prisma.offerItem.create({
+			data: {
+				name: offerItemInput.name,
+				maxSelections: offerItemInput.maxSelections,
+				offerId: offer.id,
+				products: {
+					connect: productConnections
+				}
+			}
+		})
 	}
 
 	return offer
@@ -152,11 +147,11 @@ export async function updateOffer(
 		startTime?: string
 		endTime?: string
 		weekdays?: Weekday[]
-		offerItems?: Array<{
+		offerItems?: {
 			name: string
 			maxSelections: number
 			productUuids: string[]
-		}>
+		}[]
 	},
 	context: ResolverContext
 ): Promise<Offer> {
@@ -184,8 +179,8 @@ export async function updateOffer(
 	}
 
 	// Validate offer value if provided
-	if (args.offerValue != null && args.offerValue <= 0) {
-		throwApiError(apiErrors.offerValueMustBePositive)
+	if (args.offerValue != null) {
+		throwValidationError(validateOfferValue(args.offerValue))
 	}
 
 	// Update the offer
@@ -193,16 +188,16 @@ export async function updateOffer(
 		where: { id: offer.id },
 		data: {
 			...(args.offerType != null && { offerType: args.offerType }),
-			...(args.discountType !== undefined && { discountType: args.discountType }),
+			...(args.discountType !== null && { discountType: args.discountType }),
 			...(args.offerValue != null && { offerValue: args.offerValue }),
-			...(args.startDate !== undefined && {
+			...(args.startDate !== null && {
 				startDate: args.startDate ? new Date(args.startDate) : null
 			}),
-			...(args.endDate !== undefined && {
+			...(args.endDate !== null && {
 				endDate: args.endDate ? new Date(args.endDate) : null
 			}),
-			...(args.startTime !== undefined && { startTime: args.startTime }),
-			...(args.endTime !== undefined && { endTime: args.endTime }),
+			...(args.startTime !== null && { startTime: args.startTime }),
+			...(args.endTime !== null && { endTime: args.endTime }),
 			...(args.weekdays != null && { weekdays: args.weekdays })
 		}
 	})
@@ -219,31 +214,28 @@ export async function updateOffer(
 			// Validate name
 			throwValidationError(validateNameLength(offerItemInput.name))
 
-			const offerItem = await context.prisma.offerItem.create({
-				data: {
-					name: offerItemInput.name,
-					maxSelections: offerItemInput.maxSelections,
-					offerId: offer.id
-				}
-			})
-
-			// Connect products to offer item
+			// Collect product connections
+			const productConnections = []
 			for (const productUuid of offerItemInput.productUuids) {
 				const offerProduct = await context.prisma.product.findFirst({
 					where: { uuid: productUuid }
 				})
 
 				if (offerProduct != null) {
-					await context.prisma.offerItem.update({
-						where: { id: offerItem.id },
-						data: {
-							products: {
-								connect: { id: offerProduct.id }
-							}
-						}
-					})
+					productConnections.push({ id: offerProduct.id })
 				}
 			}
+
+			await context.prisma.offerItem.create({
+				data: {
+					name: offerItemInput.name,
+					maxSelections: offerItemInput.maxSelections,
+					offerId: offer.id,
+					products: {
+						connect: productConnections
+					}
+				}
+			})
 		}
 	}
 

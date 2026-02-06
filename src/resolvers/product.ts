@@ -9,7 +9,7 @@ import {
 import { ResolverContext, List } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
-import { validateNameLength } from "../services/validationService.js"
+import { validateNameLength, validatePrice } from "../services/validationService.js"
 
 export async function searchProducts(
 	parent: any,
@@ -163,9 +163,7 @@ export async function createProduct(
 	throwValidationError(validateNameLength(args.name))
 
 	// Validate price
-	if (args.price < 0) {
-		throwApiError(apiErrors.priceMustBePositive)
-	}
+	throwValidationError(validatePrice(args.price))
 
 	// Create the product
 	const product = await context.prisma.product.create({
@@ -174,7 +172,9 @@ export async function createProduct(
 			price: args.price,
 			type: args.type,
 			shortcut: args.shortcut,
-			categoryId: category.id
+			category: {
+				connect: { id: category.id }
+			}
 		}
 	})
 
@@ -188,8 +188,8 @@ export async function createProduct(
 			if (variation != null) {
 				await context.prisma.productToVariation.create({
 					data: {
-						productId: product.id,
-						variationId: variation.id
+						product: { connect: { id: product.id } },
+						variation: { connect: { id: variation.id } }
 					}
 				})
 			}
@@ -216,7 +216,7 @@ export async function updateProduct(
 	}
 
 	// Get the product
-	const product = await context.prisma.product.findFirst({
+	let product = await context.prisma.product.findFirst({
 		where: { uuid: args.uuid },
 		include: { category: { include: { menu: { include: { restaurant: true } } } } }
 	})
@@ -239,18 +239,19 @@ export async function updateProduct(
 	}
 
 	// Validate price if provided
-	if (args.price != null && args.price < 0) {
-		throwApiError(apiErrors.priceMustBePositive)
+	if (args.price != null) {
+		throwValidationError(validatePrice(args.price))
 	}
 
 	// Update the product
-	const updatedProduct = await context.prisma.product.update({
+	product = await context.prisma.product.update({
 		where: { id: product.id },
 		data: {
 			...(args.name != null && { name: args.name }),
 			...(args.price != null && { price: args.price }),
 			...(args.shortcut != null && { shortcut: args.shortcut })
-		}
+		},
+		include: { category: { include: { menu: { include: { restaurant: true } } } } }
 	})
 
 	// Update variations if provided
@@ -269,15 +270,15 @@ export async function updateProduct(
 			if (variation != null) {
 				await context.prisma.productToVariation.create({
 					data: {
-						productId: product.id,
-						variationId: variation.id
+						product: { connect: { id: product.id } },
+						variation: { connect: { id: variation.id } }
 					}
 				})
 			}
 		}
 	}
 
-	return updatedProduct
+	return product
 }
 
 export async function deleteProduct(
@@ -309,16 +310,6 @@ export async function deleteProduct(
 	) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
-
-	// Delete product-to-variation relationships first
-	await context.prisma.productToVariation.deleteMany({
-		where: { productId: product.id }
-	})
-
-	// Delete the offer if it exists
-	await context.prisma.offer.deleteMany({
-		where: { productId: product.id }
-	})
 
 	// Delete the product (cascade will handle related records)
 	return await context.prisma.product.delete({

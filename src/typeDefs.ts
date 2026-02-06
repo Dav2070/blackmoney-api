@@ -591,8 +591,6 @@ export const typeDefs = `#graphql
 		id: Int!
 	}
 
->>>>>>> master
-=======
 	input AddOrderItemInput {
 		uuid: String
 		productUuid: String
@@ -618,7 +616,7 @@ export const typeDefs = `#graphql
 		uuid: String
 		productUuid: String!
 		count: Int!
-		variations: [AddProductVariationInput!]
+		variations: [AddOrderItemVariationInput!]
 	}
 
 	input OrderItemVariationInput {
