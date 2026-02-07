@@ -93,6 +93,11 @@ export const apiErrors = {
 		message: "Product does not exist",
 		status: 404
 	},
+	offerDoesNotExist: {
+		code: "OFFER_DOES_NOT_EXIST",
+		message: "Offer does not exist",
+		status: 404
+	},
 	variationItemDoesNotExist: {
 		code: "VARIATION_ITEM_DOES_NOT_EXIST",
 		message: "Variation item does not exist",
@@ -126,6 +131,11 @@ export const apiErrors = {
 	categoryNameAlreadyInUse: {
 		code: "CATEGORY_NAME_ALREADY_IN_USE",
 		message: "A category with this name already exists in this restaurant",
+		status: 400
+	},
+	productAlreadyHasOffer: {
+		code: "PRODUCT_ALREADY_HAS_OFFER",
+		message: "Product already has an offer",
 		status: 400
 	},
 	restaurantAlreadyHasOwner: {
@@ -204,5 +214,7 @@ export const validationErrors = {
 	postalCodeInvalid: "POSTAL_CODE_INVALID",
 	ipAddressInvalid: "IP_ADDRESS_INVALID",
 	tableNameInvalid: "TABLE_NAME_INVALID",
-	seatsInvalid: "SEATS_INVALID"
+	seatsInvalid: "SEATS_INVALID",
+	offerValueInvalid: "OFFER_VALUE_INVALID",
+	priceInvalid: "PRICE_INVALID"
 }

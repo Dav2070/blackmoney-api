@@ -23,22 +23,22 @@ model Restaurant {
   id                BigInt             @id @default(autoincrement())
   uuid              String             @unique @default(uuid())
   companyId         BigInt
-  company           Company            @relation(fields: [companyId], references: [id])
   name              String             @db.VarChar
-  owner             String?            @db.VarChar
-  taxNumber         String?            @db.VarChar
-  mail              String?            @db.VarChar
-  phoneNumber       String?            @db.VarChar
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @default(now()) @updatedAt
+  mail              String?            @db.VarChar
+  owner             String?            @db.VarChar
+  phoneNumber       String?            @db.VarChar
+  taxNumber         String?            @db.VarChar
+  address           Address?
+  bills             Bill[]
+  menus             Menu[]
+  printers          Printer[]
+  registers         Register[]
+  company           Company            @relation(fields: [companyId], references: [id])
+  rooms             Room[]
   userToRestaurants UserToRestaurant[]
   users             User[]             @relation("UserToRestaurant")
-  rooms             Room[]
-  registers         Register[]
-  printers          Printer[]
-  menus             Menu[]
-  bills             Bill[]
-  address           Address?
 }
 
 model Register {
@@ -47,9 +47,9 @@ model Register {
   name            String           @db.VarChar
   adminPin        String?          @db.VarChar
   restaurantId    BigInt
-  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @default(now()) @updatedAt
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
   registerClients RegisterClient[]
 }
 
@@ -59,12 +59,12 @@ model RegisterClient {
   name         String?     @db.VarChar
   serialNumber String      @db.VarChar
   registerId   BigInt
-  register     Register    @relation(fields: [registerId], references: [id], onDelete: Cascade)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
   bills        Bill[]
-  sessions     Session[]
   printRules   PrintRule[]
+  register     Register    @relation(fields: [registerId], references: [id], onDelete: Cascade)
+  sessions     Session[]
 
   @@unique([registerId, serialNumber])
 }
@@ -75,24 +75,24 @@ model Printer {
   name         String      @db.VarChar
   ipAddress    String      @db.VarChar
   restaurantId BigInt
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
-  printRules   PrintRule[]
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  printRules   PrintRule[] @relation("PrintRuleToPrinter")
 }
 
 model PrintRule {
   id               BigInt         @id @default(autoincrement())
   uuid             String         @unique @default(uuid())
   type             PrintRuleType  @default(PRODUCT_TYPE)
-  productType      ProductType?
   registerClientId BigInt
-  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id], onDelete: Cascade)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @default(now()) @updatedAt
-  printers         Printer[]
-  categories       Category[]
-  products         Product[]
+  productType      ProductType?
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id], onDelete: Cascade)
+  categories       Category[]     @relation("CategoryToPrintRule")
+  printers         Printer[]      @relation("PrintRuleToPrinter")
+  products         Product[]      @relation("PrintRuleToProduct")
 }
 
 model User {
@@ -102,11 +102,11 @@ model User {
   password          String?            @db.VarChar
   role              UserRole           @default(USER)
   companyId         BigInt
-  company           Company            @relation(fields: [companyId], references: [id])
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @default(now()) @updatedAt
-  sessions          Session[]
   orders            Order[]
+  sessions          Session[]
+  company           Company            @relation(fields: [companyId], references: [id])
   userToRestaurants UserToRestaurant[]
   restaurants       Restaurant[]       @relation("UserToRestaurant")
 }
@@ -115,22 +115,22 @@ model UserToRestaurant {
   id           BigInt     @id @default(autoincrement())
   userId       BigInt
   restaurantId BigInt
-  user         User       @relation(fields: [userId], references: [id])
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @default(now()) @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
 }
 
 model Session {
   id               BigInt         @id @default(autoincrement())
   uuid             String         @unique @default(uuid())
   userId           BigInt
-  user             User           @relation(fields: [userId], references: [id])
-  registerClientId BigInt
-  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id], onDelete: Cascade)
-  lastActive       DateTime       @default(now())
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @default(now()) @updatedAt
+  lastActive       DateTime       @default(now())
+  registerClientId BigInt
+  registerClient   RegisterClient @relation(fields: [registerClientId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id])
 }
 
 model Room {
@@ -139,46 +139,46 @@ model Room {
   name         String      @db.VarChar
   userId       BigInt?
   restaurantId BigInt?
-  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
   tables       Table[]
 }
 
 model Table {
   id           BigInt        @id @default(autoincrement())
   uuid         String        @unique @default(uuid())
-  roomId       BigInt
-  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
   name         Int           @default(1)
-  seats        Int           @default(2)
+  roomId       BigInt
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
+  seats        Int           @default(2)
   orders       Order[]
   reservations Reservation[]
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model Menu {
   id           BigInt      @id @default(autoincrement())
   uuid         String      @unique @default(uuid())
   restaurantId BigInt
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
   categories   Category[]
-  variations   Variation[]
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
   offers       Offer[]
+  variations   Variation[]
 }
 
 model Bill {
   id               BigInt          @id @default(autoincrement())
   uuid             String          @unique @default(uuid())
   registerClientId BigInt?
-  registerClient   RegisterClient? @relation(fields: [registerClientId], references: [id], onDelete: SetNull)
-  restaurantId     BigInt
-  restaurant       Restaurant      @relation(fields: [restaurantId], references: [id])
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @default(now()) @updatedAt
+  restaurantId     BigInt
+  registerClient   RegisterClient? @relation(fields: [registerClientId], references: [id])
+  restaurant       Restaurant      @relation(fields: [restaurantId], references: [id])
   orders           Order[]
 }
 
@@ -186,15 +186,15 @@ model Address {
   id           BigInt     @id @default(autoincrement())
   uuid         String     @unique @default(uuid())
   restaurantId BigInt     @unique
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  city         String?    @db.VarChar
-  country      Country?
-  line1        String?    @db.VarChar
-  line2        String?    @db.VarChar
-  postalCode   String?    @db.VarChar
-  houseNumber  String?    @db.VarChar
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @default(now()) @updatedAt
+  city         String?    @db.VarChar
+  country      Country?
+  postalCode   String?    @db.VarChar
+  houseNumber  String?    @db.VarChar
+  line1        String?    @db.VarChar
+  line2        String?    @db.VarChar
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 }
 
 model Order {
@@ -203,37 +203,37 @@ model Order {
   paidAt        DateTime?
   paymentMethod PaymentMethod?
   tableId       BigInt?
-  table         Table?         @relation(fields: [tableId], references: [id], onDelete: SetNull)
   userId        BigInt?
-  user          User?          @relation(fields: [userId], references: [id])
   billId        BigInt?
-  bill          Bill?          @relation(fields: [billId], references: [id])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
+  bill          Bill?          @relation(fields: [billId], references: [id])
+  table         Table?         @relation(fields: [tableId], references: [id])
+  user          User?          @relation(fields: [userId], references: [id])
   orderItems    OrderItem[]
 }
 
 model OrderItem {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
-  type                OrderItemType        @default(PRODUCT)
   count               Int                  @default(1)
-  orderItemId         BigInt?
-  orderItem           OrderItem?           @relation("OrderItemToOrderItem", fields: [orderItemId], references: [id])
   orderId             BigInt
   productId           BigInt?
-  offerId             BigInt?
-  discount            Int                  @default(0)
-  diversePrice        Int?
-  notes               String?              @db.VarChar
-  takeAway            Boolean              @default(false)
-  course              Int?
-  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product             Product?             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  offer               Offer?               @relation(fields: [offerId], references: [id])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
+  discount            Int                  @default(0)
+  offerId             BigInt?
+  notes               String?              @db.VarChar
+  orderItemId         BigInt?
+  type                OrderItemType        @default(PRODUCT)
+  course              Int?
+  takeAway            Boolean              @default(false)
+  diversePrice        Int?
+  offer               Offer?               @relation(fields: [offerId], references: [id])
+  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem           OrderItem?           @relation("OrderItemToOrderItem", fields: [orderItemId], references: [id])
   orderItems          OrderItem[]          @relation("OrderItemToOrderItem")
+  product             Product?             @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItemVariations OrderItemVariation[]
 }
 
@@ -242,9 +242,9 @@ model OrderItemVariation {
   uuid                               String                              @unique @default(uuid())
   count                              Int                                 @default(1)
   orderItemId                        BigInt
-  orderItem                          OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   createdAt                          DateTime                            @default(now())
   updatedAt                          DateTime                            @default(now()) @updatedAt
+  orderItem                          OrderItem                           @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
 }
 
@@ -252,19 +252,15 @@ model OrderItemVariationToVariationItem {
   id                   BigInt             @id @default(autoincrement())
   orderItemVariationId BigInt
   variationItemId      BigInt
-  orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id], onDelete: Cascade)
-  variationItem        VariationItem      @relation(fields: [variationItemId], references: [id], onDelete: Cascade)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @default(now()) @updatedAt
+  orderItemVariation   OrderItemVariation @relation(fields: [orderItemVariationId], references: [id], onDelete: Cascade)
+  variationItem        VariationItem      @relation(fields: [variationItemId], references: [id], onDelete: Cascade)
 }
 
 model Offer {
   id           BigInt        @id @default(autoincrement())
   uuid         String        @unique @default(uuid())
-  menuId       BigInt
-  menu         Menu          @relation(fields: [menuId], references: [id])
-  productId    BigInt?       @unique
-  product      Product?      @relation(fields: [productId], references: [id])
   offerType    OfferType
   discountType DiscountType?
   offerValue   Int
@@ -275,59 +271,63 @@ model Offer {
   weekdays     Weekday[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
-  orderItems   OrderItem[]
+  menuId       BigInt
+  productId    BigInt?       @unique
+  menu         Menu          @relation(fields: [menuId], references: [id])
+  product      Product?      @relation(fields: [productId], references: [id])
   offerItems   OfferItem[]
+  orderItems   OrderItem[]
 }
 
 model OfferItem {
   id            BigInt    @id @default(autoincrement())
   uuid          String    @unique @default(uuid())
-  offerId       BigInt
-  offer         Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
   name          String    @db.VarChar
-  maxSelections Int       @default(1)
+  offerId       BigInt
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
-  products      Product[]
+  maxSelections Int       @default(1)
+  offer         Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  products      Product[] @relation("OfferItemToProduct")
 }
 
 model Product {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
-  type                ProductType          @default(FOOD)
   name                String
   price               Int
-  shortcut            Int?
   categoryId          BigInt
-  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  offer               Offer?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
-  productToVariations ProductToVariation[]
+  type                ProductType          @default(FOOD)
+  shortcut            Int?
+  offer               Offer?
   orderItems          OrderItem[]
-  offerItems          OfferItem[]
-  printRules          PrintRule[]
+  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  productToVariations ProductToVariation[]
+  offerItems          OfferItem[]          @relation("OfferItemToProduct")
+  printRules          PrintRule[]          @relation("PrintRuleToProduct")
 }
 
 model ProductToVariation {
   id          BigInt    @id @default(autoincrement())
   productId   BigInt
   variationId BigInt
-  product     Product   @relation(fields: [productId], references: [id])
-  variation   Variation @relation(fields: [variationId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variation   Variation @relation(fields: [variationId], references: [id], onDelete: Cascade)
 }
 
 model Variation {
   id                  BigInt               @id @default(autoincrement())
   uuid                String               @unique @default(uuid())
   name                String
-  menuId              BigInt
-  menu                Menu                 @relation(fields: [menuId], references: [id], onDelete: Cascade)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @default(now()) @updatedAt
+  menuId              BigInt
   productToVariations ProductToVariation[]
+  menu                Menu                 @relation(fields: [menuId], references: [id], onDelete: Cascade)
   variationItems      VariationItem[]
 }
 
@@ -337,37 +337,37 @@ model VariationItem {
   name                               String
   additionalCost                     Int
   variationId                        BigInt
-  variation                          Variation                           @relation(fields: [variationId], references: [id])
   createdAt                          DateTime                            @default(now())
   updatedAt                          DateTime                            @default(now()) @updatedAt
   orderItemVariationToVariationItems OrderItemVariationToVariationItem[]
+  variation                          Variation                           @relation(fields: [variationId], references: [id])
 }
 
 model Category {
   id         BigInt      @id @default(autoincrement())
   uuid       String      @unique @default(uuid())
-  menuId     BigInt
-  menu       Menu        @relation(fields: [menuId], references: [id], onDelete: Cascade)
   name       String
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @default(now()) @updatedAt
+  menuId     BigInt
+  menu       Menu        @relation(fields: [menuId], references: [id], onDelete: Cascade)
   products   Product[]
-  printRules PrintRule[]
+  printRules PrintRule[] @relation("CategoryToPrintRule")
 }
 
 model Reservation {
   id             BigInt   @id @default(autoincrement())
   uuid           String   @unique @default(uuid())
   tableId        BigInt
-  table          Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
   name           String   @db.VarChar
   phoneNumber    String?  @db.VarChar
   email          String?  @db.VarChar
   numberOfPeople Int
-  date           DateTime
   checkedIn      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
+  date           DateTime
+  table          Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
