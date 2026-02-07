@@ -157,7 +157,7 @@ export const typeDefs = `#graphql
 			billUuid: String!
 			paymentMethod: PaymentMethod!
 		): Order!
-		updateOrderItem(
+		syncOrderItem(
 			uuid: String!
 			count: Int
 			orderItemVariations: [OrderItemVariationInput!]
