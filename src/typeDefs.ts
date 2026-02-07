@@ -220,6 +220,7 @@ export const typeDefs = `#graphql
 	type Company {
 		uuid: String!
 		name: String!
+		stripeOnboardingStatus: StripeOnboardingStatus!
 		restaurants: RestaurantList!
 		users: UserList!
 	}
@@ -520,6 +521,11 @@ export const typeDefs = `#graphql
 	enum RegisterStatus {
 		ACTIVE
 		INACTIVE
+	}
+
+	enum StripeOnboardingStatus {
+		PENDING
+		COMPLETED
 	}
 
 	enum ProductType {

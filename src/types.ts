@@ -39,6 +39,7 @@ export interface Category {
 }
 
 export type RegisterStatus = "ACTIVE" | "INACTIVE"
+export type StripeOnboardingStatus = "PENDING" | "COMPLETED"
 
 //#region Fiskaly types
 export type TssState = "CREATED" | "UNINITIALIZED" | "INITIALIZED"

@@ -1,3 +1,4 @@
+import Stripe from "stripe"
 import {
 	PrismaClient,
 	Company,
@@ -5,7 +6,7 @@ import {
 	User
 } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
-import { List, ResolverContext } from "../types.js"
+import { List, ResolverContext, StripeOnboardingStatus } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
@@ -107,6 +108,34 @@ export async function createCompany(
 	})
 
 	return company
+}
+
+export async function stripeOnboardingStatus(
+	company: Company,
+	args: {},
+	context: ResolverContext
+): Promise<StripeOnboardingStatus> {
+	let account: Stripe.V2.Core.Account
+
+	try {
+		// Retrieve the Stripe account to check the onboarding status
+		account = await context.stripe.v2.core.accounts.retrieve(
+			company.stripeAccountId,
+			{ include: ["configuration.merchant"] }
+		)
+	} catch (error) {
+		console.error("Error retrieving Stripe account", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	const status =
+		account.configuration.merchant.capabilities.card_payments.status
+
+	if (status === "active") {
+		return "COMPLETED"
+	} else {
+		return "PENDING"
+	}
 }
 
 export async function restaurants(
