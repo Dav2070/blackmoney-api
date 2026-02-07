@@ -67,4 +67,16 @@ export function validateSeats(seats: number) {
 		return validationErrors.seatsInvalid
 	}
 }
+
+export function validateOfferValue(offerValue: number) {
+	if (offerValue <= 0) {
+		return validationErrors.offerValueInvalid
+	}
+}
+
+export function validatePrice(price: number) {
+	if (price < 0) {
+		return validationErrors.priceInvalid
+	}
+}
 //#endregion
