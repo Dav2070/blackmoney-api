@@ -207,6 +207,10 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		createStripeAccountOnboardingLink(
+			refreshUrl: String!
+			returnUrl: String!
+		): StripeAccountLink!
 		createStripeSubscriptionCheckoutSession(
 			successUrl: String!
 			cancelUrl: String!
@@ -498,6 +502,10 @@ export const typeDefs = `#graphql
 	type ReservationList {
 		total: Int!
 		items: [Reservation!]!
+	}
+
+	type StripeAccountLink {
+		url: String!
 	}
 
 	type StripeCheckoutSession {

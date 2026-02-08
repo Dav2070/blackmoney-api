@@ -1,6 +1,54 @@
+import Stripe from "stripe"
 import { apiErrors } from "../errors.js"
 import { ResolverContext } from "../types.js"
 import { throwApiError } from "../utils.js"
+
+export async function createStripeAccountOnboardingLink(
+	parent: any,
+	args: {
+		refreshUrl: string
+		returnUrl: string
+	},
+	context: ResolverContext
+): Promise<{ url: string }> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const company = await context.prisma.company.findFirst({
+		where: {
+			id: context.user.companyId
+		}
+	})
+
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
+	}
+
+	let accountLink: Stripe.Response<Stripe.V2.Core.AccountLink>
+
+	try {
+		accountLink = await context.stripe.v2.core.accountLinks.create({
+			account: company.stripeAccountId,
+			use_case: {
+				type: "account_onboarding",
+				account_onboarding: {
+					configurations: ["merchant", "customer"],
+					refresh_url: args.refreshUrl,
+					return_url: args.returnUrl
+				}
+			}
+		})
+	} catch (error) {
+		console.error("Error creating Stripe account link", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	return {
+		url: accountLink.url
+	}
+}
 
 export async function createStripeSubscriptionCheckoutSession(
 	parent: any,
@@ -11,13 +59,13 @@ export async function createStripeSubscriptionCheckoutSession(
 	context: ResolverContext
 ): Promise<{ url: string }> {
 	// Check if the user is logged in
-	if (context.davUser == null) {
+	if (context.user == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
 	const company = await context.prisma.company.findFirst({
 		where: {
-			userId: context.davUser.Id
+			id: context.user.companyId
 		}
 	})
 

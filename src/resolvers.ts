@@ -83,6 +83,8 @@ export const resolvers = {
 		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem,
 		updateReservation: reservationResolvers.updateReservation,
+		createStripeAccountOnboardingLink:
+			stripeResolvers.createStripeAccountOnboardingLink,
 		createStripeSubscriptionCheckoutSession:
 			stripeResolvers.createStripeSubscriptionCheckoutSession,
 		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
