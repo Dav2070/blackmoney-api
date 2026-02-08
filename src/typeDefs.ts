@@ -211,6 +211,9 @@ export const typeDefs = `#graphql
 			refreshUrl: String!
 			returnUrl: String!
 		): StripeAccountLink!
+		createStripeBillingPortalSession(
+			returnUrl: String!
+		): StripeBillingPortalSession!
 		createStripeSubscriptionCheckoutSession(
 			successUrl: String!
 			cancelUrl: String!
@@ -225,6 +228,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		name: String!
 		stripeOnboardingStatus: StripeOnboardingStatus!
+		stripeSubscriptionStatus: StripeSubscriptionStatus!
 		restaurants: RestaurantList!
 		users: UserList!
 	}
@@ -508,6 +512,10 @@ export const typeDefs = `#graphql
 		url: String!
 	}
 
+	type StripeBillingPortalSession {
+		url: String!
+	}
+
 	type StripeCheckoutSession {
 		url: String!
 	}
@@ -534,6 +542,12 @@ export const typeDefs = `#graphql
 	enum StripeOnboardingStatus {
 		PENDING
 		COMPLETED
+	}
+
+	enum StripeSubscriptionStatus {
+		NOT_SUBSCRIBED
+		ACTIVE
+		INACTIVE
 	}
 
 	enum ProductType {

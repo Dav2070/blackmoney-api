@@ -85,6 +85,8 @@ export const resolvers = {
 		updateReservation: reservationResolvers.updateReservation,
 		createStripeAccountOnboardingLink:
 			stripeResolvers.createStripeAccountOnboardingLink,
+		createStripeBillingPortalSession:
+			stripeResolvers.createStripeBillingPortalSession,
 		createStripeSubscriptionCheckoutSession:
 			stripeResolvers.createStripeSubscriptionCheckoutSession,
 		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
@@ -95,6 +97,7 @@ export const resolvers = {
 	},
 	Company: {
 		stripeOnboardingStatus: companyResolvers.stripeOnboardingStatus,
+		stripeSubscriptionStatus: companyResolvers.stripeSubscriptionStatus,
 		restaurants: companyResolvers.restaurants,
 		users: companyResolvers.users
 	},

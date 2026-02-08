@@ -50,6 +50,39 @@ export async function createStripeAccountOnboardingLink(
 	}
 }
 
+export async function createStripeBillingPortalSession(
+	parent: any,
+	args: {
+		returnUrl: string
+	},
+	context: ResolverContext
+): Promise<{ url: string }> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const company = await context.prisma.company.findFirst({
+		where: {
+			id: context.user.companyId
+		}
+	})
+
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
+	}
+
+	// Create the checkout session
+	const session = await context.stripe.billingPortal.sessions.create({
+		customer_account: company.stripeAccountId,
+		return_url: args.returnUrl
+	})
+
+	return {
+		url: session.url
+	}
+}
+
 export async function createStripeSubscriptionCheckoutSession(
 	parent: any,
 	args: {

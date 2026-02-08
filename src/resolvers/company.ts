@@ -6,7 +6,12 @@ import {
 	User
 } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
-import { List, ResolverContext, StripeOnboardingStatus } from "../types.js"
+import {
+	List,
+	ResolverContext,
+	StripeOnboardingStatus,
+	StripeSubscriptionStatus
+} from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
@@ -135,6 +140,36 @@ export async function stripeOnboardingStatus(
 		return "COMPLETED"
 	} else {
 		return "PENDING"
+	}
+}
+
+export async function stripeSubscriptionStatus(
+	company: Company,
+	args: {},
+	context: ResolverContext
+): Promise<StripeSubscriptionStatus> {
+	let customer: Stripe.Customer & {
+		subscriptions: Stripe.ApiList<Stripe.Subscription>
+	}
+
+	try {
+		customer = (await context.stripe.customers.retrieve(
+			company.stripeAccountId,
+			{ expand: ["subscriptions"] }
+		)) as Stripe.Customer & {
+			subscriptions: Stripe.ApiList<Stripe.Subscription>
+		}
+	} catch (error) {
+		console.error("Error retrieving Stripe subscription status", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	if (customer.subscriptions.data.length === 0) {
+		return "NOT_SUBSCRIBED"
+	} else if (customer.subscriptions.data[0].status === "active") {
+		return "ACTIVE"
+	} else {
+		return "INACTIVE"
 	}
 }
 
