@@ -10,28 +10,6 @@ import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import { validateNameLength, validateOfferValue } from "../services/validationService.js"
 
-export function id(offer: Offer): number {
-	return Number(offer.id)
-}
-
-export async function offerItems(
-	offer: Offer,
-	args: {},
-	context: ResolverContext
-): Promise<List<OfferItem>> {
-	const where = { offerId: offer.id }
-
-	const [total, items] = await context.prisma.$transaction([
-		context.prisma.offerItem.count({ where }),
-		context.prisma.offerItem.findMany({ where })
-	])
-
-	return {
-		total,
-		items
-	}
-}
-
 export async function createOffer(
 	parent: any,
 	args: {
@@ -276,4 +254,34 @@ export async function deleteOffer(
 	return await context.prisma.offer.delete({
 		where: { id: offer.id }
 	})
+}
+
+export function id(offer: Offer): number {
+	return Number(offer.id)
+}
+
+export function startDate(offer: Offer): string {
+	return offer.startDate?.toISOString() ?? null
+}
+
+export function endDate(offer: Offer): string {
+	return offer.endDate?.toISOString() ?? null
+}
+
+export async function offerItems(
+	offer: Offer,
+	args: {},
+	context: ResolverContext
+): Promise<List<OfferItem>> {
+	const where = { offerId: offer.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.offerItem.count({ where }),
+		context.prisma.offerItem.findMany({ where })
+	])
+
+	return {
+		total,
+		items
+	}
 }
