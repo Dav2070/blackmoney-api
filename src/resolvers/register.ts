@@ -1,3 +1,4 @@
+import Stripe from "stripe"
 import { Register, RegisterClient } from "../../prisma/generated/client.js"
 import { List, RegisterStatus, ResolverContext } from "../types.js"
 import {
@@ -131,6 +132,41 @@ export async function activateRegister(
 		throwApiError(apiErrors.registerAlreadyActive)
 	}
 
+	// Check if the user has an active subscription
+	let customer: (Stripe.Customer | Stripe.DeletedCustomer) & {
+		subscriptions: Stripe.ApiList<Stripe.Subscription>
+	}
+
+	try {
+		customer = (await context.stripe.customers.retrieve(
+			register.restaurant.company.stripeAccountId,
+			{ expand: ["subscriptions"] }
+		)) as (Stripe.Customer | Stripe.DeletedCustomer) & {
+			subscriptions: Stripe.ApiList<Stripe.Subscription>
+		}
+	} catch (error) {
+		console.error("Error retrieving customer from Stripe", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	if (
+		customer == null ||
+		customer.deleted ||
+		customer.subscriptions.data.length === 0 ||
+		customer.subscriptions.data[0].status !== "active"
+	) {
+		throwApiError(apiErrors.noActiveSubscription)
+	}
+
+	// Find the register subscription item
+	const subscription = customer.subscriptions.data[0].items.data.find(
+		i => i.price.id === process.env.STRIPE_REGISTER_PRICE_ID
+	)
+
+	if (subscription == null) {
+		throwApiError(apiErrors.noActiveSubscription)
+	}
+
 	// Create the TSS
 	let tss = await createTss(register.uuid)
 
@@ -178,6 +214,18 @@ export async function activateRegister(
 
 	// Logout admin
 	await logoutAdmin(register.uuid)
+
+	// Update the subscription with the increased register quantity
+	const previousQuantity = subscription.quantity ?? 1
+
+	try {
+		await context.stripe.subscriptionItems.update(subscription.id, {
+			quantity: previousQuantity + 1
+		})
+	} catch (error) {
+		console.error("Error updating subscription in Stripe", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
 
 	return await context.prisma.register.update({
 		where: {

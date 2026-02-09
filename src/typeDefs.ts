@@ -207,6 +207,17 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		createStripeAccountOnboardingLink(
+			refreshUrl: String!
+			returnUrl: String!
+		): StripeAccountLink!
+		createStripeBillingPortalSession(
+			returnUrl: String!
+		): StripeBillingPortalSession!
+		createStripeSubscriptionCheckoutSession(
+			successUrl: String!
+			cancelUrl: String!
+		): StripeCheckoutSession!
 		createStripeConnectionToken: StripeConnectionToken!
 		captureStripePaymentIntent(
 			id: String!
@@ -216,6 +227,8 @@ export const typeDefs = `#graphql
 	type Company {
 		uuid: String!
 		name: String!
+		stripeOnboardingStatus: StripeOnboardingStatus!
+		stripeSubscriptionStatus: StripeSubscriptionStatus!
 		restaurants: RestaurantList!
 		users: UserList!
 	}
@@ -495,6 +508,18 @@ export const typeDefs = `#graphql
 		items: [Reservation!]!
 	}
 
+	type StripeAccountLink {
+		url: String!
+	}
+
+	type StripeBillingPortalSession {
+		url: String!
+	}
+
+	type StripeCheckoutSession {
+		url: String!
+	}
+
 	type StripeConnectionToken {
 		secret: String!
 	}
@@ -510,6 +535,17 @@ export const typeDefs = `#graphql
 	}
 
 	enum RegisterStatus {
+		ACTIVE
+		INACTIVE
+	}
+
+	enum StripeOnboardingStatus {
+		PENDING
+		COMPLETED
+	}
+
+	enum StripeSubscriptionStatus {
+		NOT_SUBSCRIBED
 		ACTIVE
 		INACTIVE
 	}

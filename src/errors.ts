@@ -193,6 +193,11 @@ export const apiErrors = {
 		code: "USER_ALREADY_HAS_PASSWORD",
 		message: "User already has a password",
 		status: 412
+	},
+	noActiveSubscription: {
+		code: "NO_ACTIVE_SUBSCRIPTION",
+		message: "No active subscription found for the company",
+		status: 412
 	}
 }
 

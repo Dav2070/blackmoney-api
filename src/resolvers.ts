@@ -83,6 +83,12 @@ export const resolvers = {
 		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem,
 		updateReservation: reservationResolvers.updateReservation,
+		createStripeAccountOnboardingLink:
+			stripeResolvers.createStripeAccountOnboardingLink,
+		createStripeBillingPortalSession:
+			stripeResolvers.createStripeBillingPortalSession,
+		createStripeSubscriptionCheckoutSession:
+			stripeResolvers.createStripeSubscriptionCheckoutSession,
 		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
 		captureStripePaymentIntent: stripeResolvers.captureStripePaymentIntent
 	},
@@ -90,6 +96,8 @@ export const resolvers = {
 		user: sessionResolvers.user
 	},
 	Company: {
+		stripeOnboardingStatus: companyResolvers.stripeOnboardingStatus,
+		stripeSubscriptionStatus: companyResolvers.stripeSubscriptionStatus,
 		restaurants: companyResolvers.restaurants,
 		users: companyResolvers.users
 	},

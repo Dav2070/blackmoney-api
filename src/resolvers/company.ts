@@ -1,3 +1,4 @@
+import Stripe from "stripe"
 import {
 	PrismaClient,
 	Company,
@@ -5,7 +6,12 @@ import {
 	User
 } from "../../prisma/generated/client.js"
 import { apiErrors } from "../errors.js"
-import { List, ResolverContext } from "../types.js"
+import {
+	List,
+	ResolverContext,
+	StripeOnboardingStatus,
+	StripeSubscriptionStatus
+} from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { validateNameLength } from "../services/validationService.js"
 
@@ -46,11 +52,40 @@ export async function createCompany(
 	// Validate the name
 	throwValidationError(validateNameLength(args.name))
 
+	// Create the Stripe connected account for the company
+	const account = await context.stripe.v2.core.accounts.create({
+		dashboard: "full",
+		defaults: {
+			currency: "eur",
+			locales: ["de-DE"],
+			responsibilities: {
+				fees_collector: "stripe",
+				losses_collector: "stripe"
+			}
+		},
+		display_name: args.name,
+		contact_email: context.davUser.Email,
+		identity: {
+			country: "DE"
+		},
+		configuration: {
+			merchant: {
+				capabilities: {
+					card_payments: {
+						requested: true
+					}
+				}
+			},
+			customer: {}
+		}
+	})
+
 	// Create the company and the first restaurant for the company
 	const company = await context.prisma.company.create({
 		data: {
 			name: args.name,
 			userId: BigInt(context.davUser.Id),
+			stripeAccountId: account.id,
 			restaurants: {
 				create: {
 					name: args.name
@@ -78,6 +113,64 @@ export async function createCompany(
 	})
 
 	return company
+}
+
+export async function stripeOnboardingStatus(
+	company: Company,
+	args: {},
+	context: ResolverContext
+): Promise<StripeOnboardingStatus> {
+	let account: Stripe.V2.Core.Account
+
+	try {
+		// Retrieve the Stripe account to check the onboarding status
+		account = await context.stripe.v2.core.accounts.retrieve(
+			company.stripeAccountId,
+			{ include: ["configuration.merchant"] }
+		)
+	} catch (error) {
+		console.error("Error retrieving Stripe account", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	const status =
+		account.configuration.merchant.capabilities.card_payments.status
+
+	if (status === "active") {
+		return "COMPLETED"
+	} else {
+		return "PENDING"
+	}
+}
+
+export async function stripeSubscriptionStatus(
+	company: Company,
+	args: {},
+	context: ResolverContext
+): Promise<StripeSubscriptionStatus> {
+	let customer: Stripe.Customer & {
+		subscriptions: Stripe.ApiList<Stripe.Subscription>
+	}
+
+	try {
+		customer = (await context.stripe.customers.retrieve(
+			company.stripeAccountId,
+			{ expand: ["subscriptions"] }
+		)) as Stripe.Customer & {
+			subscriptions: Stripe.ApiList<Stripe.Subscription>
+		}
+	} catch (error) {
+		console.error("Error retrieving Stripe subscription status", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	if (customer.subscriptions.data.length === 0) {
+		return "NOT_SUBSCRIBED"
+	} else if (customer.subscriptions.data[0].status === "active") {
+		return "ACTIVE"
+	} else {
+		return "INACTIVE"
+	}
 }
 
 export async function restaurants(
