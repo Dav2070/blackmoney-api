@@ -8,7 +8,10 @@ import {
 import { List, ResolverContext } from "../types.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import { apiErrors } from "../errors.js"
-import { validateNameLength, validateOfferValue } from "../services/validationService.js"
+import {
+	validateNameLength,
+	validateOfferValue
+} from "../services/validationService.js"
 
 export async function createOffer(
 	parent: any,
@@ -38,7 +41,9 @@ export async function createOffer(
 	// Get the product
 	const product = await context.prisma.product.findFirst({
 		where: { uuid: args.productUuid },
-		include: { category: { include: { menu: { include: { restaurant: true } } } } }
+		include: {
+			category: { include: { menu: { include: { restaurant: true } } } }
+		}
 	})
 
 	if (product == null) {
@@ -76,7 +81,6 @@ export async function createOffer(
 			startTime: args.startTime,
 			endTime: args.endTime,
 			weekdays: args.weekdays,
-			menuId: product.category.menuId,
 			productId: product.id
 		}
 	})
@@ -141,7 +145,15 @@ export async function updateOffer(
 	// Get the offer
 	const offer = await context.prisma.offer.findFirst({
 		where: { uuid: args.uuid },
-		include: { menu: { include: { restaurant: true } } }
+		include: {
+			product: {
+				include: {
+					category: {
+						include: { menu: { include: { restaurant: true } } }
+					}
+				}
+			}
+		}
 	})
 
 	if (offer == null) {
@@ -150,7 +162,8 @@ export async function updateOffer(
 
 	// Check if the user belongs to the same company and has the correct role
 	if (
-		context.user.companyId !== offer.menu.restaurant.companyId ||
+		context.user.companyId !==
+			offer.product.category.menu.restaurant.companyId ||
 		!["ADMIN", "OWNER"].includes(context.user.role)
 	) {
 		throwApiError(apiErrors.actionNotAllowed)
@@ -235,7 +248,15 @@ export async function deleteOffer(
 	// Get the offer
 	const offer = await context.prisma.offer.findFirst({
 		where: { uuid: args.uuid },
-		include: { menu: { include: { restaurant: true } } }
+		include: {
+			product: {
+				include: {
+					category: {
+						include: { menu: { include: { restaurant: true } } }
+					}
+				}
+			}
+		}
 	})
 
 	if (offer == null) {
@@ -244,7 +265,8 @@ export async function deleteOffer(
 
 	// Check if the user belongs to the same company and has the correct role
 	if (
-		context.user.companyId !== offer.menu.restaurant.companyId ||
+		context.user.companyId !==
+			offer.product.category.menu.restaurant.companyId ||
 		!["ADMIN", "OWNER"].includes(context.user.role)
 	) {
 		throwApiError(apiErrors.actionNotAllowed)

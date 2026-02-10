@@ -357,7 +357,6 @@ export const typeDefs = `#graphql
 		uuid: String!
 		categories: CategoryList!
 		variations: VariationList!
-		offers: OfferList!
 	}
 
 	type Category {
