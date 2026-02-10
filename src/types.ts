@@ -38,6 +38,42 @@ export interface Category {
 	name: string
 }
 
+export interface OpeningTime {
+	id: bigint
+	uuid: string
+	weekday: Weekday
+	durchgehend: boolean
+	pause: boolean
+	startTime1: string
+	endTime1: string
+	startTime2?: string
+	endTime2?: string
+}
+
+export interface SpecialOpeningTime {
+	id: bigint
+	uuid: string
+	reason: string
+	from: string
+	to: string
+	durchgehend: boolean
+	pause: boolean
+	geschlossen: boolean
+	startTime1?: string
+	endTime1?: string
+	startTime2?: string
+	endTime2?: string
+}
+
+export type Weekday =
+	| "MONDAY"
+	| "TUESDAY"
+	| "WEDNESDAY"
+	| "THURSDAY"
+	| "FRIDAY"
+	| "SATURDAY"
+	| "SUNDAY"
+
 export type RegisterStatus = "ACTIVE" | "INACTIVE"
 export type StripeOnboardingStatus = "PENDING" | "COMPLETED"
 export type StripeSubscriptionStatus = "NOT_SUBSCRIBED" | "ACTIVE" | "INACTIVE"

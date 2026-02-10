@@ -20,6 +20,7 @@ import * as orderItemResolvers from "./resolvers/orderItem.js"
 import * as orderItemVariationResolvers from "./resolvers/orderItemVariation.js"
 import * as variationItemResolvers from "./resolvers/variationItem.js"
 import * as reservationResolvers from "./resolvers/reservation.js"
+import * as openingTimeResolvers from "./resolvers/openingTime.js"
 import * as stripeResolvers from "./resolvers/stripe.js"
 
 export const resolvers = {
@@ -42,7 +43,9 @@ export const resolvers = {
 		retrieveTable: tableResolvers.retrieveTable,
 		retrieveOrder: orderResolvers.retrieveOrder,
 		listOrders: orderResolvers.listOrders,
-		listReservations: reservationResolvers.listReservations
+		listReservations: reservationResolvers.listReservations,
+		listOpeningTimes: openingTimeResolvers.listOpeningTimes,
+		listSpecialOpeningTimes: openingTimeResolvers.listSpecialOpeningTimes
 	},
 	Mutation: {
 		login: sessionResolvers.login,
@@ -83,6 +86,10 @@ export const resolvers = {
 		completeOrder: orderResolvers.completeOrder,
 		updateOrderItem: orderItemResolvers.updateOrderItem,
 		updateReservation: reservationResolvers.updateReservation,
+		updateOpeningTimes: openingTimeResolvers.updateOpeningTimes,
+		createSpecialOpeningTime: openingTimeResolvers.createSpecialOpeningTime,
+		updateSpecialOpeningTime: openingTimeResolvers.updateSpecialOpeningTime,
+		deleteSpecialOpeningTime: openingTimeResolvers.deleteSpecialOpeningTime,
 		createStripeAccountOnboardingLink:
 			stripeResolvers.createStripeAccountOnboardingLink,
 		createStripeBillingPortalSession:
