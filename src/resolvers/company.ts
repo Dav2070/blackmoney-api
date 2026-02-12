@@ -377,7 +377,6 @@ async function createDefaultDataForRestaurant(
 		await prisma.offer.createManyAndReturn({
 			data: [
 				{
-					menuId: menu.id,
 					productId: productMittagsSpecial.id,
 					offerType: "DISCOUNT",
 					discountType: "PERCENTAGE",
@@ -393,7 +392,6 @@ async function createDefaultDataForRestaurant(
 					]
 				},
 				{
-					menuId: menu.id,
 					productId: productPizzaMenu.id,
 					offerType: "FIXED_PRICE",
 					offerValue: 1490,

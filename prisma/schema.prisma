@@ -166,7 +166,6 @@ model Menu {
   updatedAt    DateTime    @default(now()) @updatedAt
   categories   Category[]
   restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
-  offers       Offer[]
   variations   Variation[]
 }
 
@@ -271,10 +270,8 @@ model Offer {
   weekdays     Weekday[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
-  menuId       BigInt
-  productId    BigInt?       @unique
-  menu         Menu          @relation(fields: [menuId], references: [id])
-  product      Product?      @relation(fields: [productId], references: [id])
+  productId    BigInt        @unique
+  product      Product       @relation(fields: [productId], references: [id])
   offerItems   OfferItem[]
   orderItems   OrderItem[]
 }
