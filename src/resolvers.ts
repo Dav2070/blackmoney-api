@@ -185,5 +185,9 @@ export const resolvers = {
 	Reservation: {
 		table: reservationResolvers.table,
 		date: reservationResolvers.date
+	},
+	SpecialOpeningTime: {
+		startDate: openingTimeResolvers.startDate,
+		endDate: openingTimeResolvers.endDate
 	}
 }

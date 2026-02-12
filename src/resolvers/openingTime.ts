@@ -55,10 +55,8 @@ export async function updateOpeningTimes(
 		restaurantUuid: string
 		openingTimes: {
 			weekday: Weekday
-			durchgehend: boolean
-			pause: boolean
-			startTime1: string
-			endTime1: string
+			startTime1?: string
+			endTime1?: string
 			startTime2?: string
 			endTime2?: string
 		}[]
@@ -105,8 +103,6 @@ export async function updateOpeningTimes(
 			data: {
 				restaurantId: restaurant.id,
 				weekday: openingTimeData.weekday,
-				durchgehend: openingTimeData.durchgehend,
-				pause: openingTimeData.pause,
 				startTime1: openingTimeData.startTime1,
 				endTime1: openingTimeData.endTime1,
 				startTime2: openingTimeData.startTime2,
@@ -153,7 +149,7 @@ export async function listSpecialOpeningTimes(
 		context.prisma.specialOpeningTime.count({ where }),
 		context.prisma.specialOpeningTime.findMany({
 			where,
-			orderBy: { from: "asc" }
+			orderBy: { startDate: "asc" }
 		})
 	])
 
@@ -167,12 +163,9 @@ export async function createSpecialOpeningTime(
 	parent: any,
 	args: {
 		restaurantUuid: string
-		reason: string
-		from: string
-		to: string
-		durchgehend: boolean
-		pause?: boolean
-		geschlossen?: boolean
+		name: string
+		startDate: string
+		endDate: string
 		startTime1?: string
 		endTime1?: string
 		startTime2?: string
@@ -209,12 +202,9 @@ export async function createSpecialOpeningTime(
 	return await context.prisma.specialOpeningTime.create({
 		data: {
 			restaurantId: restaurant.id,
-			reason: args.reason,
-			from: args.from,
-			to: args.to,
-			durchgehend: args.durchgehend,
-			pause: args.pause ?? false,
-			geschlossen: args.geschlossen ?? false,
+			name: args.name,
+			startDate: new Date(args.startDate),
+			endDate: new Date(args.endDate),
 			startTime1: args.startTime1,
 			endTime1: args.endTime1,
 			startTime2: args.startTime2,
@@ -227,12 +217,9 @@ export async function updateSpecialOpeningTime(
 	parent: any,
 	args: {
 		uuid: string
-		reason?: string
-		from?: string
-		to?: string
-		durchgehend?: boolean
-		pause?: boolean
-		geschlossen?: boolean
+		name?: string
+		startDate?: string
+		endDate?: string
 		startTime1?: string
 		endTime1?: string
 		startTime2?: string
@@ -268,14 +255,11 @@ export async function updateSpecialOpeningTime(
 
 	// Prepare the update data
 	const data: any = {}
-	if (args.reason != null) data.reason = args.reason
-	if (args.from != null) data.from = args.from
-	if (args.to != null) data.to = args.to
-	if (args.durchgehend != null) data.durchgehend = args.durchgehend
-	if (args.pause != null) data.pause = args.pause
-	if (args.geschlossen != null) data.geschlossen = args.geschlossen
-	if (args.startTime1 != null) data.startTime1 = args.startTime1
-	if (args.endTime1 != null) data.endTime1 = args.endTime1
+	if (args.name != null) data.name = args.name
+	if (args.startDate != null) data.startDate = new Date(args.startDate)
+	if (args.endDate != null) data.endDate = new Date(args.endDate)
+	if (args.startTime1 !== undefined) data.startTime1 = args.startTime1
+	if (args.endTime1 !== undefined) data.endTime1 = args.endTime1
 	if (args.startTime2 !== undefined) data.startTime2 = args.startTime2
 	if (args.endTime2 !== undefined) data.endTime2 = args.endTime2
 
@@ -323,4 +307,12 @@ export async function deleteSpecialOpeningTime(
 	return await context.prisma.specialOpeningTime.delete({
 		where: { id: specialOpeningTime.id }
 	})
+}
+
+export function startDate(specialOpeningTime: SpecialOpeningTime): string {
+	return specialOpeningTime.startDate?.toISOString()
+}
+
+export function endDate(specialOpeningTime: SpecialOpeningTime): string {
+	return specialOpeningTime.endDate?.toISOString() 
 }

@@ -215,12 +215,9 @@ export const typeDefs = `#graphql
 		): OpeningTimeList!
 		createSpecialOpeningTime(
 			restaurantUuid: String!
-			reason: String!
-			from: String!
-			to: String!
-			durchgehend: Boolean!
-			pause: Boolean
-			geschlossen: Boolean
+			name: String!
+			startDate: String!
+			endDate: String!
 			startTime1: String
 			endTime1: String
 			startTime2: String
@@ -228,12 +225,9 @@ export const typeDefs = `#graphql
 		): SpecialOpeningTime!
 		updateSpecialOpeningTime(
 			uuid: String!
-			reason: String
-			from: String
-			to: String
-			durchgehend: Boolean
-			pause: Boolean
-			geschlossen: Boolean
+			name: String
+			startDate: String
+			endDate: String
 			startTime1: String
 			endTime1: String
 			startTime2: String
@@ -544,10 +538,8 @@ export const typeDefs = `#graphql
 	type OpeningTime {
 		uuid: String!
 		weekday: Weekday!
-		durchgehend: Boolean!
-		pause: Boolean!
-		startTime1: String!
-		endTime1: String!
+		startTime1: String
+		endTime1: String
 		startTime2: String
 		endTime2: String
 	}
@@ -559,12 +551,9 @@ export const typeDefs = `#graphql
 
 	type SpecialOpeningTime {
 		uuid: String!
-		reason: String!
-		from: String!
-		to: String!
-		durchgehend: Boolean!
-		pause: Boolean!
-		geschlossen: Boolean!
+		name: String!
+		startDate: String!
+		endDate: String!
 		startTime1: String
 		endTime1: String
 		startTime2: String
@@ -741,10 +730,8 @@ export const typeDefs = `#graphql
 
 	input OpeningTimeInput {
 		weekday: Weekday!
-		durchgehend: Boolean!
-		pause: Boolean!
-		startTime1: String!
-		endTime1: String!
+		startTime1: String
+		endTime1: String
 		startTime2: String
 		endTime2: String
 	}

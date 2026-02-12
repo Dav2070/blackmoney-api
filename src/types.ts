@@ -42,10 +42,8 @@ export interface OpeningTime {
 	id: bigint
 	uuid: string
 	weekday: Weekday
-	durchgehend: boolean
-	pause: boolean
-	startTime1: string
-	endTime1: string
+	startTime1?: string
+	endTime1?: string
 	startTime2?: string
 	endTime2?: string
 }
@@ -53,12 +51,9 @@ export interface OpeningTime {
 export interface SpecialOpeningTime {
 	id: bigint
 	uuid: string
-	reason: string
-	from: string
-	to: string
-	durchgehend: boolean
-	pause: boolean
-	geschlossen: boolean
+	name: string
+	startDate: Date
+	endDate: Date
 	startTime1?: string
 	endTime1?: string
 	startTime2?: string
