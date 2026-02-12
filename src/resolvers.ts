@@ -69,6 +69,12 @@ export const resolvers = {
 		createCategory: categoryResolvers.createCategory,
 		updateCategory: categoryResolvers.updateCategory,
 		deleteCategory: categoryResolvers.deleteCategory,
+		createProduct: productResolvers.createProduct,
+		updateProduct: productResolvers.updateProduct,
+		deleteProduct: productResolvers.deleteProduct,
+		createOffer: offerResolvers.createOffer,
+		updateOffer: offerResolvers.updateOffer,
+		deleteOffer: offerResolvers.deleteOffer,
 		createBill: billResolvers.createBill,
 		createOrder: orderResolvers.createOrder,
 		updateOrder: orderResolvers.updateOrder,
@@ -77,6 +83,12 @@ export const resolvers = {
 		completeOrder: orderResolvers.completeOrder,
 		syncOrderItem: orderItemResolvers.syncOrderItem,
 		updateReservation: reservationResolvers.updateReservation,
+		createStripeAccountOnboardingLink:
+			stripeResolvers.createStripeAccountOnboardingLink,
+		createStripeBillingPortalSession:
+			stripeResolvers.createStripeBillingPortalSession,
+		createStripeSubscriptionCheckoutSession:
+			stripeResolvers.createStripeSubscriptionCheckoutSession,
 		createStripeConnectionToken: stripeResolvers.createStripeConnectionToken,
 		captureStripePaymentIntent: stripeResolvers.captureStripePaymentIntent
 	},
@@ -84,6 +96,8 @@ export const resolvers = {
 		user: sessionResolvers.user
 	},
 	Company: {
+		stripeOnboardingStatus: companyResolvers.stripeOnboardingStatus,
+		stripeSubscriptionStatus: companyResolvers.stripeSubscriptionStatus,
 		restaurants: companyResolvers.restaurants,
 		users: companyResolvers.users
 	},
@@ -119,8 +133,7 @@ export const resolvers = {
 	},
 	Menu: {
 		categories: menuResolvers.categories,
-		variations: menuResolvers.variations,
-		offers: menuResolvers.offers
+		variations: menuResolvers.variations
 	},
 	Offer: {
 		id: offerResolvers.id,

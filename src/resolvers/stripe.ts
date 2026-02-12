@@ -1,4 +1,129 @@
+import Stripe from "stripe"
+import { apiErrors } from "../errors.js"
 import { ResolverContext } from "../types.js"
+import { throwApiError } from "../utils.js"
+
+export async function createStripeAccountOnboardingLink(
+	parent: any,
+	args: {
+		refreshUrl: string
+		returnUrl: string
+	},
+	context: ResolverContext
+): Promise<{ url: string }> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const company = await context.prisma.company.findFirst({
+		where: {
+			id: context.user.companyId
+		}
+	})
+
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
+	}
+
+	let accountLink: Stripe.Response<Stripe.V2.Core.AccountLink>
+
+	try {
+		accountLink = await context.stripe.v2.core.accountLinks.create({
+			account: company.stripeAccountId,
+			use_case: {
+				type: "account_onboarding",
+				account_onboarding: {
+					configurations: ["merchant", "customer"],
+					refresh_url: args.refreshUrl,
+					return_url: args.returnUrl
+				}
+			}
+		})
+	} catch (error) {
+		console.error("Error creating Stripe account link", error)
+		throwApiError(apiErrors.unexpectedError)
+	}
+
+	return {
+		url: accountLink.url
+	}
+}
+
+export async function createStripeBillingPortalSession(
+	parent: any,
+	args: {
+		returnUrl: string
+	},
+	context: ResolverContext
+): Promise<{ url: string }> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const company = await context.prisma.company.findFirst({
+		where: {
+			id: context.user.companyId
+		}
+	})
+
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
+	}
+
+	// Create the checkout session
+	const session = await context.stripe.billingPortal.sessions.create({
+		customer_account: company.stripeAccountId,
+		return_url: args.returnUrl
+	})
+
+	return {
+		url: session.url
+	}
+}
+
+export async function createStripeSubscriptionCheckoutSession(
+	parent: any,
+	args: {
+		successUrl: string
+		cancelUrl: string
+	},
+	context: ResolverContext
+): Promise<{ url: string }> {
+	// Check if the user is logged in
+	if (context.user == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	const company = await context.prisma.company.findFirst({
+		where: {
+			id: context.user.companyId
+		}
+	})
+
+	if (company == null) {
+		throwApiError(apiErrors.companyDoesNotExist)
+	}
+
+	// Create the checkout session
+	const session = await context.stripe.checkout.sessions.create({
+		mode: "subscription",
+		line_items: [
+			{
+				price: process.env.STRIPE_REGISTER_PRICE_ID,
+				quantity: 1
+			}
+		],
+		customer_account: company.stripeAccountId,
+		success_url: args.successUrl,
+		cancel_url: args.cancelUrl
+	})
+
+	return {
+		url: session.url
+	}
+}
 
 export async function createStripeConnectionToken(
 	parent: any,
@@ -21,5 +146,6 @@ export async function captureStripePaymentIntent(
 	context: ResolverContext
 ): Promise<{ id: string }> {
 	const paymentIntent = await context.stripe.paymentIntents.capture(args.id)
+
 	return { id: paymentIntent.id }
 }
