@@ -40,6 +40,13 @@ export async function syncOrderItem(
 
 	// If count is 0 or less, delete the order item
 	if (args.count != null && args.count < 1) {
+		// Delete Child OrderItems first (for Menus and Specials)
+		await context.prisma.orderItem.deleteMany({
+			where: {
+				orderItemId: orderItem.id
+			}
+		})
+
 		return await context.prisma.orderItem.delete({
 			where: {
 				id: orderItem.id
