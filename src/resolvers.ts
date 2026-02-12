@@ -140,8 +140,7 @@ export const resolvers = {
 	},
 	Menu: {
 		categories: menuResolvers.categories,
-		variations: menuResolvers.variations,
-		offers: menuResolvers.offers
+		variations: menuResolvers.variations
 	},
 	Offer: {
 		id: offerResolvers.id,
