@@ -108,6 +108,11 @@ export const apiErrors = {
 		message: "Reservation does not exist",
 		status: 404
 	},
+	specialOpeningTimeDoesNotExist: {
+		code: "SPECIAL_OPENING_TIME_DOES_NOT_EXIST",
+		message: "Special opening time does not exist",
+		status: 404
+	},
 	tssDoesNotExist: {
 		code: "TSS_DOES_NOT_EXIST",
 		message: "Fiskaly TSS does not exist",

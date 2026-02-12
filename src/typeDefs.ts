@@ -36,6 +36,8 @@ export const typeDefs = `#graphql
 			restaurantUuid: String!
 			date: String!
 		): ReservationList!
+		listOpeningTimes(restaurantUuid: String!): OpeningTimeList!
+		listSpecialOpeningTimes(restaurantUuid: String!): SpecialOpeningTimeList!
 	}
 
 	type Mutation {
@@ -207,6 +209,31 @@ export const typeDefs = `#graphql
 			uuid: String!
 			checkedIn: Boolean
 		): Reservation!
+		updateOpeningTimes(
+			restaurantUuid: String!
+			openingTimes: [OpeningTimeInput!]!
+		): OpeningTimeList!
+		createSpecialOpeningTime(
+			restaurantUuid: String!
+			name: String!
+			startDate: String!
+			endDate: String!
+			startTime1: String
+			endTime1: String
+			startTime2: String
+			endTime2: String
+		): SpecialOpeningTime!
+		updateSpecialOpeningTime(
+			uuid: String!
+			name: String
+			startDate: String
+			endDate: String
+			startTime1: String
+			endTime1: String
+			startTime2: String
+			endTime2: String
+		): SpecialOpeningTime!
+		deleteSpecialOpeningTime(uuid: String!): SpecialOpeningTime!
 		createStripeAccountOnboardingLink(
 			refreshUrl: String!
 			returnUrl: String!
@@ -507,6 +534,36 @@ export const typeDefs = `#graphql
 		items: [Reservation!]!
 	}
 
+	type OpeningTime {
+		uuid: String!
+		weekday: Weekday!
+		startTime1: String
+		endTime1: String
+		startTime2: String
+		endTime2: String
+	}
+
+	type OpeningTimeList {
+		total: Int!
+		items: [OpeningTime!]!
+	}
+
+	type SpecialOpeningTime {
+		uuid: String!
+		name: String!
+		startDate: String!
+		endDate: String!
+		startTime1: String
+		endTime1: String
+		startTime2: String
+		endTime2: String
+	}
+
+	type SpecialOpeningTimeList {
+		total: Int!
+		items: [SpecialOpeningTime!]!
+	}
+
 	type StripeAccountLink {
 		url: String!
 	}
@@ -668,5 +725,13 @@ export const typeDefs = `#graphql
 		name: String!
 		maxSelections: Int!
 		productUuids: [String!]!
+	}
+
+	input OpeningTimeInput {
+		weekday: Weekday!
+		startTime1: String
+		endTime1: String
+		startTime2: String
+		endTime2: String
 	}
 `
